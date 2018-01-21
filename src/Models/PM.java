@@ -11,16 +11,6 @@ public class PM {
     private int memoryCapacity;
     private int networkCapacity;
     private int processorCapacity;
-    List<VM> residedVMs;
-
-
-    public List<VM> getResidedVMs() {
-        return residedVMs;
-    }
-
-    public void setResidedVMs(List<VM> residedVMs) {
-        this.residedVMs = residedVMs;
-    }
 
     public int getMemoryCapacity() {
         return memoryCapacity;
@@ -54,71 +44,13 @@ public class PM {
         this.name = name;
     }
 
-    public int getFreeMemory(){
-        final int[] freeMemory = {memoryCapacity};
-        residedVMs.forEach(vm -> {
-            freeMemory[0] -= vm.getMemorySize();
-        });
-        return freeMemory[0];
-    }
-
-
-    public int getFreeProcessor(){
-        final int[] freeCPU = {processorCapacity};
-        residedVMs.forEach(vm -> {
-            freeCPU[0] -= vm.getProcessorSize();
-        });
-        return freeCPU[0];
-    }
-
-    public int getFreeNetwork(){
-        final int[] freeNet = {networkCapacity};
-        residedVMs.forEach(vm -> {
-            freeNet[0] -= vm.getNetwork();
-        });
-        return freeNet[0];
-    }
-
-    public boolean hasFreeCapacityFor(VM vm){
-        return vm.getMemorySize() < getFreeMemory() && vm.getProcessorSize() < getFreeProcessor()
-                && vm.getNetwork() < getFreeNetwork();
-    }
-
-
-    //assignment has different mode, when you assign but not moved yet, during migration and start on new location
-    public void assignVM(VM vm){
-        //make the capacity smaller , before migration
-        if (!this.hasFreeCapacityFor(vm)){
-            System.out.println("There is no free capacity");
-        }
-        else {
-            residedVMs.add(vm);
-            vm.setLocation(this);
-        }
-    }
-
-    //or turn off after the migration is finished
-    public void removeVM(VM vm){
-
-        if (residedVMs.indexOf(vm) < 0) {
-           System.out.println("there is no such a VM located in this PM");
-        } else {
-            residedVMs.remove(vm);
-            vm.setLocation(null);
-        }
-    }
-
-    public boolean isVMHere(VM vm){
-        return residedVMs.indexOf(vm) > -1;
-    }
-
 
     public PM(String name, int memoryCapacity, int networkCapacity, int processorCapacity) {
         this.name = name;
         this.memoryCapacity = memoryCapacity;
         this.networkCapacity = networkCapacity;
         this.processorCapacity = processorCapacity;
-        this.residedVMs = new ArrayList<>();
+
     }
 
     @Override
@@ -128,7 +60,25 @@ public class PM {
                 ", memoryCapacity=" + memoryCapacity +
                 ", networkCapacity=" + networkCapacity +
                 ", processorCapacity=" + processorCapacity +
-                ", residedVMs=" + residedVMs +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PM pm = (PM) o;
+
+        return name.equals(pm.name);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + memoryCapacity;
+        result = 31 * result + networkCapacity;
+        result = 31 * result + processorCapacity;
+        return result;
     }
 }

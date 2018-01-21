@@ -1,7 +1,5 @@
 package Models;
 
-import com.sun.istack.internal.NotNull;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -11,9 +9,7 @@ public class VM {
     private String name;
     private int memorySize;
     private int processorSize;
-    private int network;
-    @NotNull
-    private PM location;
+    private int networkSize;
 
 
     public int getMemorySize() {
@@ -32,20 +28,12 @@ public class VM {
         this.processorSize = processorSize;
     }
 
-    public PM getLocation() {
-        return location;
+    public int getNetworkSize() {
+        return networkSize;
     }
 
-    public void setLocation(PM location) {
-        this.location = location;
-    }
-
-    public int getNetwork() {
-        return network;
-    }
-
-    public void setNetwork(int network) {
-        this.network = network;
+    public void setNetworkSize(int networkSize) {
+        this.networkSize = networkSize;
     }
 
     public String getName() {
@@ -60,7 +48,7 @@ public class VM {
         this.name = name;
         this.memorySize = memorySize;
         this.processorSize = processorSize;
-        this.network = network;
+        this.networkSize = network;
     }
 
     @Override
@@ -74,14 +62,14 @@ public class VM {
         VM vm = (VM) o;
         return memorySize == vm.memorySize &&
                 processorSize == vm.processorSize &&
-                network == vm.network &&
-                Objects.equals(name, vm.name) &&
-                Objects.equals(location, vm.location);
+                networkSize == vm.networkSize &&
+                Objects.equals(name, vm.name);
+
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, memorySize, processorSize, network, location);
+        return Objects.hash(name, memorySize, processorSize, networkSize);
     }
 
 
@@ -97,8 +85,7 @@ public class VM {
                 "name='" + name + '\'' +
                 ", memorySize=" + memorySize +
                 ", processorSize=" + processorSize +
-                ", network=" + network +
-                ", location=" + location +
+                ", networkSize=" + networkSize +
                 '}';
     }
 }
