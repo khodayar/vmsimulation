@@ -63,26 +63,29 @@ public class DependencyGraph {
         return found;
     }
 
+
+    //works only with a dependent and a source
     public void returnCycle(PM dependant , PM current){
         if (dependencyMap.get(current).contains(dependant)){
             System.out.println("backward");
-        }
+        } else {
 
-        List<PM> chain = chainBetween(dependant , current , new ArrayList<>() , new ArrayList<>());
+            List<PM> chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
 
-        if (chain.get(chain.size() - 1).equals(current)){
-            System.out.println("there is chain from " + current.getName() + "  to " + dependant.getName());
 
-            if (dependencyMap.get(dependant).contains(current)){
-                System.out.println("there is cycle");
-                chain.add(0 , dependant);
-                System.out.println(chain);
+            if (chain.size() > 0 && chain.get(chain.size() - 1).equals(current)) {
+                System.out.println("there is chain from " + current.getName() + "  to " + dependant.getName());
+
+                if (dependencyMap.get(dependant).contains(current)) {
+                    System.out.println("there is cycle");
+                    chain.add(0, dependant);
+                    System.out.println(chain);
+                } else {
+                    System.out.println(chain);
+                }
             }
-            else {
-                System.out.println(chain);
-            }
-        }
 
+        }
     }
 
 
