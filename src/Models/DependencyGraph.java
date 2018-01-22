@@ -1,9 +1,6 @@
 package Models;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Khodayar on 1/21/2018.
@@ -34,25 +31,57 @@ public class DependencyGraph {
 
     }
 
+    //if any two pm are in a same cycle
+    //vsn be be used only if dependent --> current (if current -> dependent without opposite returns true)
+    //goes backward of dependencies - reverse order of dependencies
+    //if we want to check p-->q are in a cycle we must check p,q,visited, found)
+    public List<PM> chainBetween(PM dependant , PM current , List<PM> visited , List<PM> found){
+            visited.add(current);
+            final boolean[] thereIS = {false};
+            //final step , return back to dependent
+            dependencyMap.get(current).forEach(pm -> {
+                if (pm.equals(dependant)) {
+                    thereIS[0] = true;
+                }
+            });
+            if (thereIS[0]) {
+                found.add(current);
 
-    public boolean isLastChain(PM dependant , PM current ,  List<PM> visited){
-        visited.add(current);
-        final boolean[] thereIS = {false};
-        dependencyMap.get(current).forEach(pm -> {
-            if (pm.equals(dependant)){
-                thereIS[0] =  true;
+            } else {
+                dependencyMap.get(current).forEach(pm -> {
+                    if (!visited.contains(pm)) {
+                        int checkSize = found.size();
+                        chainBetween(dependant, pm, visited, found);
+                        if (found.size() > checkSize){
+                            found.add(current);
+                        }
+
+                    }
+                });
 
             }
-        });
-        if (thereIS[0]){
-            return true;
+        return found;
+    }
+
+    public void returnCycle(PM dependant , PM current){
+        if (dependencyMap.get(current).contains(dependant)){
+            System.out.println("backward");
         }
-        dependencyMap.get(current).forEach(pm -> {
-            if (!visited.contains(pm)){
-                isLastChain(dependant , pm ,  visited);
+
+        List<PM> chain = chainBetween(dependant , current , new ArrayList<>() , new ArrayList<>());
+
+        if (chain.get(chain.size() - 1).equals(current)){
+            System.out.println("there is chain from " + current.getName() + "  to " + dependant.getName());
+
+            if (dependencyMap.get(dependant).contains(current)){
+                System.out.println("there is cycle");
+                chain.add(0 , dependant);
+                System.out.println(chain);
             }
-        });
-        return false;
+            else {
+                System.out.println(chain);
+            }
+        }
 
     }
 
@@ -62,7 +91,7 @@ public class DependencyGraph {
             series.add(pm2);
             return;
         }else {
-            series.remove(pm2);
+
             dependencyMap.get(pm2).forEach(pm -> {
                 series.add(pm);
                 findPairWise(pm1 , pm , series);
