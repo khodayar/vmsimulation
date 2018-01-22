@@ -66,9 +66,17 @@ public class DependencyGraph {
 
     //works only with a dependent and a source
     public void returnCycle(PM dependant , PM current){
-        if (dependencyMap.get(current).contains(dependant)){
+        if (dependencyMap.get(current).contains(dependant) && !dependencyMap.get(dependant).contains(current)){
             System.out.println("backward");
-        } else {
+        }
+        //handling case of pair cycle
+        else if (dependencyMap.get(current).contains(dependant) && dependencyMap.get(dependant).contains(current)){
+            List<PM> chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
+            chain.add(dependant);
+           System.out.println(chain);
+        }
+
+        else {
 
             List<PM> chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
 
