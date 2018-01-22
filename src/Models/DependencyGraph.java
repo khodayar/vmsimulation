@@ -65,35 +65,32 @@ public class DependencyGraph {
 
 
     //works only with a dependent and a source
-    public void returnCycle(PM dependant , PM current){
+    public List<PM> returnCycle(PM dependant , PM current){
+        List<PM> chain = new ArrayList<>();
         if (dependencyMap.get(current).contains(dependant) && !dependencyMap.get(dependant).contains(current)){
             System.out.println("backward");
         }
         //handling case of pair cycle
         else if (dependencyMap.get(current).contains(dependant) && dependencyMap.get(dependant).contains(current)){
-            List<PM> chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
+            chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
             chain.add(dependant);
-           System.out.println(chain);
         }
 
         else {
 
-            List<PM> chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
-
+             chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
 
             if (chain.size() > 0 && chain.get(chain.size() - 1).equals(current)) {
                 System.out.println("there is chain from " + current.getName() + "  to " + dependant.getName());
-
                 if (dependencyMap.get(dependant).contains(current)) {
                     System.out.println("there is cycle");
                     chain.add(0, dependant);
-                    System.out.println(chain);
-                } else {
-                    System.out.println(chain);
                 }
             }
 
         }
+        Collections.reverse(chain);
+        return chain;
     }
 
 
@@ -110,7 +107,6 @@ public class DependencyGraph {
         }
 
     }
-
 
 
 }

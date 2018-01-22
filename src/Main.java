@@ -72,14 +72,14 @@ public class Main {
         DependencyGraph dependencyGraph = new DependencyGraph(current.getPmList());
         dependencyGraph.addDependent(pm1 , pm2);
         dependencyGraph.addDependent(pm2 , pm3);
-        dependencyGraph.addDependent(pm3 , pm4);
-        dependencyGraph.addDependent(pm4 , pm5);
-        dependencyGraph.addDependent(pm5 , pm1);
-        dependencyGraph.addDependent(pm6 , pm1);
+        dependencyGraph.addDependent(pm1 , pm3);
+        dependencyGraph.addDependent(pm3 , pm1);
+        //dependencyGraph.addDependent(pm5 , pm1);
+        //dependencyGraph.addDependent(pm6 , pm1);
 
 
 
-        dependencyGraph.returnCycle(pm4,pm5);
+        System.out.println(dependencyGraph.returnCycle(pm2,pm3));
 
 
         dependencyGraph.printDependency();
