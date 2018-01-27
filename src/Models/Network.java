@@ -216,4 +216,16 @@ public class Network {
                 && freeProcessor(pm) >= vm.getProcessorSize();
     }
 
+
+
+    public List<Migration> getMigrationsFrom(List<Migration> migrations , PM source){
+        List<Migration> migrationList = new ArrayList<>();
+        migrations.forEach(m -> {
+            if (m.getSource().equals(source)){
+                migrationList.add(m);
+            }
+        });
+     return migrationList;
+    }
+
 }

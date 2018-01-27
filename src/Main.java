@@ -1,6 +1,8 @@
 import Models.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
 
@@ -9,7 +11,7 @@ public class Main {
         Network current = new Network();
 
         PM pm1 = new PM("pm1", 10,10,10);
-        PM pm2 = new PM("pm2", 20,20,20);
+        PM pm2 = new PM("pm2", 10,10,10);
         PM pm3 = new PM("pm3" ,10,10,10);
         PM pm4 = new PM("pm4", 10,10,10);
         PM pm5 = new PM("pm5", 10,10,10);
@@ -55,7 +57,7 @@ public class Main {
         newNetwork.assignToLocation(vm3 , pm1);
         newNetwork.assignToLocation(vm4, pm1);
         newNetwork.assignToLocation(vm5, pm3);
-            newNetwork.assignToLocation(vm6, pm3);
+        newNetwork.assignToLocation(vm6, pm3);
         }catch (Exception e){
 
         }
@@ -65,13 +67,28 @@ public class Main {
         DependencyGraph dependencyGraph = new DependencyGraph();
         List<Migration> migrationList = current.getMigrations(current , newNetwork);
 
-        System.out.println(current.getOutgoingVmsFrom(migrationList , pm1));
-        System.out.println(current.getVMGoingFromTo(migrationList , pm2, pm1));
+       // System.out.println(current.getOutgoingVmsFrom(migrationList , pm1));
+       // System.out.println(current.getVMGoingFromTo(migrationList , pm2, pm1));
 
-        current.getVMGoingFromTo(migrationList , pm2, pm1);
+        //loop over pms , check if there is any locked migratuion add to set and stop current iteration
+        //i think it has repated dependencie
+        current.getPmList().forEach(sourcePm -> {
+            current.getMigrationsFrom(migrationList , sourcePm).forEach(migration -> {
+                if (!current.hasFreeCapacityFor(migration.getDestination() , migration.getVm())) {
+                    VMSet vmSet = current.getVMGoingFromTo(migrationList, sourcePm, migration.getDestination());
+                    current.getOutgoingVmsFrom(migrationList, migration.getDestination()).forEach(destOutSet -> {
+                        System.out.println(vmSet + "->" + destOutSet);
+                        dependencyGraph.addDependent(vmSet, destOutSet);
+                    });
+                }
+            });
+
+        });
 
 
 
+        //problem : it's a map not accept repeated keys
+        dependencyGraph.printDependency();
 
 
         VMSet set1 = new VMSet();
