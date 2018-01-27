@@ -39,6 +39,15 @@ public class Migration {
     }
 
     @Override
+    public String toString() {
+        return "Migration{" +
+                vm.getName() + " : " +
+                source.getName() +
+                " -> " + destination.getName() +
+               '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
