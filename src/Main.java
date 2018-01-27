@@ -24,65 +24,54 @@ public class Main {
 //
 //
 //
-//        VM vm1 = new VM("vm1", 3,4,2);
-//        VM vm2 = new VM("vm2",6,2,2);
-//        VM vm3 = new VM("vm3", 3,7,3);
-//        VM vm4 = new VM("vm4", 2,4,2);
-//        VM vm5 = new VM("vm5",1,2,2);
-//        VM vm6 = new VM("vm6", 4,2,4);
-//        VM vm7 = new VM("vm7", 5,4,3);
-//        VM vm8 = new VM("vm8",3,6,5);
-//        VM vm9 = new VM("vm9", 3,7,2);
-//
-//        current.assignToLocation(vm1 , pm1);
-//        current.assignToLocation(vm2 , pm1);
-//        current.assignToLocation(vm3 , pm3);
-//        current.assignToLocation(vm4 , pm6);
-//        current.assignToLocation(vm5 , pm5);
-//        current.assignToLocation(vm6 , pm5);
-//        current.assignToLocation(vm7 , pm2);
-//        current.assignToLocation(vm8 , pm4);
-//        current.assignToLocation(vm9 , pm6);
-//
-//        current.showAssignments();
-//
-//        Network newNetwork = new Network();
-//
-//        newNetwork.setPmList(current.getPmList());
-//
-//        newNetwork.assignToLocation(vm1 , pm2);
-//        newNetwork.assignToLocation(vm2 , pm1);
-//        newNetwork.assignToLocation(vm3 , pm3);
-//        newNetwork.assignToLocation(vm4 , pm6);
-//        newNetwork.assignToLocation(vm5 , pm3);
-//        newNetwork.assignToLocation(vm6 , pm2);
-//        newNetwork.assignToLocation(vm7 , pm4);
-//        newNetwork.assignToLocation(vm8 , pm4);
-//        newNetwork.assignToLocation(vm9 , pm1);
-//
-//
-//        newNetwork.showAssignments();
-//
-//       List<Migration> migrations = current.getMigrations(current , newNetwork);
-//       migrations.forEach(migration -> {
-//           System.out.println(migration.getVm().getName() + " from  " + migration.getSource().getName() + "  to :" + migration.getDestination().getName());
-//       });
+        VM vm1 = new VM("vm1", 3,4,2);
+        VM vm2 = new VM("vm2",6,2,2);
+        VM vm3 = new VM("vm3", 3,7,3);
+        VM vm4 = new VM("vm4", 2,4,2);
+        VM vm5 = new VM("vm5",1,2,2);
+        VM vm6 = new VM("vm6", 4,2,4);
+        VM vm7 = new VM("vm7", 5,4,3);
+        VM vm8 = new VM("vm8",3,6,5);
+        VM vm9 = new VM("vm9", 3,7,2);
 
 
-        DependencyGraph dependencyGraph = new DependencyGraph(current.getPmList());
-        dependencyGraph.addDependent(pm1 , pm2);
-        dependencyGraph.addDependent(pm2 , pm3);
-        dependencyGraph.addDependent(pm1 , pm3);
-        dependencyGraph.addDependent(pm3 , pm1);
-        //dependencyGraph.addDependent(pm5 , pm1);
-        //dependencyGraph.addDependent(pm6 , pm1);
+        VMSet set1 = new VMSet();
+        VMSet set2 = new VMSet();
+        VMSet set3 = new VMSet();
+        VMSet set4 = new VMSet();
+        VMSet set5 = new VMSet();
+        set1.add(vm1);
+        //set1.add(vm5);
+        set2.add(vm2);
+        //set2.add(vm6);
+        set3.add(vm3);
+        set4.add(vm4);
+        set5.add(vm5);
 
 
-
-        System.out.println(dependencyGraph.returnCycle(pm2,pm3));
-
+        DependencyGraph dependencyGraph = new DependencyGraph();
+        dependencyGraph.addDependent(set1 , set2);
+        dependencyGraph.addDependent(set2 , set3);
+        dependencyGraph.addDependent(set3 , set5);
+        dependencyGraph.addDependent(set4 , set1);
+        dependencyGraph.addDependent(set5 , set1);
 
         dependencyGraph.printDependency();
+
+        System.out.println();
+
+//
+//        System.out.println(dependencyGraph.returnCycle(set1,set5));
+//
+//        System.out.println(dependencyGraph.returnCycle(set1,set4));
+//
+//        System.out.println(dependencyGraph.returnCycle(set3,set4));
+
+
+        System.out.println(dependencyGraph.returnCycle(set1,set3));
+
+
+
 
 
     }
