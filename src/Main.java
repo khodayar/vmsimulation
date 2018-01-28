@@ -1,5 +1,6 @@
 import Models.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,8 @@ public class Main {
         current.assignToLocation(vm4, pm2);
         current.assignToLocation(vm5, pm3);
         current.assignToLocation(vm6, pm3);
+        current.assignToLocation(vm7, pm3);
+        current.assignToLocation(vm8, pm3);
 
 
        // current.showAssignments();
@@ -55,6 +58,8 @@ public class Main {
         newNetwork.assignToLocation(vm4, pm3);
         newNetwork.assignToLocation(vm5, pm1);
         newNetwork.assignToLocation(vm6, pm1);
+        newNetwork.assignToLocation(vm7, pm5);
+        newNetwork.assignToLocation(vm8, pm5);
 
         System.out.println("Migrations :");
 
@@ -91,10 +96,20 @@ public class Main {
         set3.add(vm5);
         set3.add(vm6);
 
-       // set5.add(vm5);
+        set4.add(vm7);
+        set4.add(vm8);
 
 
-        System.out.println(dependencyGraph.returnChain(set1, set2));
+
+        // System.out.println(dependencyGraph.getDependencyDept(set3 ,  new ArrayList<>(), 0,new ArrayList<>()));
+        System.out.println(dependencyGraph.returnChain(set1 , set4));
+
+
+        System.out.println(dependencyGraph.chainBetween2(set1 , set2, new ArrayList<>() ,  new ArrayList<>()));
+
+        System.out.println(dependencyGraph.chainBetween2(set3 , set3, new ArrayList<>() ,  new ArrayList<>()));
+
+
         //System.out.println(dependencyGraph.isCycle(set1, set3));
 
 
