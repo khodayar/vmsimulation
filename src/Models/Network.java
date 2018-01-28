@@ -44,7 +44,7 @@ public class Network {
     //change assignment of a vm to new location
     //no need to check here
      //if (hasFreeCapacityFor(pm, vm)) {
-    public void assignToLocation(VM vm, PM pm) throws Exception {
+    public void assignToLocation(VM vm, PM pm) {
 
             Assignment newAssignment = new Assignment(pm, vm);
             Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;

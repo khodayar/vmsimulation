@@ -34,16 +34,13 @@ public class Main {
         VM vm8 = new VM("vm8",3,6,5);
         VM vm9 = new VM("vm9", 3,7,2);
 
-        try {
+
             current.assignToLocation(vm1, pm1);
             current.assignToLocation(vm2, pm1);
             current.assignToLocation(vm3, pm2);
             current.assignToLocation(vm4, pm2);
             current.assignToLocation(vm5, pm3);
             current.assignToLocation(vm6, pm1);
-        }catch (Exception e){
-
-        }
 
 
         current.showAssignments();
@@ -51,16 +48,14 @@ public class Main {
         Network newNetwork = new Network();
         newNetwork.setPmList(current.getPmList());
 
-        try {
+
         newNetwork.assignToLocation(vm1 , pm2);
         newNetwork.assignToLocation(vm2 , pm2);
         newNetwork.assignToLocation(vm3 , pm1);
         newNetwork.assignToLocation(vm4, pm1);
         newNetwork.assignToLocation(vm5, pm3);
         newNetwork.assignToLocation(vm6, pm3);
-        }catch (Exception e){
 
-        }
         System.out.println(current.getMigrations(current , newNetwork));
 
 
