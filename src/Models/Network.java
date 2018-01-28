@@ -228,4 +228,26 @@ public class Network {
      return migrationList;
     }
 
+    public DependencyGraph generateDependencyGraph(Network current, Network newNetwork) {
+        DependencyGraph dependencyGraph = new DependencyGraph();
+        List<Migration> migrationList = current.getMigrations(current , newNetwork);
+        current.getPmList().forEach(sourcePm -> {
+            current.getMigrationsFrom(migrationList , sourcePm).forEach(migration -> {
+                if (!current.hasFreeCapacityFor(migration.getDestination() , migration.getVm())) {
+                    VMSet vmSet = current.getVMGoingFromTo(migrationList, sourcePm, migration.getDestination());
+                    current.getOutgoingVmsFrom(migrationList, migration.getDestination()).forEach(destOutSet -> {
+                       // System.out.println(vmSet + "->" + destOutSet);
+                        dependencyGraph.addDependent(vmSet, destOutSet);
+                    });
+                }
+            });
+
+        });
+        return dependencyGraph;
+    }
+
+
+
+
+
 }

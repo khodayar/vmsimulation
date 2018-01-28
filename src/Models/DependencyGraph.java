@@ -51,7 +51,7 @@ public class DependencyGraph {
         if (thereIS[0]) {
             found.add(destination);
 
-        } else {
+        } else if (dependencyMap.get(destination) != null) {
             dependencyMap.get(destination).forEach(vmSet -> {
             if (!visited.contains(vmSet)) {
                 int checkSize = found.size();
@@ -71,30 +71,32 @@ public class DependencyGraph {
     //works only with a dependent and a source
     public List<VMSet> returnChain(VMSet dependant, VMSet current) {
         List<VMSet> chain = new ArrayList<>();
-        if (dependencyMap.get(current).equals(dependant) && !dependencyMap.get(dependant).equals(current)) {
+        if (dependencyMap.get(current) != null && dependencyMap.get(current).equals(dependant) && !dependencyMap.get(dependant).equals(current)) {
             System.out.println("backward");
             chain = chainBetween(current, dependant, new ArrayList<>(), new ArrayList<>());
         }
         //handling case of pair cycle
-        else if (dependencyMap.get(current).equals(dependant) && dependencyMap.get(dependant).equals(current)) {
+        else if (dependencyMap.get(current)!= null && dependencyMap.get(current).equals(dependant) && dependencyMap.get(dependant).equals(current)) {
             chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
-        } else {
+        }
+        else {
             chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
         }
 
         if (chain.size() > 0 && chain.get(chain.size() - 1).equals(current)) {
-            System.out.println("there is chain between " + current + "  and " + dependant);
+           // System.out.println("there is chain between " + dependant + "  and " + current);
         }
 
-        Collections.reverse(chain);
+        //Collections.reverse(chain);
         return chain;
     }
 
 
     public boolean isCycle(VMSet dependant, VMSet current) {
-        List<VMSet> chain = returnChain(dependant, current);
+        List<VMSet> chain1 = returnChain(dependant, current);
+        List<VMSet> chain2 = returnChain(current,dependant);
 
-        if (chain.size() > 0 && chain.contains(current) && chain.contains(dependant) && dependencyMap.get(dependant).contains(current)) {
+        if (chain1.size() > 0 && chain1.contains(current) && chain1.contains(dependant) && dependencyMap.get(dependant).contains(current)) {
             return true;
         }
         return false;
