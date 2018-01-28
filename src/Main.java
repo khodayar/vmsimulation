@@ -92,38 +92,16 @@ public class Main {
         VMSet set4 = new VMSet();
         VMSet set5 = new VMSet();
         set1.add(vm1);
-        set1.add(vm5);
-        set2.add(vm2);
-        set2.add(vm6);
+        set1.add(vm2);
+        set2.add(vm3);
+        set2.add(vm4);
         set3.add(vm3);
         set4.add(vm4);
         set5.add(vm5);
 
 
-//        DependencyGraph dependencyGraph = new DependencyGraph();
-//        dependencyGraph.addDependent(set1 , set2);
-//        dependencyGraph.addDependent(set2 , set3);
-//        dependencyGraph.addDependent(set3 , set5);
-//        dependencyGraph.addDependent(set4 , set1);
-//        dependencyGraph.addDependent(set5 , set1);
-
-       // dependencyGraph.printDependency();
-
-        // System.out.println();
-
-//
-//        System.out.println(dependencyGraph.returnChain(set1,set5));
-//
-//        System.out.println(dependencyGraph.returnChain(set1,set4));
-//
-//        System.out.println(dependencyGraph.returnChain(set3,set4));
-
-
-     //   System.out.println(dependencyGraph.returnChain(set2,set3));
-      //  System.out.println(dependencyGraph.isCycle(set2 ,set3));
-
-
-
+        System.out.println(dependencyGraph.returnChain(set1,set2));
+        System.out.println(dependencyGraph.isCycle(set1 ,set2));
 
 
     }

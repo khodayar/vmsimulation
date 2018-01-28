@@ -6,7 +6,7 @@ import java.util.*;
  * Created by Khodayar on 1/21/2018.
  */
 public class DependencyGraph {
-    private Map<VMSet, VMSet> dependencyMap;
+    private Map<VMSet, List<VMSet>> dependencyMap;
 
 
     public DependencyGraph() {
@@ -14,43 +14,55 @@ public class DependencyGraph {
     }
 
     public void addDependent(VMSet dep, VMSet source) {
-        dependencyMap.put(dep, source);
+        if (dependencyMap.get(dep) == null) {
+            List<VMSet> vmSetList = new ArrayList<VMSet>() {{
+                add(source);
+            }};
+            dependencyMap.put(dep, vmSetList);
+        } else {
+
+            if (!dependencyMap.get(dep).contains(source)) dependencyMap.get(dep).add(source);
+        }
+
     }
 
 
     public void printDependency() {
-        for (Map.Entry<VMSet, VMSet> entry : dependencyMap.entrySet()) {
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
             System.out.print("\n" + entry.getKey() + " --> ");
             System.out.print(entry.getValue());
         }
+        System.out.println();
     }
 
     //if any two pm are in a same cycle
     //vsn be be used only if dependent --> current (if current -> dependent without opposite returns true)
     //if we want to check p-->q are in a cycle we must check p,q,visited, found)
-    public List<VMSet> chainBetween(VMSet dependant, VMSet current, List<VMSet> visited, List<VMSet> found) {
-        visited.add(current);
+    public List<VMSet> chainBetween(VMSet dependant, VMSet destination, List<VMSet> visited, List<VMSet> found) {
+        visited.add(dependant);
         final boolean[] thereIS = {false};
         //final step , return back to dependent
         //stops when reaches the dependant
-        if (dependencyMap.get(current) != null && dependencyMap.get(current).equals(dependant)) {
+        if (dependencyMap.get(dependant) != null && dependencyMap.get(dependant).contains(destination)) {
             thereIS[0] = true;
             found.add(dependant);
         }
 
         if (thereIS[0]) {
-            found.add(current);
+            found.add(destination);
 
         } else {
-            VMSet vmset = dependencyMap.get(current);
-            if (!visited.contains(vmset)) {
+            dependencyMap.get(destination).forEach(vmSet -> {
+            if (!visited.contains(vmSet)) {
                 int checkSize = found.size();
-                chainBetween(dependant, vmset, visited, found);
+                chainBetween(destination, vmSet, visited, found);
+                //we found something ?
                 if (found.size() > checkSize) {
-                    found.add(current);
+                    found.add(vmSet);
                 }
 
             }
+            });
         }
         return found;
     }
@@ -82,7 +94,7 @@ public class DependencyGraph {
     public boolean isCycle(VMSet dependant, VMSet current) {
         List<VMSet> chain = returnChain(dependant, current);
 
-        if (chain.size() > 0 && chain.contains(current) && chain.contains(dependant) && dependencyMap.get(dependant).equals(current)) {
+        if (chain.size() > 0 && chain.contains(current) && chain.contains(dependant) && dependencyMap.get(dependant).contains(current)) {
             return true;
         }
         return false;
