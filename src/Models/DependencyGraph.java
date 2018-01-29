@@ -98,6 +98,41 @@ public class DependencyGraph {
     }
 
 
+    //logic can be used for cycle checking
+    public int getDependencyDept(VMSet vmSet , List<VMSet> visited, int weight ,  List<VMSet> longestPath ){
+        visited.add(vmSet);
+        //weight++;
+        if (dependencyMap.get(vmSet)== null || dependencyMap.get(vmSet).isEmpty()){
+            System.out.println("reaches one end");
+        } else if (dependencyMap.get(vmSet).contains(visited.get(0))){
+            weight += 1000;
+            //System.out.println("weight:" + weight);
+           // System.out.println("visiting" + visited.get(0));
+            System.out.println("loop");
+        }
+        else {
+
+            final int[] finalWeight = {weight};
+            dependencyMap.get(vmSet).forEach(set ->{
+                if (!visited.contains(set)) {
+                    System.out.println("visiting" + set);
+                    if (finalWeight[0] < getDependencyDept(set,  visited , finalWeight[0],longestPath)){
+                        longestPath.add(set);
+                    }
+                    finalWeight[0] = getDependencyDept(set,  visited , finalWeight[0],longestPath);
+                }
+
+            });
+            System.out.println("weight:" + weight + "  " +finalWeight[0]);
+
+            if (finalWeight[0] > weight){
+                weight = finalWeight[0];
+            }
+        }
+        return weight;
+    }
+
+
 
     //works only with a dependent and a source
     public List<VMSet> returnChain(VMSet dependant, VMSet current) {

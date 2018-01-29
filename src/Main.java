@@ -105,9 +105,9 @@ public class Main {
         System.out.println(dependencyGraph.returnChain(set1 , set4));
 
 
-        System.out.println(dependencyGraph.chainBetween2(set1 , set2, new ArrayList<>() ,  new ArrayList<>()));
+        System.out.println(dependencyGraph.chainBetween2(set1 , set4, new ArrayList<>() ,  new ArrayList<>()));
 
-        System.out.println(dependencyGraph.chainBetween2(set3 , set3, new ArrayList<>() ,  new ArrayList<>()));
+      //  System.out.println(dependencyGraph.chainBetween2(set3 , set3, new ArrayList<>() ,  new ArrayList<>()));
 
 
         //System.out.println(dependencyGraph.isCycle(set1, set3));
