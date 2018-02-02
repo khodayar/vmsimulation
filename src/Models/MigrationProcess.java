@@ -68,7 +68,7 @@ public class MigrationProcess {
                 toBeRemoved.add(currentMigration);
                 degree++;
                 finished.add(currentMigration);
-                System.out.println("Migration Finished " + currentMigration + " at" + timeStamp);
+                System.out.println("Migration Finished " + currentMigration + " at " + timeStamp);
             }
         });
 
@@ -85,7 +85,7 @@ public class MigrationProcess {
             while (degree > 0 && queue.size() >1) {
 
                 for (int i = 0; i < queue.size(); i++) {
-                    if (!currentMigrations.contains(queue.get(i))) {
+                    if (!currentMigrations.contains(queue.get(i))) { //todo && migration can be done empty space in the destination
                         startMigration(queue.get(i));
                         break;
                     }
