@@ -69,6 +69,7 @@ public class MigrationProcess {
                 degree++;
                 finished.add(currentMigration);
                 System.out.println("Migration Finished " + currentMigration + " at " + timeStamp);
+                System.out.println("free degree :" + degree);
             }
         });
 
@@ -82,14 +83,16 @@ public class MigrationProcess {
 
         while (!queue.isEmpty()) {
 
-            while (degree > 0 && queue.size() >1) {
+            boolean allIsChecked = false;
+            //we must handle a case where there is no feasible migration for a while to use all the degree
+            while (degree > 0  && !allIsChecked) {
 
                 for (int i = 0; i < queue.size(); i++) {
                     if (!currentMigrations.contains(queue.get(i))) { //todo && migration can be done empty space in the destination
                         startMigration(queue.get(i));
-                        break;
+                         break;
                     }
-
+                allIsChecked = true;
                 }
             }
 
