@@ -44,6 +44,8 @@ public class Main {
         current.assignToLocation(vm6, pm3);
         current.assignToLocation(vm7, pm3);
         current.assignToLocation(vm8, pm3);
+        current.assignToLocation(vm8, pm3);
+        current.assignToLocation(vm9, pm3);
 
 
        // current.showAssignments();
@@ -60,6 +62,8 @@ public class Main {
         newNetwork.assignToLocation(vm6, pm1);
         newNetwork.assignToLocation(vm7, pm5);
         newNetwork.assignToLocation(vm8, pm5);
+        newNetwork.assignToLocation(vm9, pm6);
+
 
         System.out.println("Migrations :");
 
@@ -99,15 +103,20 @@ public class Main {
         set4.add(vm7);
         set4.add(vm8);
 
+        set5.add(vm9);
+
 
 
         // System.out.println(dependencyGraph.getDependencyDept(set3 ,  new ArrayList<>(), 0,new ArrayList<>()));
-        System.out.println(dependencyGraph.returnChain(set1 , set4));
+       // System.out.println(dependencyGraph.returnChain(set1 , set4));
 
 
-        System.out.println(dependencyGraph.chainBetween2(set1 , set4, new ArrayList<>() ,  new ArrayList<>()));
+        //System.out.println(dependencyGraph.getPath(set1 , set5));
 
-      //  System.out.println(dependencyGraph.chainBetween2(set3 , set3, new ArrayList<>() ,  new ArrayList<>()));
+        MigrationProcess migrationProcess = new MigrationProcess();
+        migrationProcess.setDegree(2);
+        migrationProcess.setMigrations(migrationList);
+        migrationProcess.doMigration();
 
 
         //System.out.println(dependencyGraph.isCycle(set1, set3));

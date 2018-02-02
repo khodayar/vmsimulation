@@ -31,6 +31,7 @@ public class Network {
         this.pmList = pmList;
     }
 
+
     public Network(List<PM> pmList, List<Assignment> assignments) {
         this.pmList = pmList;
         this.assignments = assignments;

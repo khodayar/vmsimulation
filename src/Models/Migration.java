@@ -7,6 +7,8 @@ public class Migration {
     private PM source;
     private PM destination;
     private VM vm;
+    private int weight;
+    private int remainingSize;
 
     public PM getSource() {
         return source;
@@ -32,10 +34,27 @@ public class Migration {
         this.vm = vm;
     }
 
+    public int getWeight() {
+        return weight;
+    }
+
+    public void setWeight(int weight) {
+        this.weight = weight;
+    }
+
+    public int getRemainingSize() {
+        return remainingSize;
+    }
+
+    public void setRemainingSize(int remainingSize) {
+        this.remainingSize = remainingSize;
+    }
+
     public Migration(PM source, PM destination, VM vm) {
         this.source = source;
         this.destination = destination;
         this.vm = vm;
+        this.remainingSize = vm.getMemorySize();
     }
 
     @Override
