@@ -9,14 +9,15 @@ import java.util.function.Predicate;
 public class Network {
 
     List<PM> pmList;
-    List<Assignment> assignments;
+    List<Assignment> currentAssignments;
+    List<Assignment> newAssignments;
 
-    public List<Assignment> getAssignments() {
-        return assignments;
+    public List<Assignment> getCurrentAssignments() {
+        return currentAssignments;
     }
 
-    public void setAssignments(List<Assignment> assignments) {
-        this.assignments = assignments;
+    public void setCurrentAssignments(List<Assignment> currentAssignments) {
+        this.currentAssignments = currentAssignments;
     }
 
     public Network(List<PM> pmList) {
@@ -31,40 +32,82 @@ public class Network {
         this.pmList = pmList;
     }
 
+    public List<Assignment> getNewAssignments() {
+        return newAssignments;
+    }
 
-    public Network(List<PM> pmList, List<Assignment> assignments) {
+    public void setNewAssignments(List<Assignment> newAssignments) {
+        this.newAssignments = newAssignments;
+    }
+
+    public Network(List<PM> pmList, List<Assignment> currentAssignments) {
         this.pmList = pmList;
-        this.assignments = assignments;
+        this.currentAssignments = currentAssignments;
     }
 
     public Network() {
         this.pmList = new ArrayList<>();
-        this.assignments = new ArrayList<>();
+        this.currentAssignments = new ArrayList<>();
+        this.newAssignments = new ArrayList<>();
+}
+
+    public Assignment findAssignment(List<Assignment> assignments, VM vm){
+        Assignment result;
+         result = assignments.stream().filter(obj -> obj.getVm().equals(vm)).findFirst()
+                 .get();
+    return result;
     }
+
 
     //change assignment of a vm to new location
     //no need to check here
      //if (hasFreeCapacityFor(pm, vm)) {
-    public void assignToLocation(VM vm, PM pm) {
+    public void assignToCurrentLocation(VM vm, PM pm) throws Exception {
 
+        if (!hasFreeCapacityFor(currentAssignments , pm , vm)){
+            throw new Exception("there is no free capacity for this assignment " +  vm.getName() +" to " + pm.getName());
+        }
             Assignment newAssignment = new Assignment(pm, vm);
             Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
-            assignments.removeIf(assignmentPredicate);
-            assignments.add(newAssignment);
+            currentAssignments.removeIf(assignmentPredicate);
+            currentAssignments.add(newAssignment);
+    }
 
+
+    public void assignToNewLocation(VM vm, PM pm) throws Exception {
+
+        if (!hasFreeCapacityFor(newAssignments , pm , vm)){
+            throw new Exception("there is no free capacity for this assignment " +  vm.getName() +" to " + pm.getName());
+        }
+        Assignment newAssignment = new Assignment(pm, vm);
+        Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
+        newAssignments.removeIf(assignmentPredicate);
+        newAssignments.add(newAssignment);
+
+    }
+
+    public void removeFromCurrent(VM vm , PM pm){
+        final Assignment[] remove = new Assignment[1];
+        currentAssignments.forEach(assignment -> {
+            if (assignment.getVm().equals(vm)){
+            remove[0] = assignment;
+            }
+        });
+
+        currentAssignments.remove(remove[0]);
     }
 
 
     public List<VM> getVMs() {
         List<VM> vms = new ArrayList<>();
-        assignments.forEach(assignment -> {
+        currentAssignments.forEach(assignment -> {
             vms.add(assignment.getVm());
         });
         return vms;
     }
 
 
-    public List<VM> getVMForPM(PM pm) {
+    public List<VM> getVMForPM(List<Assignment> assignments, PM pm) {
         List<VM> vms = new ArrayList<>();
         assignments.forEach(assignment -> {
             if (assignment.getPm().equals(pm)) {
@@ -75,20 +118,28 @@ public class Network {
     }
 
     public void showAssignments() {
-        System.out.println("-------------------------");
+        System.out.println("-------------------------legacy");
         pmList.forEach(pm -> {
-            System.out.print(pm.getName() + " [free memory:" + freeMemory(pm) + ", free CPU:" + freeProcessor(pm) + ",free network:" + freeNetwork(pm) + "]   assigned VMs: ");
-            getVMForPM(pm).forEach(vm -> {
+            System.out.print(pm.getName() + " [free memory:" + freeMemory(currentAssignments, pm) + ", free CPU:" + freeProcessor(currentAssignments, pm) + ",free network:" + freeNetwork(currentAssignments,pm) + "]   assigned VMs: ");
+            getVMForPM(currentAssignments,pm).forEach(vm -> {
                 System.out.print(vm.getName() + " ");
             });
             System.out.println();
         });
-    }
+        System.out.println("-------------------------New");
+        pmList.forEach(pm -> {
+            System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments,pm) + ", free CPU:" + freeProcessor(newAssignments,pm) + ",free network:" + freeNetwork(newAssignments,pm) + "]   assigned VMs: ");
+            getVMForPM(newAssignments,pm).forEach(vm -> {
+                System.out.print(vm.getName() + " ");
+            });
+            System.out.println();
+        });
+   }
 
 
-    public PM getVMLocation(VM vm) {
+    public PM getLegacyVMLocation(VM vm) {
         final PM[] pm = new PM[1];
-        this.getAssignments().forEach(assignment -> {
+        this.getCurrentAssignments().forEach(assignment -> {
             if (assignment.getVm() == vm) {
                 pm[0] = assignment.getPm();
             }
@@ -97,11 +148,11 @@ public class Network {
     }
 
 
-    public List<Migration> getMigrations(Network currentN, Network newN) {
+    public List<Migration> getMigrations() {
         List<Migration> migrations = new ArrayList<>();
-        currentN.getAssignments().forEach(assignment -> {
-            if (!getVMLocation(assignment.getVm()).equals(newN.getVMLocation(assignment.getVm()))) {
-                migrations.add(new Migration(assignment.getPm(), newN.getVMLocation(assignment.getVm()), assignment.getVm()));
+        currentAssignments.forEach(assignment -> {
+            if (!getLegacyVMLocation(assignment.getVm()).equals(findAssignment(newAssignments ,assignment.getVm()).getPm())) {
+                migrations.add(new Migration(assignment.getPm(), findAssignment(newAssignments ,assignment.getVm()).getPm(), assignment.getVm()));
             }
         });
         return migrations;
@@ -160,23 +211,21 @@ public class Network {
         });
         return vmSetList;
     }
+//
+//
+//    public List<DependencyGraph> getDependencies(Network currentN, Network newN) {
+//
+//        List<DependencyGraph> dependencies = new ArrayList<>();
+//        List<Migration> migrations = getMigrations(currentN, newN);
+//        migrations.forEach(migration -> {
+//            // VMSet vmSet =
+//        });
+//
+//
+//        return null;
+//    }
 
-
-    public List<DependencyGraph> getDependencies(Network currentN, Network newN) {
-
-        List<DependencyGraph> dependencies = new ArrayList<>();
-        List<Migration> migrations = getMigrations(currentN, newN);
-        migrations.forEach(migration -> {
-            // VMSet vmSet =
-        });
-
-
-        return null;
-
-
-    }
-
-    public int freeMemory(PM pm) {
+    public int freeMemory(List<Assignment> assignments , PM pm) {
         final int[] freeMemory = {pm.getMemoryCapacity()};
         assignments.forEach(assignment -> {
             if (assignment.getPm().equals(pm)) {
@@ -188,7 +237,7 @@ public class Network {
 
     }
 
-    public int freeProcessor(PM pm) {
+    public int freeProcessor(List<Assignment> assignments ,PM pm) {
         final int[] freeMemory = {pm.getProcessorCapacity()};
         assignments.forEach(assignment -> {
             if (assignment.getPm().equals(pm)) {
@@ -200,7 +249,7 @@ public class Network {
 
     }
 
-    public int freeNetwork(PM pm) {
+    public int freeNetwork(List<Assignment> assignments ,PM pm) {
         final int[] freeMemory = {pm.getNetworkCapacity()};
         assignments.forEach(assignment -> {
             if (assignment.getPm().equals(pm)) {
@@ -212,9 +261,9 @@ public class Network {
 
     }
 
-    public boolean hasFreeCapacityFor(PM pm, VM vm) {
-        return freeMemory(pm) >= vm.getMemorySize() && freeNetwork(pm) >= vm.getNetworkSize()
-                && freeProcessor(pm) >= vm.getProcessorSize();
+    public boolean hasFreeCapacityFor(List<Assignment> assignments, PM pm, VM vm) {
+        return freeMemory(assignments,pm) >= vm.getMemorySize() && freeNetwork(assignments,pm) >= vm.getNetworkSize()
+                && freeProcessor(assignments,pm) >= vm.getProcessorSize();
     }
 
 
@@ -229,14 +278,16 @@ public class Network {
      return migrationList;
     }
 
-    public DependencyGraph generateDependencyGraph(Network current, Network newNetwork) {
+
+    //check of logic is not deteriorated
+    public DependencyGraph generateDependencyGraph() {
         DependencyGraph dependencyGraph = new DependencyGraph();
-        List<Migration> migrationList = current.getMigrations(current , newNetwork);
-        current.getPmList().forEach(sourcePm -> {
-            current.getMigrationsFrom(migrationList , sourcePm).forEach(migration -> {
-                if (!current.hasFreeCapacityFor(migration.getDestination() , migration.getVm())) {
-                    VMSet vmSet = current.getVMGoingFromTo(migrationList, sourcePm, migration.getDestination());
-                    current.getOutgoingVmsFrom(migrationList, migration.getDestination()).forEach(destOutSet -> {
+        List<Migration> migrationList = getMigrations();
+        pmList.forEach(sourcePm -> {
+            getMigrationsFrom(migrationList , sourcePm).forEach(migration -> {
+                if (!hasFreeCapacityFor(currentAssignments, migration.getDestination() , migration.getVm())) {
+                    VMSet vmSet = getVMGoingFromTo(migrationList, sourcePm, migration.getDestination());
+                    getOutgoingVmsFrom(migrationList, migration.getDestination()).forEach(destOutSet -> {
                        // System.out.println(vmSet + "->" + destOutSet);
                         dependencyGraph.addDependent(vmSet, destOutSet);
                     });

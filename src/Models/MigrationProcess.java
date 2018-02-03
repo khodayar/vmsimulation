@@ -9,18 +9,26 @@ import java.util.List;
 public class MigrationProcess {
 
 
-    private List<Migration> migrations;
+
+    private Network network;
     private int degree;
-    private List<Migration> currentMigrations;
+    private List<Migration> onGoingMigrations;
     private int timeStamp;
 
-
-    public List<Migration> getMigrations() {
-        return migrations;
+    public Network getNetwork() {
+        return network;
     }
 
-    public void setMigrations(List<Migration> migrations) {
-        this.migrations = migrations;
+    public void setNetwork(Network network) {
+        this.network = network;
+    }
+
+    public int getTimeStamp() {
+        return timeStamp;
+    }
+
+    public void setTimeStamp(int timeStamp) {
+        this.timeStamp = timeStamp;
     }
 
     public int getDegree() {
@@ -31,21 +39,22 @@ public class MigrationProcess {
         this.degree = degree;
     }
 
-    public List<Migration> getCurrentMigrations() {
-        return currentMigrations;
+    public List<Migration> getOnGoingMigrations() {
+        return onGoingMigrations;
     }
 
-    public void setCurrentMigrations(List<Migration> currentMigrations) {
-        this.currentMigrations = currentMigrations;
+    public void setOnGoingMigrations(List<Migration> onGoingMigrations) {
+        this.onGoingMigrations = onGoingMigrations;
     }
 
     public MigrationProcess() {
-        this.currentMigrations = new ArrayList<>();
+        this.onGoingMigrations = new ArrayList<>();
         timeStamp=0;
     }
 
-    private void startMigration(Migration m) {
-        currentMigrations.add(m);
+    private void startMigration(Migration m) throws Exception {
+        network.assignToCurrentLocation(m.getVm() , m.getDestination());
+        onGoingMigrations.add(m);
         degree--;
         System.out.println("Migration Started " + m + " at " + timeStamp);
 
@@ -54,7 +63,7 @@ public class MigrationProcess {
     private List<Migration> finishNextMigration() {
         List<Migration> finished = new ArrayList<>();
         final int[] minRemainingTime = {1000};
-        currentMigrations.forEach(currentMigration -> {
+        onGoingMigrations.forEach(currentMigration -> {
             if (currentMigration.getRemainingSize() < minRemainingTime[0]) {
                 minRemainingTime[0] = currentMigration.getRemainingSize();
             }
@@ -62,24 +71,25 @@ public class MigrationProcess {
 
         timeStamp += minRemainingTime[0];
         List<Migration> toBeRemoved = new ArrayList<>();
-        currentMigrations.forEach(currentMigration -> {
+        onGoingMigrations.forEach(currentMigration -> {
             currentMigration.setRemainingSize(currentMigration.getRemainingSize() - minRemainingTime[0]);
             if (currentMigration.getRemainingSize() == 0) {
                 toBeRemoved.add(currentMigration);
                 degree++;
                 finished.add(currentMigration);
+                network.removeFromCurrent(currentMigration.getVm() , currentMigration.getDestination());
                 System.out.println("Migration Finished " + currentMigration + " at " + timeStamp);
                 System.out.println("free degree :" + degree);
             }
         });
 
-        currentMigrations.removeAll(toBeRemoved);
+        onGoingMigrations.removeAll(toBeRemoved);
         return finished;
     }
 
 
-    public void doMigration() {
-        List<Migration> queue = migrations;
+    public void doMigration() throws Exception {
+        List<Migration> queue = network.getMigrations();
 
         while (!queue.isEmpty()) {
 
@@ -88,7 +98,7 @@ public class MigrationProcess {
             while (degree > 0  && !allIsChecked) {
 
                 for (int i = 0; i < queue.size(); i++) {
-                    if (!currentMigrations.contains(queue.get(i))) { //todo && migration can be done empty space in the destination
+                    if (!onGoingMigrations.contains(queue.get(i))) { //todo && migration can be done empty space in the destination
                         startMigration(queue.get(i));
                          break;
                     }
