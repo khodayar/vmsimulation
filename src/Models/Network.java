@@ -11,6 +11,7 @@ public class Network {
     List<PM> pmList;
     List<Assignment> currentAssignments;
     List<Assignment> newAssignments;
+    List<Migration> migrations;
 
     public List<Assignment> getCurrentAssignments() {
         return currentAssignments;
@@ -38,6 +39,14 @@ public class Network {
 
     public void setNewAssignments(List<Assignment> newAssignments) {
         this.newAssignments = newAssignments;
+    }
+
+    public List<Migration> getMigrations() {
+        return migrations;
+    }
+
+    public void setMigrations(List<Migration> migrations) {
+        this.migrations = migrations;
     }
 
     public Network(List<PM> pmList, List<Assignment> currentAssignments) {
@@ -148,13 +157,14 @@ public class Network {
     }
 
 
-    public List<Migration> getMigrations() {
+    public List<Migration> generateMigrations() {
         List<Migration> migrations = new ArrayList<>();
         currentAssignments.forEach(assignment -> {
             if (!getLegacyVMLocation(assignment.getVm()).equals(findAssignment(newAssignments, assignment.getVm()).getPm())) {
                 migrations.add(new Migration(assignment.getPm(), findAssignment(newAssignments, assignment.getVm()).getPm(), assignment.getVm()));
             }
         });
+        this.migrations = migrations;
         return migrations;
     }
 
@@ -214,7 +224,7 @@ public class Network {
 //    public List<DependencyGraph> getDependencies(Network currentN, Network newN) {
 //
 //        List<DependencyGraph> dependencies = new ArrayList<>();
-//        List<Migration> migrations = getMigrations(currentN, newN);
+//        List<Migration> migrations = generateMigrations(currentN, newN);
 //        migrations.forEach(migration -> {
 //            // VMSet vmSet =
 //        });

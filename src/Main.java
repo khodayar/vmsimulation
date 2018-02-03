@@ -22,9 +22,10 @@ public class Main {
         VM vm4 = new VM("vm4", 2, 4, 2);
         VM vm5 = new VM("vm5", 1, 2, 2);
         VM vm6 = new VM("vm6", 4, 2, 4);
-        VM vm7 = new VM("vm7", 5, 4, 3);
+        VM vm7 = new VM("vm7", 7, 4, 3);
         VM vm8 = new VM("vm8", 3, 6, 5);
         VM vm9 = new VM("vm9", 3, 2, 2);
+        VM vm10 = new VM("vm10", 6, 2, 2);
 
 
 
@@ -46,6 +47,7 @@ public class Main {
             current.assignToCurrentLocation(vm8, pm3);
             current.assignToCurrentLocation(vm8, pm3);
             current.assignToCurrentLocation(vm9, pm3);
+            current.assignToCurrentLocation(vm10, pm5);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -62,6 +64,7 @@ public class Main {
         current.assignToNewLocation(vm7, pm5);
         current.assignToNewLocation(vm8, pm5);
         current.assignToNewLocation(vm9, pm6);
+        current.assignToNewLocation(vm10, pm4);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -71,7 +74,6 @@ public class Main {
 
 
         DependencyGraph dependencyGraph;
-        List<Migration> migrationList = current.getMigrations();
 
         // System.out.println(current.getOutgoingVmsFrom(migrationList , pm1));
         // System.out.println(current.getVMGoingFromTo(migrationList , pm2, pm1));
@@ -79,19 +81,19 @@ public class Main {
         //loop over pms , check if there is any locked migratuion add to set and stop current iteration
         //i think it has repated dependencie
 
-        dependencyGraph = current.generateDependencyGraph(current.getMigrations());
-        List<Migration> migrations = current.getMigrations();
+        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
+         current.generateMigrations();
 
-        current.setMigrationWeights(migrations);
+      // current.setMigrationWeights(current.getMigrations());
 
-        System.out.println(migrations);
+       System.out.println(current.getMigrations());
 
-        current.setDependencyWeights(migrations);
+      //  current.setDependencyWeights(current.getMigrations());
 
-        //System.out.println("Dependencies :");
+        System.out.println("Dependencies :");
         dependencyGraph.printDependency();
 
-        System.out.println(migrations);
+        System.out.println(current.getMigrations());
 
         VMSet set1 = new VMSet();
         VMSet set2 = new VMSet();
@@ -114,7 +116,7 @@ public class Main {
         set5.add(vm9);
 
 
-     //   System.out.println(current.getAllOutGoingSets(current.getMigrations()));
+     //   System.out.println(current.getAllOutGoingSets(current.generateMigrations()));
 
         // System.out.println(dependencyGraph.getDependencyDept(set3 ,  new ArrayList<>(), 0,new ArrayList<>()));
         // System.out.println(dependencyGraph.returnChain(set1 , set4));
@@ -122,15 +124,15 @@ public class Main {
 
         //System.out.println(dependencyGraph.getPath(set1 , set5));
 
-//        MigrationProcess migrationProcess = new MigrationProcess();
-//        migrationProcess.setDegree(2);
-//        migrationProcess.setNetwork(current);
-//        try {
-//            migrationProcess.doMigration();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
+        MigrationProcess migrationProcess = new MigrationProcess();
+        migrationProcess.setDegree(2);
+        migrationProcess.setNetwork(current);
+        try {
+            migrationProcess.doMigration();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         //System.out.println(dependencyGraph.isCycle(set1, set3));
 

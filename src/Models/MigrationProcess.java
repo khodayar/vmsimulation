@@ -1,7 +1,6 @@
 package Models;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -93,7 +92,7 @@ public class MigrationProcess {
     public void doMigration() throws Exception {
         List<Migration> queue = network.getMigrations();
 
-        network.setMigrationWeights(queue);
+      //  network.setMigrationWeights(queue);
         Collections.sort(queue);
 
         System.out.println("Migration Order :");
