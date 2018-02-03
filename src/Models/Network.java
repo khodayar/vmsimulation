@@ -201,7 +201,8 @@ public class Network {
 
 
     //all the sets  , no use for now
-    public List<VMSet> getAllOutGoingSets(List<Migration> migrations) {
+    public List<VMSet> getAllOutGoingSets() {
+        List<Migration> migrations = getMigrations();
         List<VMSet> vmSetList = new ArrayList<>();
         this.getPmList().forEach(pm -> {
             if (!getOutgoingVmsFrom(migrations, pm).isEmpty())
@@ -280,9 +281,8 @@ public class Network {
 
 
     //check of logic is not deteriorated
-    public DependencyGraph generateDependencyGraph() {
+    public DependencyGraph generateDependencyGraph( List<Migration> migrationList) {
         DependencyGraph dependencyGraph = new DependencyGraph();
-        List<Migration> migrationList = getMigrations();
         pmList.forEach(sourcePm -> {
             getMigrationsFrom(migrationList , sourcePm).forEach(migration -> {
                 if (!hasFreeCapacityFor(currentAssignments, migration.getDestination() , migration.getVm())) {
@@ -298,8 +298,21 @@ public class Network {
         return dependencyGraph;
     }
 
+    public void setMigrationWeights(List<Migration> migrations){
+        migrations.forEach(migration -> {
+            migration.setWeight(migration.getVm().getMemorySize());
+        });
+    }
 
 
+    public void setDependencyWeights(List<Migration> migrations){
+        DependencyGraph dependencyGraph = generateDependencyGraph(migrations);
+
+
+
+
+
+    }
 
 
 }

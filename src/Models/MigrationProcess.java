@@ -92,7 +92,12 @@ public class MigrationProcess {
 
     public void doMigration() throws Exception {
         List<Migration> queue = network.getMigrations();
+
+        network.setMigrationWeights(queue);
         Collections.sort(queue);
+
+        System.out.println("Migration Order :");
+        System.out.println(queue);
 
         while (!queue.isEmpty()) {
 
@@ -101,7 +106,8 @@ public class MigrationProcess {
             while (degree > 0  && !allIsChecked) {
 
                 for (int i = 0; i < queue.size(); i++) {
-                    if (!onGoingMigrations.contains(queue.get(i)) && network.hasFreeCapacityFor(network.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())) { //todo && migration can be done empty space in the destination
+                    //second term checks if destination has capacity, otherwise checks next migration
+                    if (!onGoingMigrations.contains(queue.get(i)) && network.hasFreeCapacityFor(network.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())) {
                         startMigration(queue.get(i));
                          break;
                     }
@@ -116,11 +122,9 @@ public class MigrationProcess {
     }
 
 
-    public void setMigrationWeights(List<Migration> migrations){
-        migrations.forEach(migration -> {
-            migration.setWeight(migration.getVm().getMemorySize());
-        });
-    }
+
+
+
 
 
 }

@@ -15,12 +15,6 @@ public class Main {
         PM pm5 = new PM("pm5", 10, 10, 10);
         PM pm6 = new PM("pm6", 10, 10, 10);
 
-        current.getPmList().add(pm1);
-        current.getPmList().add(pm2);
-        current.getPmList().add(pm3);
-        current.getPmList().add(pm4);
-        current.getPmList().add(pm5);
-        current.getPmList().add(pm6);
 
         VM vm1 = new VM("vm1", 3, 4, 2);
         VM vm2 = new VM("vm2", 6, 2, 2);
@@ -32,6 +26,14 @@ public class Main {
         VM vm8 = new VM("vm8", 3, 6, 5);
         VM vm9 = new VM("vm9", 3, 2, 2);
 
+
+
+        current.getPmList().add(pm1);
+        current.getPmList().add(pm2);
+        current.getPmList().add(pm3);
+        current.getPmList().add(pm4);
+        current.getPmList().add(pm5);
+        current.getPmList().add(pm6);
 
         try {
             current.assignToCurrentLocation(vm1, pm1);
@@ -68,11 +70,6 @@ public class Main {
         current.showAssignments();
 
 
-        System.out.println("Migrations :");
-
-        System.out.println(current.getMigrations());
-
-
         DependencyGraph dependencyGraph;
         List<Migration> migrationList = current.getMigrations();
 
@@ -82,10 +79,10 @@ public class Main {
         //loop over pms , check if there is any locked migratuion add to set and stop current iteration
         //i think it has repated dependencie
 
-        //dependencyGraph = current.generateDependencyGraph(current, newNetwork);
+        dependencyGraph = current.generateDependencyGraph(current.getMigrations());
 
         System.out.println("Dependencies :");
-        // dependencyGraph.printDependency();
+         dependencyGraph.printDependency();
 
 
         VMSet set1 = new VMSet();
@@ -109,21 +106,23 @@ public class Main {
         set5.add(vm9);
 
 
+        System.out.println(current.getAllOutGoingSets());
+
         // System.out.println(dependencyGraph.getDependencyDept(set3 ,  new ArrayList<>(), 0,new ArrayList<>()));
         // System.out.println(dependencyGraph.returnChain(set1 , set4));
 
 
         //System.out.println(dependencyGraph.getPath(set1 , set5));
 
-        MigrationProcess migrationProcess = new MigrationProcess();
-        migrationProcess.setDegree(2);
-        migrationProcess.setNetwork(current);
-        try {
-            migrationProcess.doMigration();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+//        MigrationProcess migrationProcess = new MigrationProcess();
+//        migrationProcess.setDegree(2);
+//        migrationProcess.setNetwork(current);
+//        try {
+//            migrationProcess.doMigration();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
 
         //System.out.println(dependencyGraph.isCycle(set1, set3));
 
