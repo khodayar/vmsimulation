@@ -63,6 +63,7 @@ public class Migration implements Comparable<Migration>{
                 vm.getName() + " : " +
                 source.getName() +
                 " -> " + destination.getName() +
+                " weight :" + weight +
                '}';
     }
 

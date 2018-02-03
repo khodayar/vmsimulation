@@ -8,6 +8,10 @@ import java.util.*;
 public class DependencyGraph {
     private Map<VMSet, List<VMSet>> dependencyMap;
 
+    public Map<VMSet, List<VMSet>> getDependencyMap() {
+        return dependencyMap;
+    }
+
 
     public DependencyGraph() {
         dependencyMap = new HashMap<>();

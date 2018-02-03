@@ -80,10 +80,18 @@ public class Main {
         //i think it has repated dependencie
 
         dependencyGraph = current.generateDependencyGraph(current.getMigrations());
+        List<Migration> migrations = current.getMigrations();
 
-        System.out.println("Dependencies :");
-         dependencyGraph.printDependency();
+        current.setMigrationWeights(migrations);
 
+        System.out.println(migrations);
+
+        current.setDependencyWeights(migrations);
+
+        //System.out.println("Dependencies :");
+        dependencyGraph.printDependency();
+
+        System.out.println(migrations);
 
         VMSet set1 = new VMSet();
         VMSet set2 = new VMSet();
@@ -106,7 +114,7 @@ public class Main {
         set5.add(vm9);
 
 
-        System.out.println(current.getAllOutGoingSets());
+     //   System.out.println(current.getAllOutGoingSets(current.getMigrations()));
 
         // System.out.println(dependencyGraph.getDependencyDept(set3 ,  new ArrayList<>(), 0,new ArrayList<>()));
         // System.out.println(dependencyGraph.returnChain(set1 , set4));
