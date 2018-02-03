@@ -1,6 +1,8 @@
 package Models;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -90,6 +92,7 @@ public class MigrationProcess {
 
     public void doMigration() throws Exception {
         List<Migration> queue = network.getMigrations();
+        Collections.sort(queue);
 
         while (!queue.isEmpty()) {
 
@@ -98,7 +101,7 @@ public class MigrationProcess {
             while (degree > 0  && !allIsChecked) {
 
                 for (int i = 0; i < queue.size(); i++) {
-                    if (!onGoingMigrations.contains(queue.get(i))) { //todo && migration can be done empty space in the destination
+                    if (!onGoingMigrations.contains(queue.get(i)) && network.hasFreeCapacityFor(network.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())) { //todo && migration can be done empty space in the destination
                         startMigration(queue.get(i));
                          break;
                     }
@@ -111,5 +114,13 @@ public class MigrationProcess {
         }
 
     }
+
+
+    public void setMigrationWeights(List<Migration> migrations){
+        migrations.forEach(migration -> {
+            migration.setWeight(migration.getVm().getMemorySize());
+        });
+    }
+
 
 }

@@ -3,7 +3,7 @@ package Models;
 /**
  * Created by Khodayar on 1/20/2018.
  */
-public class Migration {
+public class Migration implements Comparable<Migration>{
     private PM source;
     private PM destination;
     private VM vm;
@@ -84,5 +84,11 @@ public class Migration {
         result = 31 * result + destination.hashCode();
         result = 31 * result + vm.hashCode();
         return result;
+    }
+
+
+    @Override
+    public int compareTo(Migration o) {
+        return weight > o.getWeight()? 1 : -1;
     }
 }
