@@ -275,6 +275,21 @@ public class Network {
     }
 
 
+    public boolean hasFreeCapacityFor(List<Assignment> assignments, PM pm, VMSet vmSet) {
+        int neededMemory = 0, neededCpu=0 , neededNet=0;
+
+        for (int i =0 ;i<vmSet.getVMList().size();i++) {
+            VM vm = vmSet.getVMList().get(i);
+            neededMemory += vm.getMemorySize();
+            neededCpu += vm.getProcessorSize();
+            neededNet += vm.getNetworkSize();
+        }
+
+        return freeMemory(assignments, pm) >= neededMemory && freeNetwork(assignments, pm) >= neededNet
+                && freeProcessor(assignments, pm) >= neededCpu;
+    }
+
+
     public List<Migration> getMigrationsFrom(List<Migration> migrations, PM source) {
         List<Migration> migrationList = new ArrayList<>();
         migrations.forEach(m -> {
@@ -287,18 +302,28 @@ public class Network {
 
 
     //check of logic is not deteriorated
+    //todo : it's each pm must be sets
     public DependencyGraph generateDependencyGraph(List<Migration> migrationList) {
         DependencyGraph dependencyGraph = new DependencyGraph();
         pmList.forEach(sourcePm -> {
-            getMigrationsFrom(migrationList, sourcePm).forEach(migration -> {
-                if (!hasFreeCapacityFor(currentAssignments, migration.getDestination(), migration.getVm())) {
-                    VMSet vmSet = getVMGoingFromTo(migrationList, sourcePm, migration.getDestination());
-                    getOutgoingVmsFrom(migrationList, migration.getDestination()).forEach(destOutSet -> {
+            getOutgoingVmsFrom(migrationList , sourcePm).forEach(vmSet -> {
+                PM destination = findMigrationOfVM(vmSet.getVMList().get(0),migrationList).getDestination();
+                if (!hasFreeCapacityFor(currentAssignments , destination , vmSet)){
+                    getOutgoingVmsFrom(migrationList, destination).forEach(destOutSet -> {
                         // System.out.println(vmSet + "->" + destOutSet);
                         dependencyGraph.addDependent(vmSet, destOutSet);
                     });
                 }
             });
+//            getMigrationsFrom(migrationList, sourcePm).forEach(migration -> {
+//                if (!hasFreeCapacityFor(currentAssignments, migration.getDestination(), migration.getVm())) {
+//                    VMSet vmSet = getVMGoingFromTo(migrationList, sourcePm, migration.getDestination());
+//                    getOutgoingVmsFrom(migrationList, migration.getDestination()).forEach(destOutSet -> {
+//                        // System.out.println(vmSet + "->" + destOutSet);
+//                        dependencyGraph.addDependent(vmSet, destOutSet);
+//                    });
+//                }
+//            });
 
         });
         return dependencyGraph;
