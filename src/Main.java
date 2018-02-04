@@ -1,5 +1,6 @@
 import Models.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
@@ -9,24 +10,25 @@ public class Main {
         Network current = new Network();
 
         PM pm1 = new PM("pm1", 10, 10, 10);
-        PM pm2 = new PM("pm2", 15, 15, 20);
-        PM pm3 = new PM("pm3", 20, 20, 20);
+        PM pm2 = new PM("pm2", 12, 12, 12);
+        PM pm3 = new PM("pm3", 12, 12, 12);
         PM pm4 = new PM("pm4", 10, 10, 10);
         PM pm5 = new PM("pm5", 10, 10, 10);
         PM pm6 = new PM("pm6", 10, 10, 10);
+        PM pm7 = new PM("pm5", 10, 10, 10);
+        PM pm8 = new PM("pm6", 10, 10, 10);
 
 
         VM vm1 = new VM("vm1", 3, 4, 2);
         VM vm2 = new VM("vm2", 6, 2, 2);
         VM vm3 = new VM("vm3", 3, 7, 3);
         VM vm4 = new VM("vm4", 2, 4, 2);
-        VM vm5 = new VM("vm5", 1, 2, 2);
-        VM vm6 = new VM("vm6", 4, 2, 4);
+        VM vm5 = new VM("vm5", 4, 4, 2);
+        VM vm6 = new VM("vm6", 4, 4, 4);
         VM vm7 = new VM("vm7", 7, 4, 3);
-        VM vm8 = new VM("vm8", 3, 6, 5);
+        VM vm8 = new VM("vm8", 2, 2, 2);
         VM vm9 = new VM("vm9", 3, 2, 2);
         VM vm10 = new VM("vm10", 6, 2, 2);
-
 
 
         current.getPmList().add(pm1);
@@ -35,6 +37,8 @@ public class Main {
         current.getPmList().add(pm4);
         current.getPmList().add(pm5);
         current.getPmList().add(pm6);
+        current.getPmList().add(pm7);
+        current.getPmList().add(pm8);
 
         try {
             current.assignToCurrentLocation(vm1, pm1);
@@ -43,58 +47,33 @@ public class Main {
             current.assignToCurrentLocation(vm4, pm2);
             current.assignToCurrentLocation(vm5, pm3);
             current.assignToCurrentLocation(vm6, pm3);
-            current.assignToCurrentLocation(vm7, pm3);
+            current.assignToCurrentLocation(vm7, pm4);
             current.assignToCurrentLocation(vm8, pm3);
-            current.assignToCurrentLocation(vm8, pm3);
-            current.assignToCurrentLocation(vm9, pm3);
-            current.assignToCurrentLocation(vm10, pm5);
+            current.assignToCurrentLocation(vm9, pm5);
+            current.assignToCurrentLocation(vm10, pm6);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
 
         try {
-        current.assignToNewLocation(vm1, pm2);
-        current.assignToNewLocation(vm2, pm2);
-        current.assignToNewLocation(vm3, pm3);
-        current.assignToNewLocation(vm4, pm3);
-        current.assignToNewLocation(vm5, pm1);
-        current.assignToNewLocation(vm6, pm1);
-        current.assignToNewLocation(vm7, pm5);
-        current.assignToNewLocation(vm8, pm5);
-        current.assignToNewLocation(vm9, pm6);
-        current.assignToNewLocation(vm10, pm4);
+            current.assignToNewLocation(vm1, pm2);
+            current.assignToNewLocation(vm2, pm2);
+            current.assignToNewLocation(vm3, pm3);
+            current.assignToNewLocation(vm4, pm3);
+            current.assignToNewLocation(vm5, pm1);
+            current.assignToNewLocation(vm6, pm1);
+            current.assignToNewLocation(vm7, pm8);
+            current.assignToNewLocation(vm8, pm5);
+            current.assignToNewLocation(vm9, pm5);
+            current.assignToNewLocation(vm10, pm6);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        current.showAssignments();
 
-
-        DependencyGraph dependencyGraph;
-
-        // System.out.println(current.getOutgoingVmsFrom(migrationList , pm1));
-        // System.out.println(current.getVMGoingFromTo(migrationList , pm2, pm1));
-
-        //loop over pms , check if there is any locked migratuion add to set and stop current iteration
-        //i think it has repated dependencie
-
-        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
-         current.generateMigrations();
-
-      // current.setMigrationWeights(current.getMigrations());
-
-       System.out.println(current.getMigrations());
-
-      //  current.setDependencyWeights(current.getMigrations());
-
-        System.out.println("Dependencies :");
-        dependencyGraph.printDependency();
-
-        System.out.println(current.getMigrations());
-
+        //just for calling inner methods in Dependency Graph
         VMSet set1 = new VMSet();
         VMSet set2 = new VMSet();
         VMSet set3 = new VMSet();
@@ -114,9 +93,45 @@ public class Main {
         set4.add(vm8);
 
         set5.add(vm9);
+        //
+
+        current.showAssignments();
 
 
-     //   System.out.println(current.getAllOutGoingSets(current.generateMigrations()));
+        DependencyGraph dependencyGraph;
+
+
+        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
+
+        //it will fill the list of migrations for the network
+        current.generateMigrations();
+
+        current.setMigrationWeights(current.getMigrations());
+
+        List<Migration> migrationsOFCurrent = current.getMigrations();
+
+        System.out.println(current.getMigrations());
+
+        dependencyGraph.printDependency();
+
+        current.solveCycles();
+
+
+        dependencyGraph = current.generateDependencyGraph(current.getMigrations());
+        //loop for cycles
+        current.setDependencyWeights(current.getMigrations());
+
+     //   System.out.println("Dependencies :");
+        dependencyGraph.printDependency();
+      //  System.out.println(dependencyGraph.getPath(set2 , set2));
+      //  System.out.println(dependencyGraph.getPath(set5 , set5));
+
+
+        //  System.out.println(current.getMigrations());
+
+
+
+        //   System.out.println(current.getAllOutGoingSets(current.generateMigrations()));
 
         // System.out.println(dependencyGraph.getDependencyDept(set3 ,  new ArrayList<>(), 0,new ArrayList<>()));
         // System.out.println(dependencyGraph.returnChain(set1 , set4));

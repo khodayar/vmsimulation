@@ -95,6 +95,8 @@ public class MigrationProcess {
       //  network.setMigrationWeights(queue);
         Collections.sort(queue);
 
+        queue.addAll(network.getNextPhaseMigrations());
+
         System.out.println("Migration Order :");
         System.out.println(queue);
 
@@ -119,6 +121,9 @@ public class MigrationProcess {
         }
 
     }
+
+
+
 
 
 

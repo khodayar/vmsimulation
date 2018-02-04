@@ -64,7 +64,7 @@ public class Migration implements Comparable<Migration>{
                 source.getName() +
                 " -> " + destination.getName() +
                 " weight :" + weight +
-               '}';
+               "}";
     }
 
     @Override
