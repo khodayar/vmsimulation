@@ -6,107 +6,180 @@ import java.util.*;
  * Created by Khodayar on 1/21/2018.
  */
 public class DependencyGraph {
-    int numberOFPMs;
-    private Map<PM , List<PM>> dependencyMap;
+    private Map<VMSet, List<VMSet>> dependencyMap;
 
-    public DependencyGraph(List<PM> pms) {
+    public Map<VMSet, List<VMSet>> getDependencyMap() {
+        return dependencyMap;
+    }
+
+
+    public DependencyGraph() {
         dependencyMap = new HashMap<>();
-        pms.forEach(pm -> dependencyMap.put(pm , new ArrayList<>()));
     }
 
-    public void addDependent(PM dependent , PM destination){
-            dependencyMap.get(dependent).add(destination);
-    }
+    public void addDependent(VMSet dep, VMSet source) {
+        if (dependencyMap.get(dep) == null) {
+            List<VMSet> vmSetList = new ArrayList<VMSet>() {{
+                add(source);
+            }};
+            dependencyMap.put(dep, vmSetList);
+        } else {
 
-
-
-    public void printDependency(){
-        for (Map.Entry<PM,List<PM>> entry : dependencyMap.entrySet()) {
-            System.out.print( "\n" + "Key = " + entry.getKey().getName());
-            if (entry.getValue().size() > 0){
-                System.out.print("  dependent to");
-                entry.getValue().forEach(pm -> System.out.print(" " + pm.getName()));
-            }
+            if (!dependencyMap.get(dep).contains(source)) dependencyMap.get(dep).add(source);
         }
 
     }
 
-    //if any two pm are in a same cycle
-    //vsn be be used only if dependent --> current (if current -> dependent without opposite returns true)
-    //goes backward of dependencies - reverse order of dependencies
-    //if we want to check p-->q are in a cycle we must check p,q,visited, found)
-    public List<PM> chainBetween(PM dependant , PM current , List<PM> visited , List<PM> found){
-            visited.add(current);
-            final boolean[] thereIS = {false};
-            //final step , return back to dependent
-            dependencyMap.get(current).forEach(pm -> {
-                if (pm.equals(dependant)) {
-                    thereIS[0] = true;
+
+    public void printDependency() {
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+            System.out.print("\n" + entry.getKey() + " --> ");
+            System.out.print(entry.getValue());
+        }
+        System.out.println();
+    }
+
+
+
+
+    //return chain between any two this works fine -- update return chain based on this
+    //return all the chain except dependant , if add set1, set1 and set1 is there , that's a cycle
+    public List<VMSet> chainBetween(VMSet dependant, VMSet destination, List<VMSet> visited, List<VMSet> found) {
+        visited.add(dependant);
+        if (dependencyMap.get(dependant) != null && dependencyMap.get(dependant).contains(destination)) {
+              found.add(destination);
+        }
+         else if (dependencyMap.get(dependant) != null) {
+            dependencyMap.get(dependant).forEach(vmSet -> {
+                if (!visited.contains(vmSet)) {
+                    int checkSize = found.size();
+                    chainBetween(vmSet, destination, visited, found);
+                    //we found something ?
+                    if (found.size() > checkSize) {
+                        found.add(vmSet);
+                    }
+
                 }
             });
-            if (thereIS[0]) {
-                found.add(current);
-
-            } else {
-                dependencyMap.get(current).forEach(pm -> {
-                    if (!visited.contains(pm)) {
-                        int checkSize = found.size();
-                        chainBetween(dependant, pm, visited, found);
-                        if (found.size() > checkSize){
-                            found.add(current);
-                        }
-
-                    }
-                });
-
-            }
+        }
         return found;
     }
 
 
-    //works only with a dependent and a source
-    public List<PM> returnCycle(PM dependant , PM current){
-        List<PM> chain = new ArrayList<>();
-        if (dependencyMap.get(current).contains(dependant) && !dependencyMap.get(dependant).contains(current)){
-            System.out.println("backward");
-        }
-        //handling case of pair cycle
-        else if (dependencyMap.get(current).contains(dependant) && dependencyMap.get(dependant).contains(current)){
-            chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
-            chain.add(dependant);
-        }
+    public List<VMSet> getPath(VMSet dependant, VMSet destination){
 
+        List<VMSet> path =  chainBetween(dependant , destination , new ArrayList<>() ,  new ArrayList<>());
+
+        Collections.reverse(path);
+        path.add(0, dependant);
+        return path;
+
+    }
+
+
+    //logic can be used for cycle checking
+    public int getDependencyDept(VMSet vmSet , List<VMSet> visited, int weight ,  List<VMSet> longestPath ){
+        visited.add(vmSet);
+        //weight++;
+        if (dependencyMap.get(vmSet)== null || dependencyMap.get(vmSet).isEmpty()){
+            System.out.println("reaches one end");
+        } else if (dependencyMap.get(vmSet).contains(visited.get(0))){
+            weight += 1000;
+            //System.out.println("weight:" + weight);
+           // System.out.println("visiting" + visited.get(0));
+            System.out.println("loop");
+        }
         else {
 
-             chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
-
-            if (chain.size() > 0 && chain.get(chain.size() - 1).equals(current)) {
-                System.out.println("there is chain from " + current.getName() + "  to " + dependant.getName());
-                if (dependencyMap.get(dependant).contains(current)) {
-                    System.out.println("there is cycle");
-                    chain.add(0, dependant);
+            final int[] finalWeight = {weight};
+            dependencyMap.get(vmSet).forEach(set ->{
+                if (!visited.contains(set)) {
+                    System.out.println("visiting" + set);
+                    if (finalWeight[0] < getDependencyDept(set,  visited , finalWeight[0],longestPath)){
+                        longestPath.add(set);
+                    }
+                    finalWeight[0] = getDependencyDept(set,  visited , finalWeight[0],longestPath);
                 }
-            }
 
+            });
+            System.out.println("weight:" + weight + "  " +finalWeight[0]);
+
+            if (finalWeight[0] > weight){
+                weight = finalWeight[0];
+            }
         }
-        Collections.reverse(chain);
+        return weight;
+    }
+
+
+
+    //works only with a dependent and a source
+    public List<VMSet> returnChain(VMSet dependant, VMSet current) {
+        List<VMSet> chain = new ArrayList<>();
+        if (dependencyMap.get(current) != null && dependencyMap.get(current).equals(dependant) && !dependencyMap.get(dependant).equals(current)) {
+            System.out.println("backward");
+            chain = chainBetween(current, dependant, new ArrayList<>(), new ArrayList<>());
+        }
+        //handling case of pair cycle
+        else if (dependencyMap.get(current)!= null && dependencyMap.get(current).equals(dependant) && dependencyMap.get(dependant).equals(current)) {
+            chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
+        }
+        else {
+            chain = chainBetween(dependant, current, new ArrayList<>(), new ArrayList<>());
+        }
+
+        if (chain.size() > 0 && chain.get(chain.size() - 1).equals(current)) {
+           // System.out.println("there is chain between " + dependant + "  and " + current);
+        }
+
+        //Collections.reverse(chain);
         return chain;
     }
 
 
-    public void findPairWise(PM pm1, PM pm2 , List<PM> series){
-        if (dependencyMap.get(pm2).contains(pm1)){
-            series.add(pm2);
-            return;
-        }else {
 
-            dependencyMap.get(pm2).forEach(pm -> {
-                series.add(pm);
-                findPairWise(pm1 , pm , series);
-            });
+
+    public boolean isCycle(VMSet dependant, VMSet current) {
+        List<VMSet> chain1 = returnChain(dependant, current);
+        List<VMSet> chain2 = returnChain(current,dependant);
+
+        if (chain1.size() > 0 && chain1.contains(current) && chain1.contains(dependant) && dependencyMap.get(dependant).contains(current)) {
+            return true;
         }
-
+        return false;
     }
 
+
+    //if any two pm are in a same cycle
+    //vsn be be used only if dependent --> current (if current -> dependent without opposite returns true)
+    //if we want to check p-->q are in a cycle we must check p,q,visited, found)
+    public List<VMSet> chainBetweenold(VMSet dependant, VMSet destination, List<VMSet> visited, List<VMSet> found) {
+        visited.add(destination);
+        final boolean[] thereIS = {false};
+        //final step , return back to dependent
+        //stops when reaches the dependant
+        if (dependencyMap.get(dependant) != null && dependencyMap.get(dependant).contains(destination)) {
+            thereIS[0] = true;
+            found.add(dependant);
+        }
+
+        if (thereIS[0]) {
+            //  found.add(destination);
+
+        } else if (dependencyMap.get(dependant) != null) {
+            dependencyMap.get(dependant).forEach(vmSet -> {
+                if (!visited.contains(vmSet)) {
+                    int checkSize = found.size();
+                    chainBetweenold(vmSet, destination, visited, found);
+                    //we found something ?
+                    if (found.size() > checkSize) {
+                        found.add(vmSet);
+                    }
+
+                }
+            });
+        }
+        return found;
+    }
 
 }

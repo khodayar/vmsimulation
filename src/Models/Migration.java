@@ -3,10 +3,12 @@ package Models;
 /**
  * Created by Khodayar on 1/20/2018.
  */
-public class Migration {
+public class Migration implements Comparable<Migration>{
     private PM source;
     private PM destination;
     private VM vm;
+    private int weight;
+    private int remainingSize;
 
     public PM getSource() {
         return source;
@@ -32,10 +34,37 @@ public class Migration {
         this.vm = vm;
     }
 
+    public int getWeight() {
+        return weight;
+    }
+
+    public void setWeight(int weight) {
+        this.weight = weight;
+    }
+
+    public int getRemainingSize() {
+        return remainingSize;
+    }
+
+    public void setRemainingSize(int remainingSize) {
+        this.remainingSize = remainingSize;
+    }
+
     public Migration(PM source, PM destination, VM vm) {
         this.source = source;
         this.destination = destination;
         this.vm = vm;
+        this.remainingSize = vm.getMemorySize();
+    }
+
+    @Override
+    public String toString() {
+        return "Migration{" +
+                vm.getName() + " : " +
+                source.getName() +
+                " -> " + destination.getName() +
+                " weight :" + weight +
+               "}";
     }
 
     @Override
@@ -56,5 +85,11 @@ public class Migration {
         result = 31 * result + destination.hashCode();
         result = 31 * result + vm.hashCode();
         return result;
+    }
+
+
+    @Override
+    public int compareTo(Migration o) {
+        return weight > o.getWeight()? -1 : 1;
     }
 }
