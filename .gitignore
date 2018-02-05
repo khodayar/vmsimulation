@@ -1,0 +1,7 @@
+# Generated artifacts
+target/
+bin/
+out/
+.idea/
+out
+.idea/
