@@ -196,10 +196,17 @@ public class DependencyGraph {
 
     public void draw(){
         Graph<String, String> g = new SparseMultigraph<String, String>();
-        g.addVertex("a2");
-        g.addVertex("a1");
-        g.addVertex("a3");
-        g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
+
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+            g.addVertex(String.valueOf(entry.getKey()));
+           // System.out.print("\n" + entry.getKey() + " --> ");
+           // System.out.print(entry.getValue());
+        }
+
+//        g.addVertex("a2");
+//        g.addVertex("a1");
+//        g.addVertex("a3");
+//        g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
         Layout<Integer, String> layout = new CircleLayout(g);
         layout.setSize(new Dimension(800,800));
         BasicVisualizationServer<Integer,String> vv =
