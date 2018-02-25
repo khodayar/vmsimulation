@@ -1,6 +1,7 @@
-package Models;
+package main.java.Models;
 
 import java.util.*;
+import main.java.Models.*;
 import java.util.function.Predicate;
 
 /**

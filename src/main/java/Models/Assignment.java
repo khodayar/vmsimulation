@@ -1,4 +1,6 @@
-package Models;
+package main.java.Models;
+
+import main.java.Models.PM;
 
 /**
  * Created by Khodayar on 1/20/2018.
