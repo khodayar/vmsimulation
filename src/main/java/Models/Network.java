@@ -1,7 +1,7 @@
-package main.java.Models;
+package Models;
 
 import java.util.*;
-import main.java.Models.*;
+import Models.*;
 import java.util.function.Predicate;
 
 /**
@@ -397,7 +397,12 @@ public class Network {
                 System.out.println("There is a cycle :");
                 System.out.println(dGraph.getPath(vmSet, vmSet));
                 VMSet bestCandidate = findTheMinWeightSet(dGraph.getPath(vmSet, vmSet));
-                PM bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
+                PM bestPm = null;
+                try {
+                    bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
                 updateMigration(bestCandidate, bestPm);
             }
 
@@ -429,7 +434,7 @@ public class Network {
     }
 
 
-    private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) {
+    private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) throws Exception {
         final PM[] pm = new PM[1];
         List<PM> candidatePms = tempLocationPMs(cycleVMSetList);
         candidatePms.forEach(candidatePm -> {
@@ -437,8 +442,9 @@ public class Network {
                 pm[0] = candidatePm;
             }
         });
-        if (pm[0].getName() == null) {
+        if (pm[0] == null) {
             System.out.println("there is no temp location for solving the cycle");
+            throw new Exception("Unsolvable Cycle");
         }
         return pm[0];
 

@@ -1,6 +1,4 @@
-package main.java;
-
-import main.java.Models.*;
+import Models.*;
 
 import java.util.ArrayList;
 import java.util.List;

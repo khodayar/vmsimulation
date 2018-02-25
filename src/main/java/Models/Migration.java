@@ -1,4 +1,4 @@
-package main.java.Models;
+package Models;
 
 /**
  * Created by Khodayar on 1/20/2018.
