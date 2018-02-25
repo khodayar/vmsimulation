@@ -1,6 +1,17 @@
 package Models;
 
+
+import edu.uci.ics.jung.algorithms.layout.CircleLayout;
+import edu.uci.ics.jung.algorithms.layout.Layout;
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.visualization.BasicVisualizationServer;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by Khodayar on 1/21/2018.
@@ -180,6 +191,26 @@ public class DependencyGraph {
             });
         }
         return found;
+    }
+
+
+    public void draw(){
+        Graph<String, String> g = new SparseMultigraph<String, String>();
+        g.addVertex("a2");
+        g.addVertex("a1");
+        g.addVertex("a3");
+        g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
+        Layout<Integer, String> layout = new CircleLayout(g);
+        layout.setSize(new Dimension(800,800));
+        BasicVisualizationServer<Integer,String> vv =
+                new BasicVisualizationServer<Integer,String>(layout);
+        vv.setPreferredSize(new Dimension(850,850));
+
+        JFrame frame = new JFrame("Simple Graph View");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(vv);
+        frame.pack();
+        frame.setVisible(true);
     }
 
 }

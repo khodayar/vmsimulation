@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 /**
  * Created by I857455 on 1/18/2018.
  */
-public class Network {
+public class Cloud {
 
     List<PM> pmList;
     List<Assignment> currentAssignments;
@@ -23,7 +23,7 @@ public class Network {
         this.currentAssignments = currentAssignments;
     }
 
-    public Network(List<PM> pmList) {
+    public Cloud(List<PM> pmList) {
         this.pmList = pmList;
     }
 
@@ -59,12 +59,12 @@ public class Network {
         this.nextPhaseMigrations = nextPhaseMigrations;
     }
 
-    public Network(List<PM> pmList, List<Assignment> currentAssignments) {
+    public Cloud(List<PM> pmList, List<Assignment> currentAssignments) {
         this.pmList = pmList;
         this.currentAssignments = currentAssignments;
     }
 
-    public Network() {
+    public Cloud() {
         this.pmList = new ArrayList<>();
         this.currentAssignments = new ArrayList<>();
         this.newAssignments = new ArrayList<>();
@@ -402,6 +402,7 @@ public class Network {
                     bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
+                    System.exit(0);
                 }
                 updateMigration(bestCandidate, bestPm);
             }

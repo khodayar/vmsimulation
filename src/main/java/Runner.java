@@ -1,13 +1,30 @@
 import Models.*;
+import edu.uci.ics.jung.algorithms.layout.CircleLayout;
+import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import edu.uci.ics.jung.graph.event.GraphEvent;
+import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.visualization.VisualizationImageServer;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.algorithms.layout.CircleLayout;
+import edu.uci.ics.jung.algorithms.layout.Layout;
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.visualization.BasicVisualizationServer;
+import java.awt.Dimension;
+import javax.swing.JFrame;
+import com.google.common.graph.Network;
 
-import java.util.ArrayList;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 public class Runner {
 
     public static void main(String[] args) {
 
-        Network current = new Network();
+
+
+        Cloud current = new Cloud();
         current.addOptimalPlacement(8 , 10);
         current.assignRndNewLocations();
 
@@ -32,6 +49,7 @@ public class Runner {
         System.out.println(current.getMigrations());
 //
         dependencyGraph.printDependency();
+
 //
         current.solveCycles();
 //
@@ -52,7 +70,7 @@ public class Runner {
 
         MigrationProcess migrationProcess = new MigrationProcess();
         migrationProcess.setDegree(2);
-        migrationProcess.setNetwork(current);
+        migrationProcess.setCloud(current);
         try {
             migrationProcess.doMigration();
         } catch (Exception e) {

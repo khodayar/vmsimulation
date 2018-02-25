@@ -11,17 +11,17 @@ public class MigrationProcess {
 
 
 
-    private Network network;
+    private Cloud cloud;
     private int degree;
     private List<Migration> onGoingMigrations;
     private int timeStamp;
 
-    public Network getNetwork() {
-        return network;
+    public Cloud getCloud() {
+        return cloud;
     }
 
-    public void setNetwork(Network network) {
-        this.network = network;
+    public void setCloud(Cloud cloud) {
+        this.cloud = cloud;
     }
 
     public int getTimeStamp() {
@@ -54,7 +54,7 @@ public class MigrationProcess {
     }
 
     private void startMigration(Migration m) throws Exception {
-        network.assignToCurrentLocation(m.getVm() , m.getDestination());
+        cloud.assignToCurrentLocation(m.getVm() , m.getDestination());
         onGoingMigrations.add(m);
         degree--;
         System.out.println("Migration Started " + m + " at " + timeStamp);
@@ -78,7 +78,7 @@ public class MigrationProcess {
                 toBeRemoved.add(currentMigration);
                 degree++;
                 finished.add(currentMigration);
-                network.removeFromCurrent(currentMigration.getVm() , currentMigration.getDestination());
+                cloud.removeFromCurrent(currentMigration.getVm() , currentMigration.getDestination());
                 System.out.println("Migration Finished " + currentMigration + " at " + timeStamp);
                 System.out.println("free degree :" + degree);
             }
@@ -90,12 +90,12 @@ public class MigrationProcess {
 
 
     public void doMigration() throws Exception {
-        List<Migration> queue = network.getMigrations();
+        List<Migration> queue = cloud.getMigrations();
 
-      //  network.setMigrationWeights(queue);
+      //  cloud.setMigrationWeights(queue);
         Collections.sort(queue);
 
-        queue.addAll(network.getNextPhaseMigrations());
+        queue.addAll(cloud.getNextPhaseMigrations());
 
         System.out.println("Migration Order :");
         System.out.println(queue);
@@ -108,7 +108,7 @@ public class MigrationProcess {
 
                 for (int i = 0; i < queue.size(); i++) {
                     //second term checks if destination has capacity, otherwise checks next migration
-                    if (!onGoingMigrations.contains(queue.get(i)) && network.hasFreeCapacityFor(network.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())) {
+                    if (!onGoingMigrations.contains(queue.get(i)) && cloud.hasFreeCapacityFor(cloud.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())) {
                         startMigration(queue.get(i));
                          break;
                     }
