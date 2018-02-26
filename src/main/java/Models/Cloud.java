@@ -1,8 +1,17 @@
 package Models;
 
+import edu.uci.ics.jung.algorithms.layout.CircleLayout;
+import edu.uci.ics.jung.algorithms.layout.Layout;
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.visualization.BasicVisualizationServer;
+import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
+import java.awt.Dimension;
 import java.util.*;
 import Models.*;
 import java.util.function.Predicate;
+import javax.swing.JFrame;
 
 /**
  * Created by I857455 on 1/18/2018.
@@ -530,4 +539,43 @@ public class Cloud {
         return new VM("vm" + index, (int) (Math.random() * ((max - min) + 1)) + min,
                 (int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
     }
+
+
+    public void draw(DependencyGraph dependencyGraph){
+        Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
+
+        Graph<String, String> g = new SparseMultigraph<String , String>();
+
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+
+            g.addVertex(String.valueOf(entry.getKey()));
+            entry.getValue().forEach(vmSet -> {
+                g.addVertex(String.valueOf(vmSet));
+            });
+
+        }
+
+        final int[] counter = {0};
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+            entry.getValue().forEach(vmSet -> {
+                g.addEdge(String.valueOf(counter[0]++), String.valueOf(entry.getKey()) , String.valueOf(vmSet) , EdgeType.DIRECTED);
+            });
+
+        }
+
+        // g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
+        Layout<String, String> layout = new CircleLayout(g);
+        layout.setSize(new Dimension(400,400));
+        BasicVisualizationServer<String,String> vv =
+                new BasicVisualizationServer<String,String>(layout);
+        vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+        vv.setPreferredSize(new Dimension(420,420));
+
+        JFrame frame = new JFrame("Simple Graph View");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(vv);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
 }

@@ -50,7 +50,7 @@ public class Runner {
 //
         dependencyGraph.printDependency();
 
-        dependencyGraph.draw();
+        current.draw(dependencyGraph);
 
 //
         current.solveCycles();

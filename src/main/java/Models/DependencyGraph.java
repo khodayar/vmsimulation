@@ -8,6 +8,7 @@ import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.visualization.BasicVisualizationServer;
 
+import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
@@ -191,33 +192,6 @@ public class DependencyGraph {
             });
         }
         return found;
-    }
-
-
-    public void draw(){
-        Graph<String, String> g = new SparseMultigraph<String, String>();
-
-        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
-            g.addVertex(String.valueOf(entry.getKey()));
-           // System.out.print("\n" + entry.getKey() + " --> ");
-           // System.out.print(entry.getValue());
-        }
-
-//        g.addVertex("a2");
-//        g.addVertex("a1");
-//        g.addVertex("a3");
-//        g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
-        Layout<Integer, String> layout = new CircleLayout(g);
-        layout.setSize(new Dimension(800,800));
-        BasicVisualizationServer<Integer,String> vv =
-                new BasicVisualizationServer<Integer,String>(layout);
-        vv.setPreferredSize(new Dimension(850,850));
-
-        JFrame frame = new JFrame("Simple Graph View");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(vv);
-        frame.pack();
-        frame.setVisible(true);
     }
 
 }
