@@ -94,7 +94,8 @@ public class Cloud {
     public void assignToCurrentLocation(VM vm, PM pm) throws Exception {
 
         if (!hasFreeCapacityFor(currentAssignments, pm, vm)) {
-            throw new Exception("there is no free capacity for this assignment " + vm.getName() + " to " + pm.getName());
+            throw new Exception(
+                    "there is no free capacity for this assignment " + vm.getName() + " to " + pm.getName());
         }
         Assignment newAssignment = new Assignment(pm, vm);
         Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
@@ -106,7 +107,8 @@ public class Cloud {
     public void assignToNewLocation(VM vm, PM pm) throws Exception {
 
         if (!hasFreeCapacityFor(newAssignments, pm, vm)) {
-            throw new Exception("there is no free capacity for this assignment " + vm.getName() + " to " + pm.getName());
+            throw new Exception(
+                    "there is no free capacity for this assignment " + vm.getName() + " to " + pm.getName());
         }
         Assignment newAssignment = new Assignment(pm, vm);
         Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
@@ -149,7 +151,9 @@ public class Cloud {
     public void showAssignments() {
         System.out.println("-------------------------legacy");
         pmList.forEach(pm -> {
-            System.out.print(pm.getName() + " [free memory:" + freeMemory(currentAssignments, pm) + ", free CPU:" + freeProcessor(currentAssignments, pm) + ",free network:" + freeNetwork(currentAssignments, pm) + "]   assigned VMs: ");
+            System.out.print(pm.getName() + " [free memory:" + freeMemory(currentAssignments, pm) + ", free CPU:"
+                    + freeProcessor(currentAssignments, pm) + ",free network:" + freeNetwork(currentAssignments, pm)
+                    + "]   assigned VMs: ");
             getVMForPM(currentAssignments, pm).forEach(vm -> {
                 System.out.print(vm.getName() + " ");
             });
@@ -157,7 +161,9 @@ public class Cloud {
         });
         System.out.println("-------------------------New");
         pmList.forEach(pm -> {
-            System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:" + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm) + "]   assigned VMs: ");
+            System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:"
+                    + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm)
+                    + "]   assigned VMs: ");
             getVMForPM(newAssignments, pm).forEach(vm -> {
                 System.out.print(vm.getName() + " ");
             });
@@ -180,8 +186,10 @@ public class Cloud {
     public List<Migration> generateMigrations() {
         List<Migration> migrations = new ArrayList<>();
         currentAssignments.forEach(assignment -> {
-            if (!getLegacyVMLocation(assignment.getVm()).equals(findAssignment(newAssignments, assignment.getVm()).getPm())) {
-                migrations.add(new Migration(assignment.getPm(), findAssignment(newAssignments, assignment.getVm()).getPm(), assignment.getVm()));
+            if (!getLegacyVMLocation(assignment.getVm())
+                    .equals(findAssignment(newAssignments, assignment.getVm()).getPm())) {
+                migrations.add(new Migration(assignment.getPm(),
+                        findAssignment(newAssignments, assignment.getVm()).getPm(), assignment.getVm()));
             }
         });
         this.migrations = migrations;
@@ -232,10 +240,11 @@ public class Cloud {
     public List<VMSet> getAllOutGoingSets(List<Migration> migrations) {
         List<VMSet> vmSetList = new ArrayList<>();
         this.getPmList().forEach(pm -> {
-            if (!getOutgoingVmsFrom(migrations, pm).isEmpty())
+            if (!getOutgoingVmsFrom(migrations, pm).isEmpty()) {
                 getOutgoingVmsFrom(migrations, pm).forEach(vmsetlist -> {
                     vmSetList.add(vmsetlist);
                 });
+            }
         });
         return vmSetList;
     }
@@ -357,7 +366,8 @@ public class Cloud {
                         if (map.get(set) != null) {
                             map.get(set).forEach(dependentSet -> {
                                 dependentSet.getVMList().forEach(vm -> {
-                                            findMigrationOfVM(vm, migrations).setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
+                                            findMigrationOfVM(vm, migrations)
+                                                    .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
 
                                         }
 
@@ -388,10 +398,22 @@ public class Cloud {
     }
 
 
+    private int sumWeightOfSet(VMSet set, List<Migration> migrations) {
+        final int[] weight = {0};
+        set.getVMList().forEach(vm -> {
+                    weight[0] += findMigrationOfVM(vm, migrations).getWeight();
+                }
+        );
+        return weight[0];
+    }
+
+
     public Migration findMigrationOfVM(VM vm, List<Migration> migrations) {
         final Migration[] migration = new Migration[1];
         migrations.forEach(mig -> {
-            if (mig.getVm().equals(vm)) migration[0] = mig;
+            if (mig.getVm().equals(vm)) {
+                migration[0] = mig;
+            }
         });
 
         return migration[0];
@@ -436,7 +458,7 @@ public class Cloud {
     private VMSet findTheMinWeightSet(List<VMSet> vmSetList) {
         final VMSet[] found = {vmSetList.get(0)};
         vmSetList.forEach(vmSet -> {
-            if (maxWeightOfSet(vmSet, migrations) < maxWeightOfSet(found[0], migrations)) {
+            if (sumWeightOfSet(vmSet, migrations) < sumWeightOfSet(found[0], migrations)) {
                 found[0] = vmSet;
             }
         });
@@ -492,7 +514,7 @@ public class Cloud {
         PM[] pms = new PM[numberOfPMs];
 
         for (int i = 0; i < numberOfPMs; i++) {
-            pms[i] = new PM("pm" + i, 10, 10, 10);
+            pms[i] = new PM("pm" + i, 20, 20, 20);
             this.getPmList().add(pms[i]);
         }
 
@@ -520,8 +542,9 @@ public class Cloud {
                 PM pm = getPmList().get((int) (Math.random() * (pmList.size())));
                 if (hasFreeCapacityFor(newAssignments, pm, vm)) {
                     try {
-                        assignToNewLocation(vm , pm);
-                    } catch (Exception e) {}
+                        assignToNewLocation(vm, pm);
+                    } catch (Exception e) {
+                    }
 
                     assigned = true;
                 }
@@ -541,10 +564,10 @@ public class Cloud {
     }
 
 
-    public void draw(DependencyGraph dependencyGraph){
+    public void draw(DependencyGraph dependencyGraph) {
         Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
 
-        Graph<String, String> g = new SparseMultigraph<String , String>();
+        Graph<String, String> g = new SparseMultigraph<String, String>();
 
         for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
 
@@ -558,18 +581,19 @@ public class Cloud {
         final int[] counter = {0};
         for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
             entry.getValue().forEach(vmSet -> {
-                g.addEdge(String.valueOf(counter[0]++), String.valueOf(entry.getKey()) , String.valueOf(vmSet) , EdgeType.DIRECTED);
+                g.addEdge(String.valueOf(counter[0]++), String.valueOf(entry.getKey()), String.valueOf(vmSet),
+                        EdgeType.DIRECTED);
             });
 
         }
 
         // g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
         Layout<String, String> layout = new CircleLayout(g);
-        layout.setSize(new Dimension(400,400));
-        BasicVisualizationServer<String,String> vv =
-                new BasicVisualizationServer<String,String>(layout);
+        layout.setSize(new Dimension(400, 400));
+        BasicVisualizationServer<String, String> vv =
+                new BasicVisualizationServer<String, String>(layout);
         vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
-        vv.setPreferredSize(new Dimension(420,420));
+        vv.setPreferredSize(new Dimension(420, 420));
 
         JFrame frame = new JFrame("Simple Graph View");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

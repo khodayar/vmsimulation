@@ -25,7 +25,7 @@ public class Runner {
 
 
         Cloud current = new Cloud();
-        current.addOptimalPlacement(8 , 10);
+        current.addOptimalPlacement(4 , 12);
         current.assignRndNewLocations();
 
         //end of setting up the network
