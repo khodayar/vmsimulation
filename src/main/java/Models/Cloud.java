@@ -149,7 +149,7 @@ public class Cloud {
     }
 
     public void showAssignments() {
-        System.out.println("-------------------------legacy");
+        System.out.println("-------------------------legacy Assignments");
         pmList.forEach(pm -> {
             System.out.print(pm.getName() + " [free memory:" + freeMemory(currentAssignments, pm) + ", free CPU:"
                     + freeProcessor(currentAssignments, pm) + ",free network:" + freeNetwork(currentAssignments, pm)
@@ -159,7 +159,7 @@ public class Cloud {
             });
             System.out.println();
         });
-        System.out.println("-------------------------New");
+        System.out.println("-------------------------New Assignments");
         pmList.forEach(pm -> {
             System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:"
                     + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm)
@@ -448,7 +448,7 @@ public class Cloud {
             Migration newMig = new Migration(oldmig.getSource(), bestPm, vm);
             newMig.setWeight(oldmig.getWeight());
             System.out.println("new temp Migration has been added :" + newMig);
-            nextPhaseMigrations.add(oldmig);
+            nextPhaseMigrations.add(new Migration(bestPm , oldmig.getDestination() , vm));
             migrations.remove(oldmig);
             migrations.add(newMig);
         });
@@ -514,16 +514,16 @@ public class Cloud {
         PM[] pms = new PM[numberOfPMs];
 
         for (int i = 0; i < numberOfPMs; i++) {
-            pms[i] = new PM("pm" + i, 20, 20, 20);
+            pms[i] = new PM("pm" + i, 18, 18, 18);
             this.getPmList().add(pms[i]);
         }
 
         for (int j = 0; j < numberOfVMs; j++) {
             VM currentVm = createRndVM(j);
             for (int i = 0; i < numberOfPMs; i++) {
-                if (hasFreeCapacityFor(currentAssignments, pms[i], currentVm)) {
+                if (hasFreeCapacityFor(newAssignments, pms[i], currentVm)) {
                     try {
-                        assignToCurrentLocation(currentVm, pms[i]);
+                        assignToNewLocation(currentVm, pms[i]);
                     } catch (Exception e) {
                         //handled in assignToCurrentLocation
                     }
@@ -535,14 +535,14 @@ public class Cloud {
 
 
     public void assignRndNewLocations() {
-        currentAssignments.forEach(assignment -> {
+        newAssignments.forEach(assignment -> {
             VM vm = assignment.getVm();
             boolean assigned = false;
             while (!assigned) {
                 PM pm = getPmList().get((int) (Math.random() * (pmList.size())));
-                if (hasFreeCapacityFor(newAssignments, pm, vm)) {
+                if (hasFreeCapacityFor(currentAssignments, pm, vm)) {
                     try {
-                        assignToNewLocation(vm, pm);
+                        assignToCurrentLocation(vm, pm);
                     } catch (Exception e) {
                     }
 

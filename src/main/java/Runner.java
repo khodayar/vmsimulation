@@ -41,8 +41,11 @@ public class Runner {
         current.solveCycles();
 //
 //
-//        //
+//
+
+
         dependencyGraph = current.generateDependencyGraph(current.getMigrations());
+        current.draw(dependencyGraph);
         //loop for cycles
         current.setDependencyWeights(current.getMigrations());
         System.out.println("migration with dependency weights :");
