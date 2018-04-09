@@ -9,7 +9,6 @@ import edu.uci.ics.jung.visualization.BasicVisualizationServer;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import java.awt.Dimension;
 import java.util.*;
-import Models.*;
 import java.util.function.Predicate;
 import javax.swing.JFrame;
 
@@ -78,6 +77,23 @@ public class Cloud {
         this.currentAssignments = new ArrayList<>();
         this.newAssignments = new ArrayList<>();
         this.nextPhaseMigrations = new ArrayList<>();
+    }
+
+
+    public void displayCloudInfo(){
+        System.out.println("Cloud info--------------");
+        System.out.println("List of PMs :");
+        pmList.forEach(pm -> {
+            System.out.println(pm.getName() + " [memory:" + pm.getMemoryCapacity() + ",  CPU:"
+                    + pm.getProcessorCapacity() + ", network:" + pm.getNetworkCapacity());
+        });
+        System.out.println("List of VMs :");
+        currentAssignments.forEach(assignment -> {
+          VM vm = assignment.getVm();
+            System.out.println(vm.getName() + " [memory:" + vm.getMemorySize() + ",  CPU:"
+                    + vm.getProcessorSize() + ", network:" + vm.getNetworkSize());
+        });
+        System.out.println("---------------------------------");
     }
 
     public Assignment findAssignment(List<Assignment> assignments, VM vm) {
@@ -197,7 +213,7 @@ public class Cloud {
     }
 
     //outgoing set of pm , separated based on each destination pm
-    public List<VMSet> getOutgoingVmsFrom(List<Migration> migrations, PM pm) {
+    public List<VMSet> getOutgoingVmSetsFrom(List<Migration> migrations, PM pm) {
 
         Map<PM, List<VM>> migrationsOfPM = new HashMap<>();
         migrations.forEach(migration -> {
@@ -240,8 +256,8 @@ public class Cloud {
     public List<VMSet> getAllOutGoingSets(List<Migration> migrations) {
         List<VMSet> vmSetList = new ArrayList<>();
         this.getPmList().forEach(pm -> {
-            if (!getOutgoingVmsFrom(migrations, pm).isEmpty()) {
-                getOutgoingVmsFrom(migrations, pm).forEach(vmsetlist -> {
+            if (!getOutgoingVmSetsFrom(migrations, pm).isEmpty()) {
+                getOutgoingVmSetsFrom(migrations, pm).forEach(vmsetlist -> {
                     vmSetList.add(vmsetlist);
                 });
             }
@@ -323,10 +339,10 @@ public class Cloud {
     public DependencyGraph generateDependencyGraph(List<Migration> migrationList) {
         DependencyGraph dependencyGraph = new DependencyGraph();
         pmList.forEach(sourcePm -> {
-            getOutgoingVmsFrom(migrationList, sourcePm).forEach(vmSet -> {
+            getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
                 PM destination = findMigrationOfVM(vmSet.getVMList().get(0), migrationList).getDestination();
                 if (!hasFreeCapacityFor(currentAssignments, destination, vmSet)) {
-                    getOutgoingVmsFrom(migrationList, destination).forEach(destOutSet -> {
+                    getOutgoingVmSetsFrom(migrationList, destination).forEach(destOutSet -> {
                         // System.out.println(vmSet + "->" + destOutSet);
                         dependencyGraph.addDependent(vmSet, destOutSet);
                     });
@@ -514,7 +530,7 @@ public class Cloud {
         PM[] pms = new PM[numberOfPMs];
 
         for (int i = 0; i < numberOfPMs; i++) {
-            pms[i] = new PM("pm" + i, 18, 18, 18);
+            pms[i] = new PM("pm" + i, 12, 12, 12);
             this.getPmList().add(pms[i]);
         }
 

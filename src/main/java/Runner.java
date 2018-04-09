@@ -9,11 +9,12 @@ public class Runner {
 
 
         Cloud current = new Cloud();
-        current.addOptimalPlacement(6 , 12);
+        current.addOptimalPlacement(4 , 6);
         current.assignRndNewLocations();
 
         //end of setting up the network
 
+        current.displayCloudInfo();
         current.showAssignments();
 
 
