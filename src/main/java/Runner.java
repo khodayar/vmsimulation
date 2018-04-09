@@ -1,5 +1,7 @@
 import Models.*;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class Runner {
@@ -32,7 +34,17 @@ public class Runner {
         List<Migration> migrationsOFCurrent = current.getMigrations();
 
         System.out.println("migration with initial weights :");
+        Collections.sort(current.getMigrations(), new Comparator<Migration>() {
+            @Override
+            public int compare(Migration o1, Migration o2) {
+                return o2.getWeight() - o1.getWeight();
+            }
+        });
         System.out.println(current.getMigrations());
+
+
+
+
 //
         dependencyGraph.printDependency();
 
