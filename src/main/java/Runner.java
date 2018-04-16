@@ -1,18 +1,24 @@
 import Models.*;
 
+import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class Runner {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
 
 
 
         Cloud current = new Cloud();
+        SetUp.initialAllocation(current);
+        current.showAssignments();
+
+        /*
         current.addOptimalPlacement(4 , 6);
         current.assignRndNewLocations();
+        */
 
         //end of setting up the network
 
