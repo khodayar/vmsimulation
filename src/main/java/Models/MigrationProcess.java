@@ -11,17 +11,18 @@ public class MigrationProcess {
 
 
 
-    private Network network;
-    private int degree;
+    private Cloud cloud;
+    private int pipelineDegree;
+    private int linkDegree;
     private List<Migration> onGoingMigrations;
     private int timeStamp;
 
-    public Network getNetwork() {
-        return network;
+    public Cloud getCloud() {
+        return cloud;
     }
 
-    public void setNetwork(Network network) {
-        this.network = network;
+    public void setCloud(Cloud cloud) {
+        this.cloud = cloud;
     }
 
     public int getTimeStamp() {
@@ -32,12 +33,12 @@ public class MigrationProcess {
         this.timeStamp = timeStamp;
     }
 
-    public int getDegree() {
-        return degree;
+    public int getPipelineDegree() {
+        return pipelineDegree;
     }
 
-    public void setDegree(int degree) {
-        this.degree = degree;
+    public void setPipelineDegree(int pipelineDegree) {
+        this.pipelineDegree = pipelineDegree;
     }
 
     public List<Migration> getOnGoingMigrations() {
@@ -48,15 +49,23 @@ public class MigrationProcess {
         this.onGoingMigrations = onGoingMigrations;
     }
 
+    public int getLinkDegree() {
+        return linkDegree;
+    }
+
+    public void setLinkDegree(int linkDegree) {
+        this.linkDegree = linkDegree;
+    }
+
     public MigrationProcess() {
         this.onGoingMigrations = new ArrayList<>();
         timeStamp=0;
     }
 
     private void startMigration(Migration m) throws Exception {
-        network.assignToCurrentLocation(m.getVm() , m.getDestination());
+        cloud.assignToCurrentLocation(m.getVm() , m.getDestination());
         onGoingMigrations.add(m);
-        degree--;
+        pipelineDegree--;
         System.out.println("Migration Started " + m + " at " + timeStamp);
 
     }
@@ -76,11 +85,11 @@ public class MigrationProcess {
             currentMigration.setRemainingSize(currentMigration.getRemainingSize() - minRemainingTime[0]);
             if (currentMigration.getRemainingSize() == 0) {
                 toBeRemoved.add(currentMigration);
-                degree++;
+                pipelineDegree++;
                 finished.add(currentMigration);
-                network.removeFromCurrent(currentMigration.getVm() , currentMigration.getDestination());
+                cloud.removeFromCurrent(currentMigration.getVm() , currentMigration.getDestination());
                 System.out.println("Migration Finished " + currentMigration + " at " + timeStamp);
-                System.out.println("free degree :" + degree);
+                System.out.println("free pipelineDegree :" + pipelineDegree);
             }
         });
 
@@ -90,12 +99,12 @@ public class MigrationProcess {
 
 
     public void doMigration() throws Exception {
-        List<Migration> queue = network.getMigrations();
+        List<Migration> queue = cloud.getMigrations();
 
-      //  network.setMigrationWeights(queue);
+      //  cloud.setMigrationWeights(queue);
         Collections.sort(queue);
 
-        queue.addAll(network.getNextPhaseMigrations());
+        queue.addAll(cloud.getNextPhaseMigrations());
 
         System.out.println("Migration Order :");
         System.out.println(queue);
@@ -103,16 +112,18 @@ public class MigrationProcess {
         while (!queue.isEmpty()) {
 
             boolean allIsChecked = false;
-            //we must handle a case where there is no feasible migration for a while to use all the degree
-            while (degree > 0  && !allIsChecked) {
+            //we must handle a case where there is no feasible migration for a while to use all the pipelineDegree
+            while (pipelineDegree > 0  && !allIsChecked) {
 
                 for (int i = 0; i < queue.size(); i++) {
                     //second term checks if destination has capacity, otherwise checks next migration
-                    if (!onGoingMigrations.contains(queue.get(i)) && network.hasFreeCapacityFor(network.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())) {
+                    if (!onGoingMigrations.contains(queue.get(i)) && cloud.hasFreeCapacityFor(cloud.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())
+                            && linksHaveCapacity(queue.get(i))) {
+                        System.out.println("i" + i + "   free degree :" + pipelineDegree );
                         startMigration(queue.get(i));
                          break;
                     }
-                allIsChecked = true;
+                if (i == queue.size()-1 ) allIsChecked = true;
                 }
             }
 
@@ -122,13 +133,21 @@ public class MigrationProcess {
 
     }
 
+    private boolean linksHaveCapacity(Migration migration) {
+        final int[] sourceTraffic = {0};
+        final int[] destTraffic = {0};
+        onGoingMigrations.forEach(onGoingMigration -> {
+            if (onGoingMigration.getSource() == migration.getSource() || onGoingMigration.getDestination() == migration.getSource()){
+                sourceTraffic[0]++;
+            }
+            if (onGoingMigration.getSource() == migration.getDestination() || onGoingMigration.getDestination() == migration.getDestination()){
+                destTraffic[0]++;
+            }
 
+        });
 
-
-
-
-
-
+        return sourceTraffic[0] < linkDegree && destTraffic[0] < linkDegree;
+    }
 
 
 }

@@ -1,12 +1,21 @@
 package Models;
 
+import edu.uci.ics.jung.algorithms.layout.CircleLayout;
+import edu.uci.ics.jung.algorithms.layout.Layout;
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.visualization.BasicVisualizationServer;
+import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
+import java.awt.Dimension;
 import java.util.*;
 import java.util.function.Predicate;
+import javax.swing.JFrame;
 
 /**
  * Created by I857455 on 1/18/2018.
  */
-public class Network {
+public class Cloud {
 
     List<PM> pmList;
     List<Assignment> currentAssignments;
@@ -22,7 +31,7 @@ public class Network {
         this.currentAssignments = currentAssignments;
     }
 
-    public Network(List<PM> pmList) {
+    public Cloud(List<PM> pmList) {
         this.pmList = pmList;
     }
 
@@ -58,16 +67,33 @@ public class Network {
         this.nextPhaseMigrations = nextPhaseMigrations;
     }
 
-    public Network(List<PM> pmList, List<Assignment> currentAssignments) {
+    public Cloud(List<PM> pmList, List<Assignment> currentAssignments) {
         this.pmList = pmList;
         this.currentAssignments = currentAssignments;
     }
 
-    public Network() {
+    public Cloud() {
         this.pmList = new ArrayList<>();
         this.currentAssignments = new ArrayList<>();
         this.newAssignments = new ArrayList<>();
         this.nextPhaseMigrations = new ArrayList<>();
+    }
+
+
+    public void displayCloudInfo(){
+        System.out.println("Cloud info--------------");
+        System.out.println("List of PMs :");
+        pmList.forEach(pm -> {
+            System.out.println(pm.getName() + " [memory:" + pm.getMemoryCapacity() + ",  CPU:"
+                    + pm.getProcessorCapacity() + ", network:" + pm.getNetworkCapacity());
+        });
+        System.out.println("List of VMs :");
+        currentAssignments.forEach(assignment -> {
+          VM vm = assignment.getVm();
+            System.out.println(vm.getName() + " [memory:" + vm.getMemorySize() + ",  CPU:"
+                    + vm.getProcessorSize() + ", network:" + vm.getNetworkSize());
+        });
+        System.out.println("---------------------------------");
     }
 
     public Assignment findAssignment(List<Assignment> assignments, VM vm) {
@@ -84,7 +110,8 @@ public class Network {
     public void assignToCurrentLocation(VM vm, PM pm) throws Exception {
 
         if (!hasFreeCapacityFor(currentAssignments, pm, vm)) {
-            throw new Exception("there is no free capacity for this assignment " + vm.getName() + " to " + pm.getName());
+            throw new Exception(
+                    "there is no free capacity for this assignment " + vm.getName() + " to " + pm.getName());
         }
         Assignment newAssignment = new Assignment(pm, vm);
         Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
@@ -96,7 +123,8 @@ public class Network {
     public void assignToNewLocation(VM vm, PM pm) throws Exception {
 
         if (!hasFreeCapacityFor(newAssignments, pm, vm)) {
-            throw new Exception("there is no free capacity for this assignment " + vm.getName() + " to " + pm.getName());
+            throw new Exception(
+                    "there is no free capacity for this assignment " + vm.getName() + " to " + pm.getName());
         }
         Assignment newAssignment = new Assignment(pm, vm);
         Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
@@ -137,17 +165,21 @@ public class Network {
     }
 
     public void showAssignments() {
-        System.out.println("-------------------------legacy");
+        System.out.println("-------------------------legacy Assignments");
         pmList.forEach(pm -> {
-            System.out.print(pm.getName() + " [free memory:" + freeMemory(currentAssignments, pm) + ", free CPU:" + freeProcessor(currentAssignments, pm) + ",free network:" + freeNetwork(currentAssignments, pm) + "]   assigned VMs: ");
+            System.out.print(pm.getName() + " [free memory:" + freeMemory(currentAssignments, pm) + ", free CPU:"
+                    + freeProcessor(currentAssignments, pm) + ",free network:" + freeNetwork(currentAssignments, pm)
+                    + "]   assigned VMs: ");
             getVMForPM(currentAssignments, pm).forEach(vm -> {
                 System.out.print(vm.getName() + " ");
             });
             System.out.println();
         });
-        System.out.println("-------------------------New");
+        System.out.println("-------------------------New Assignments");
         pmList.forEach(pm -> {
-            System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:" + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm) + "]   assigned VMs: ");
+            System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:"
+                    + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm)
+                    + "]   assigned VMs: ");
             getVMForPM(newAssignments, pm).forEach(vm -> {
                 System.out.print(vm.getName() + " ");
             });
@@ -170,8 +202,10 @@ public class Network {
     public List<Migration> generateMigrations() {
         List<Migration> migrations = new ArrayList<>();
         currentAssignments.forEach(assignment -> {
-            if (!getLegacyVMLocation(assignment.getVm()).equals(findAssignment(newAssignments, assignment.getVm()).getPm())) {
-                migrations.add(new Migration(assignment.getPm(), findAssignment(newAssignments, assignment.getVm()).getPm(), assignment.getVm()));
+            if (!getLegacyVMLocation(assignment.getVm())
+                    .equals(findAssignment(newAssignments, assignment.getVm()).getPm())) {
+                migrations.add(new Migration(assignment.getPm(),
+                        findAssignment(newAssignments, assignment.getVm()).getPm(), assignment.getVm()));
             }
         });
         this.migrations = migrations;
@@ -179,7 +213,7 @@ public class Network {
     }
 
     //outgoing set of pm , separated based on each destination pm
-    public List<VMSet> getOutgoingVmsFrom(List<Migration> migrations, PM pm) {
+    public List<VMSet> getOutgoingVmSetsFrom(List<Migration> migrations, PM pm) {
 
         Map<PM, List<VM>> migrationsOfPM = new HashMap<>();
         migrations.forEach(migration -> {
@@ -222,10 +256,11 @@ public class Network {
     public List<VMSet> getAllOutGoingSets(List<Migration> migrations) {
         List<VMSet> vmSetList = new ArrayList<>();
         this.getPmList().forEach(pm -> {
-            if (!getOutgoingVmsFrom(migrations, pm).isEmpty())
-                getOutgoingVmsFrom(migrations, pm).forEach(vmsetlist -> {
+            if (!getOutgoingVmSetsFrom(migrations, pm).isEmpty()) {
+                getOutgoingVmSetsFrom(migrations, pm).forEach(vmsetlist -> {
                     vmSetList.add(vmsetlist);
                 });
+            }
         });
         return vmSetList;
     }
@@ -304,10 +339,10 @@ public class Network {
     public DependencyGraph generateDependencyGraph(List<Migration> migrationList) {
         DependencyGraph dependencyGraph = new DependencyGraph();
         pmList.forEach(sourcePm -> {
-            getOutgoingVmsFrom(migrationList, sourcePm).forEach(vmSet -> {
+            getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
                 PM destination = findMigrationOfVM(vmSet.getVMList().get(0), migrationList).getDestination();
                 if (!hasFreeCapacityFor(currentAssignments, destination, vmSet)) {
-                    getOutgoingVmsFrom(migrationList, destination).forEach(destOutSet -> {
+                    getOutgoingVmSetsFrom(migrationList, destination).forEach(destOutSet -> {
                         // System.out.println(vmSet + "->" + destOutSet);
                         dependencyGraph.addDependent(vmSet, destOutSet);
                     });
@@ -347,7 +382,8 @@ public class Network {
                         if (map.get(set) != null) {
                             map.get(set).forEach(dependentSet -> {
                                 dependentSet.getVMList().forEach(vm -> {
-                                            findMigrationOfVM(vm, migrations).setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
+                                            findMigrationOfVM(vm, migrations)
+                                                    .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
 
                                         }
 
@@ -378,10 +414,22 @@ public class Network {
     }
 
 
+    private int sumWeightOfSet(VMSet set, List<Migration> migrations) {
+        final int[] weight = {0};
+        set.getVMList().forEach(vm -> {
+                    weight[0] += findMigrationOfVM(vm, migrations).getWeight();
+                }
+        );
+        return weight[0];
+    }
+
+
     public Migration findMigrationOfVM(VM vm, List<Migration> migrations) {
         final Migration[] migration = new Migration[1];
         migrations.forEach(mig -> {
-            if (mig.getVm().equals(vm)) migration[0] = mig;
+            if (mig.getVm().equals(vm)) {
+                migration[0] = mig;
+            }
         });
 
         return migration[0];
@@ -396,7 +444,13 @@ public class Network {
                 System.out.println("There is a cycle :");
                 System.out.println(dGraph.getPath(vmSet, vmSet));
                 VMSet bestCandidate = findTheMinWeightSet(dGraph.getPath(vmSet, vmSet));
-                PM bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
+                PM bestPm = null;
+                try {
+                    bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                    System.exit(0);
+                }
                 updateMigration(bestCandidate, bestPm);
             }
 
@@ -407,22 +461,20 @@ public class Network {
         List<VM> vmList = bestCandidate.getVMList();
         vmList.forEach(vm -> {
             Migration oldmig = findMigrationOfVM(vm, migrations);
-            Migration newMig = new Migration(oldmig.getSource() , bestPm , vm);
+            Migration newMig = new Migration(oldmig.getSource(), bestPm, vm);
             newMig.setWeight(oldmig.getWeight());
             System.out.println("new temp Migration has been added :" + newMig);
-            nextPhaseMigrations.add(oldmig);
+            nextPhaseMigrations.add(new Migration(bestPm , oldmig.getDestination() , vm));
             migrations.remove(oldmig);
             migrations.add(newMig);
         });
     }
 
 
-
-
     private VMSet findTheMinWeightSet(List<VMSet> vmSetList) {
         final VMSet[] found = {vmSetList.get(0)};
         vmSetList.forEach(vmSet -> {
-            if (maxWeightOfSet(vmSet, migrations) < maxWeightOfSet(found[0], migrations)) {
+            if (sumWeightOfSet(vmSet, migrations) < sumWeightOfSet(found[0], migrations)) {
                 found[0] = vmSet;
             }
         });
@@ -430,7 +482,7 @@ public class Network {
     }
 
 
-    private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) {
+    private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) throws Exception {
         final PM[] pm = new PM[1];
         List<PM> candidatePms = tempLocationPMs(cycleVMSetList);
         candidatePms.forEach(candidatePm -> {
@@ -438,8 +490,9 @@ public class Network {
                 pm[0] = candidatePm;
             }
         });
-        if (pm[0].getName() == null) {
+        if (pm[0] == null) {
             System.out.println("there is no temp location for solving the cycle");
+            throw new Exception("Unsolvable Cycle");
         }
         return pm[0];
 
@@ -458,7 +511,7 @@ public class Network {
 
 
     private List<PM> tempLocationPMs(List<VMSet> cycleVMSetList) {
-        List<PM> pms =new ArrayList<PM>(pmList);
+        List<PM> pms = new ArrayList<PM>(pmList);
         cycleVMSetList.forEach(vmSet -> {
             vmSet.getVMList().forEach(vm -> {
                 migrations.forEach(migration -> {
@@ -470,4 +523,99 @@ public class Network {
         });
         return pms;
     }
+
+    //add initial creation of pms and vms and assigns as FFD
+    public void addOptimalPlacement(int numberOfPMs, int numberOfVMs) {
+
+        PM[] pms = new PM[numberOfPMs];
+
+        for (int i = 0; i < numberOfPMs; i++) {
+            pms[i] = new PM("pm" + i, 12, 12, 12);
+            this.getPmList().add(pms[i]);
+        }
+
+        for (int j = 0; j < numberOfVMs; j++) {
+            VM currentVm = createRndVM(j);
+            for (int i = 0; i < numberOfPMs; i++) {
+                if (hasFreeCapacityFor(newAssignments, pms[i], currentVm)) {
+                    try {
+                        assignToNewLocation(currentVm, pms[i]);
+                    } catch (Exception e) {
+                        //handled in assignToCurrentLocation
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+
+    public void assignRndNewLocations() {
+        newAssignments.forEach(assignment -> {
+            VM vm = assignment.getVm();
+            boolean assigned = false;
+            while (!assigned) {
+                PM pm = getPmList().get((int) (Math.random() * (pmList.size())));
+                if (hasFreeCapacityFor(currentAssignments, pm, vm)) {
+                    try {
+                        assignToCurrentLocation(vm, pm);
+                    } catch (Exception e) {
+                    }
+
+                    assigned = true;
+                }
+
+            }
+
+
+        });
+    }
+
+
+    private VM createRndVM(int index) {
+        int min = 3;
+        int max = 6;
+        return new VM("vm" + index, (int) (Math.random() * ((max - min) + 1)) + min,
+                (int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
+    }
+
+
+    public void draw(DependencyGraph dependencyGraph) {
+        Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
+
+        Graph<String, String> g = new SparseMultigraph<String, String>();
+
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+
+            g.addVertex(String.valueOf(entry.getKey()));
+            entry.getValue().forEach(vmSet -> {
+                g.addVertex(String.valueOf(vmSet));
+            });
+
+        }
+
+        final int[] counter = {0};
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+            entry.getValue().forEach(vmSet -> {
+                g.addEdge(String.valueOf(counter[0]++), String.valueOf(entry.getKey()), String.valueOf(vmSet),
+                        EdgeType.DIRECTED);
+            });
+
+        }
+
+        // g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
+        Layout<String, String> layout = new CircleLayout(g);
+        layout.setSize(new Dimension(400, 400));
+        BasicVisualizationServer<String, String> vv =
+                new BasicVisualizationServer<String, String>(layout);
+        vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+        vv.setPreferredSize(new Dimension(420, 420));
+
+        JFrame frame = new JFrame("Simple Graph View");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(vv);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
 }

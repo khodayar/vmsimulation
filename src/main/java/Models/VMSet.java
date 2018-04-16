@@ -27,7 +27,7 @@ public class VMSet {
     @Override
     public String toString() {
         final String[] str = new String[1];
-        str[0] = "VMSet{";
+        str[0] = "{";
         if (VMList.size() > 0) {
 
             VMList.forEach(vm -> {
