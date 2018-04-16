@@ -11,6 +11,8 @@ import java.awt.Dimension;
 import java.util.*;
 import java.util.function.Predicate;
 import javax.swing.JFrame;
+import javax.xml.crypto.dsig.Transform;
+import org.apache.commons.collections15.Transformer;
 
 /**
  * Created by I857455 on 1/18/2018.
@@ -342,13 +344,19 @@ public class Cloud {
             getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
                 PM destination = findMigrationOfVM(vmSet.getVMList().get(0), migrationList).getDestination();
                 if (!hasFreeCapacityFor(currentAssignments, destination, vmSet)) {
+
+                    //adding individual vm set
                     getOutgoingVmSetsFrom(migrationList, destination).forEach(destOutSet -> {
-                        // System.out.println(vmSet + "->" + destOutSet);
                         dependencyGraph.addDependent(vmSet, destOutSet);
                     });
+
+                    PM source = findMigrationOfVM(vmSet.getVMList().get(0) , migrationList).getSource();
+                    ComplexDependency complexDependency=  new ComplexDependency(vmSet , source , destination);
+                    dependencyGraph.getCmplxDepend().add(complexDependency);
                 }
             });
         });
+
         return dependencyGraph;
     }
 
@@ -580,16 +588,45 @@ public class Cloud {
     }
 
 
+    public void drawComplex(DependencyGraph dependencyGraph){
+        Graph<String, String> g = new SparseMultigraph<String, String>();
+        dependencyGraph.getCmplxDepend().forEach(complexDependency -> {
+            g.addVertex(complexDependency.getSource().getName());
+            g.addVertex(complexDependency.getDestination().getName());
+
+            g.addEdge(complexDependency.getVmSet().toString() , complexDependency.getSource().getName() , complexDependency.getDestination().getName() , EdgeType.DIRECTED );
+        });
+
+
+
+
+        Layout<String, String> layout = new CircleLayout(g);
+        layout.setSize(new Dimension(400, 400));
+        BasicVisualizationServer<String, String> vv =
+                new BasicVisualizationServer<String, String>(layout);
+        vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+        vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller());
+        vv.setPreferredSize(new Dimension(420, 420));
+
+        JFrame frame = new JFrame("Simple Graph View");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(vv);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+
     public void draw(DependencyGraph dependencyGraph) {
         Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
+
 
         Graph<String, String> g = new SparseMultigraph<String, String>();
 
         for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
 
-            g.addVertex(String.valueOf(entry.getKey()));
+            g.addVertex(String.valueOf(entry.getKey().getVMList().get(0).getName()));
             entry.getValue().forEach(vmSet -> {
-                g.addVertex(String.valueOf(vmSet));
+                g.addVertex(vmSet.getVMList().get(0).getName());
             });
 
         }
@@ -597,7 +634,7 @@ public class Cloud {
         final int[] counter = {0};
         for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
             entry.getValue().forEach(vmSet -> {
-                g.addEdge(String.valueOf(counter[0]++), String.valueOf(entry.getKey()), String.valueOf(vmSet),
+                g.addEdge(String.valueOf(counter[0]++), String.valueOf(entry.getKey().getVMList().get(0).getName()), String.valueOf(vmSet.getVMList().get(0).getName()),
                         EdgeType.DIRECTED);
             });
 

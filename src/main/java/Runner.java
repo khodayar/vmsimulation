@@ -54,40 +54,40 @@ public class Runner {
 //
         dependencyGraph.printDependency();
 
-        current.draw(dependencyGraph);
+        current.drawComplex(dependencyGraph);
 
 //
-        current.solveCycles();
+//        current.solveCycles();
+////
+////
+////
 //
 //
+//        dependencyGraph = current.generateDependencyGraph(current.getMigrations());
+//        current.draw(dependencyGraph);
+//        //loop for cycles
+//        current.setDependencyWeights(current.getMigrations());
+//        System.out.println("migration with dependency weights :");
+//        System.out.println(current.getMigrations());
+//        //   System.out.println("Dependencies :");
+//        dependencyGraph.printDependency();
+//        //  System.out.println(dependencyGraph.getPath(set2 , set2));
+//        //  System.out.println(dependencyGraph.getPath(set5 , set5));
+//        //  System.out.println(current.getMigrations());
+//        //   System.out.println(current.getAllOutGoingSets(current.generateMigrations()));
+//        // System.out.println(dependencyGraph.getDependencyDept(set3 ,  new ArrayList<>(), 0,new ArrayList<>()));
+//        // System.out.println(dependencyGraph.returnChain(set1 , set4));
+//        //System.out.println(dependencyGraph.getPath(set1 , set5));
 //
-
-
-        dependencyGraph = current.generateDependencyGraph(current.getMigrations());
-        current.draw(dependencyGraph);
-        //loop for cycles
-        current.setDependencyWeights(current.getMigrations());
-        System.out.println("migration with dependency weights :");
-        System.out.println(current.getMigrations());
-        //   System.out.println("Dependencies :");
-        dependencyGraph.printDependency();
-        //  System.out.println(dependencyGraph.getPath(set2 , set2));
-        //  System.out.println(dependencyGraph.getPath(set5 , set5));
-        //  System.out.println(current.getMigrations());
-        //   System.out.println(current.getAllOutGoingSets(current.generateMigrations()));
-        // System.out.println(dependencyGraph.getDependencyDept(set3 ,  new ArrayList<>(), 0,new ArrayList<>()));
-        // System.out.println(dependencyGraph.returnChain(set1 , set4));
-        //System.out.println(dependencyGraph.getPath(set1 , set5));
-
-        MigrationProcess migrationProcess = new MigrationProcess();
-        migrationProcess.setPipelineDegree(4);
-        migrationProcess.setLinkDegree(2);
-        migrationProcess.setCloud(current);
-        try {
-            migrationProcess.doMigration();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        MigrationProcess migrationProcess = new MigrationProcess();
+//        migrationProcess.setPipelineDegree(4);
+//        migrationProcess.setLinkDegree(2);
+//        migrationProcess.setCloud(current);
+//        try {
+//            migrationProcess.doMigration();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
 
     }
