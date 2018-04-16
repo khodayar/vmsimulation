@@ -465,6 +465,21 @@ public class Cloud {
         });
     }
 
+    public void detectCycles(DependencyGraph dependencyGraph){
+
+        dependencyGraph.getCmplxDepend();
+
+
+
+        //i need to get all the cycles and decide for the temp migration here
+
+
+
+
+    }
+
+
+
     private void updateMigration(VMSet bestCandidate, PM bestPm) {
         List<VM> vmList = bestCandidate.getVMList();
         vmList.forEach(vm -> {
