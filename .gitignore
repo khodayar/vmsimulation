@@ -6,3 +6,9 @@ out/
 out/
 .idea/
 VM_Migration.iml
+*.iml
+*.jar
+*.war
+*.ear
+#Maven
+.mvn/
