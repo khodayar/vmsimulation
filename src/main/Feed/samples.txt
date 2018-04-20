@@ -30,3 +30,31 @@ pm-4 vm-2 vm-7
 pm-5 vm-4
 pm-6 vm-6
 ---
+
+
+---sample in our paper
+
+pm definition
+pm-1 20 10 10
+pm-2 20 10 10
+pm-3 20 10 10
+pm-4 20 10 10
+vm definition
+vm-1 5 1 1
+vm-2 3 1 1
+vm-3 4 1 1
+vm-4 5 1 1
+vm-5 5 1 1
+vm-6 5 1 1
+vm-7 10 1 1
+vm-8 2 1 1
+current assignment definition
+pm-1 vm-1 vm-7
+pm-2 vm-2 vm-3 vm-6
+pm-3 vm-4
+pm-4 vm-5 vm-8
+new assignment definition
+pm-1 vm-2 vm-3 vm-4
+pm-2 vm-8
+pm-3
+pm-4 vm-1 vm-6 vm-5 vm-7
