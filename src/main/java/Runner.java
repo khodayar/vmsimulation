@@ -7,13 +7,13 @@ import java.util.List;
 
 public class Runner {
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws Exception {
 
 
 
         Cloud current = new Cloud();
         SetUp.initialAllocation(current);
-        current.showAssignments();
+       // current.showAssignments();
 
         /*
         current.addOptimalPlacement(4 , 6);
@@ -54,8 +54,8 @@ public class Runner {
 //
         dependencyGraph.printDependency();
 
-      //  current.draw(dependencyGraph);
-        current.drawComplex(dependencyGraph);
+        current.draw(dependencyGraph);
+      //  current.drawComplex(dependencyGraph);
 
 
         current.solveCycles();

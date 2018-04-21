@@ -16,7 +16,7 @@ public class SetUp {
     private static List<VM> vmList = new ArrayList<>();
 
 
-    public static void initialAllocation (Cloud cloud) throws FileNotFoundException {
+    public static void initialAllocation (Cloud cloud) throws Exception {
 
 
         String cloudSetUp = null;
@@ -58,8 +58,8 @@ public class SetUp {
                     for (int v=1;v<assignment.length;v++){
                         int finalV = v;
                         VM vm = vmList.stream().filter(thisvm -> thisvm.getName().equals(assignment[finalV])).findFirst().orElse(null);
-                        Assignment assignment1 = new Assignment(pm , vm);
-                        cloud.getCurrentAssignments().add(assignment1);
+                        cloud.assignToCurrentLocation(vm, pm);
+
                     }
             }
             else if (setupCase.equals("new assignment definition")){
@@ -68,8 +68,7 @@ public class SetUp {
                 for (int v=1;v<assignment.length;v++){
                     int finalV = v;
                     VM vm = vmList.stream().filter(thisvm -> thisvm.getName().equals(assignment[finalV])).findFirst().orElse(null);
-                    Assignment assignment1 = new Assignment(pm , vm);
-                    cloud.getNewAssignments().add(assignment1);
+                    cloud.assignToNewLocation(vm , pm);
                 }
             }
 
