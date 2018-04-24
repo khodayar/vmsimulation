@@ -16,7 +16,7 @@ public class SetUp {
     private static List<VM> vmList = new ArrayList<>();
 
 
-    public static void initialAllocation (Cloud cloud) throws Exception {
+    public static void readSetUp(Cloud cloud) throws Exception {
 
 
         String cloudSetUp = null;

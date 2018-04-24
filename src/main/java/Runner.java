@@ -1,6 +1,5 @@
 import Models.*;
 
-import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -12,7 +11,7 @@ public class Runner {
 
 
         Cloud current = new Cloud();
-        SetUp.initialAllocation(current);
+        SetUp.readSetUp(current);
        // current.showAssignments();
 
         /*
@@ -54,7 +53,7 @@ public class Runner {
 //
         dependencyGraph.printDependency();
 
-        current.draw(dependencyGraph);
+       // current.draw(dependencyGraph);
       //  current.drawComplex(dependencyGraph);
 
 
@@ -65,7 +64,7 @@ public class Runner {
 
 
         dependencyGraph = current.generateDependencyGraph(current.getMigrations());
-        current.drawComplex(dependencyGraph);
+      // current.drawComplex(dependencyGraph);
         //loop for cycles
         current.setDependencyWeights(current.getMigrations());
         System.out.println("migration with dependency weights :");

@@ -58,3 +58,56 @@ pm-1 vm-2 vm-3 vm-4
 pm-2 vm-8
 pm-3
 pm-4 vm-1 vm-6 vm-5 vm-7
+
+
+----sample for open questions
+pm definition
+pm-1 20 10 10
+pm-2 20 10 10
+pm-3 20 10 10
+pm-4 30 10 10
+pm-5 40 10 10
+vm definition
+vm-1 10 1 1
+vm-2 10 1 1
+vm-3 10 1 1
+vm-4 10 1 1
+vm-5 10 1 1
+vm-6 10 1 1
+vm-7 10 1 1
+vm-8 10 1 1
+current assignment definition
+pm-1 vm-1 vm-2
+pm-2 vm-3 vm-4
+pm-3 vm-5 vm-6
+pm-4 vm-7 vm-8
+new assignment definition
+pm-1 vm-1
+pm-2 vm-2
+pm-3 vm-3 vm-6
+pm-4 vm-4 vm-7
+pm-5 vm-5 vm-8
+
+--sample cycle with min set, min vm is better
+pm definition
+pm-1 15 10 10
+pm-2 15 10 10
+pm-3 15 10 10
+pm-4 15 10 10
+pm-5 15 10 10
+vm definition
+vm-1 12 1 1
+vm-2 7 1 1
+vm-3 8 1 1
+vm-4 14 1 1
+vm-5 13 1 1
+current assignment definition
+pm-1 vm-1
+pm-2 vm-2 vm-3
+pm-3 vm-4
+pm-4 vm-5
+new assignment definition
+pm-1 vm-5
+pm-2 vm-1
+pm-3 vm-2 vm-3
+pm-4 vm-4
