@@ -54,7 +54,7 @@ public class Runner {
         //****  two option to draw the dependency graph, based on VMs and based on PMs
 
        current.draw(dependencyGraph);
-      //  current.drawComplex(dependencyGraph);
+       current.drawComplex(dependencyGraph);
 
 
         current.solveCycles();

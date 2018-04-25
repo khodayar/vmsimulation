@@ -371,7 +371,7 @@ public class Cloud {
 
     public void setDependencyWeights(List<Migration> migrations) {
         DependencyGraph dependencyGraph = generateDependencyGraph(migrations);
-        Map<VMSet, List<VMSet>> map = dependencyGraph.getDependencyMap();
+        Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
 
         List<VMSet> removedInEdge = new ArrayList<>();
         List<VMSet> allSets = getAllOutGoingSets(migrations);
@@ -381,7 +381,7 @@ public class Cloud {
             allSets.forEach(set -> {
                 if (!removedInEdge.contains(set)) {
                     boolean hasInEdge = false;
-                    for (Map.Entry<VMSet, List<VMSet>> entry : map.entrySet()) {
+                    for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
                         if (entry.getValue().contains(set) && !removedInEdge.contains(entry.getKey())) {
                             hasInEdge = true;
                         }
@@ -389,8 +389,8 @@ public class Cloud {
 
                     if (!hasInEdge) {
                         int setWeight = maxWeightOfSet(set, migrations);
-                        if (map.get(set) != null) {
-                            map.get(set).forEach(dependentSet -> {
+                        if (dependencyMap.get(set) != null) {
+                            dependencyMap.get(set).forEach(dependentSet -> {
                                 dependentSet.getVMList().forEach(vm -> {
                                             findMigrationOfVM(vm, migrations)
                                                     .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
@@ -403,7 +403,6 @@ public class Cloud {
                }
             });
         }
-
 
     }
 
