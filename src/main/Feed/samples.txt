@@ -111,3 +111,36 @@ pm-1 vm-5
 pm-2 vm-1
 pm-3 vm-2 vm-3
 pm-4 vm-4
+
+
+---------  fork example
+pm definition
+pm-1 15 10 10
+pm-2 15 10 10
+pm-3 15 10 10
+pm-4 15 10 10
+pm-5 15 10 10
+vm definition
+vm-1 8 1 1
+vm-2 2 1 1
+vm-3 2 1 1
+vm-4 2 1 1
+vm-5 2 1 1
+vm-6 2 1 1
+vm-7 2 1 1
+vm-8 2 1 1
+vm-9 2 1 1
+vm-10 9 1 1
+vm-11 6 1 1
+current assignment definition
+pm-1 vm-1
+pm-2 vm-2 vm-3 vm-4 vm-5
+pm-3 vm-6 vm-7 vm-8 vm-9
+pm-4 vm-10
+pm-5 vm-11
+new assignment definition
+pm-1 vm-11
+pm-2 vm-1
+pm-3 vm-2 vm-3 vm-4 vm-5
+pm-4 vm-6 vm-7
+pm-5 vm-10 vm-8 vm-9

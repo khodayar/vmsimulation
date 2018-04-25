@@ -63,7 +63,7 @@ public class MigrationProcess {
     }
 
     private void startMigration(Migration m) throws Exception {
-        cloud.assignToCurrentLocation(m.getVm() , m.getDestination());
+        cloud.assignToCurrentLocation(m.getVm() , m.getDestination(), true);
         onGoingMigrations.add(m);
         pipelineDegree--;
         System.out.println("Migration Started " + m + " at " + timeStamp);
@@ -87,7 +87,8 @@ public class MigrationProcess {
                 toBeRemoved.add(currentMigration);
                 pipelineDegree++;
                 finished.add(currentMigration);
-                cloud.removeFromCurrent(currentMigration.getVm() , currentMigration.getDestination());
+                //remove initial vm running on source
+                cloud.removeFromCurrent(currentMigration.getVm() , currentMigration.getSource());
                 System.out.println("Migration Finished " + currentMigration + " at " + timeStamp);
                 System.out.println("free pipelineDegree :" + pipelineDegree);
             }

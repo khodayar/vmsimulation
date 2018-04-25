@@ -109,7 +109,7 @@ public class Cloud {
     //change assignment of a vm to new location
     //no need to check here
     //if (hasFreeCapacityFor(pm, vm)) {
-    public void assignToCurrentLocation(VM vm, PM pm) throws Exception {
+    public void assignToCurrentLocation(VM vm, PM pm, boolean inMigration) throws Exception {
 
         if (!hasFreeCapacityFor(currentAssignments, pm, vm)) {
             throw new Exception(
@@ -117,7 +117,7 @@ public class Cloud {
         }
         Assignment newAssignment = new Assignment(pm, vm);
         Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
-        currentAssignments.removeIf(assignmentPredicate);
+        if (!inMigration) currentAssignments.removeIf(assignmentPredicate);
         currentAssignments.add(newAssignment);
     }
 
@@ -138,7 +138,7 @@ public class Cloud {
     public void removeFromCurrent(VM vm, PM pm) {
         final Assignment[] remove = new Assignment[1];
         currentAssignments.forEach(assignment -> {
-            if (assignment.getVm().equals(vm)) {
+            if (assignment.getVm().equals(vm) && assignment.getPm().equals(pm)) {
                 remove[0] = assignment;
             }
         });
@@ -166,8 +166,8 @@ public class Cloud {
         return vms;
     }
 
-    public void showAssignments() {
-        System.out.println("-------------------------legacy Assignments");
+    public void showAssignments(boolean end) {
+        System.out.println("-------------------------current Assignments");
         pmList.forEach(pm -> {
             System.out.print(pm.getName() + " [free memory:" + freeMemory(currentAssignments, pm) + ", free CPU:"
                     + freeProcessor(currentAssignments, pm) + ",free network:" + freeNetwork(currentAssignments, pm)
@@ -177,16 +177,18 @@ public class Cloud {
             });
             System.out.println();
         });
-        System.out.println("-------------------------New Assignments");
-        pmList.forEach(pm -> {
-            System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:"
-                    + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm)
-                    + "]   assigned VMs: ");
-            getVMForPM(newAssignments, pm).forEach(vm -> {
-                System.out.print(vm.getName() + " ");
+        if (!end) {
+            System.out.println("-------------------------New Assignments");
+            pmList.forEach(pm -> {
+                System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:"
+                        + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm)
+                        + "]   assigned VMs: ");
+                getVMForPM(newAssignments, pm).forEach(vm -> {
+                    System.out.print(vm.getName() + " ");
+                });
+                System.out.println();
             });
-            System.out.println();
-        });
+        }
     }
 
 
@@ -392,16 +394,13 @@ public class Cloud {
                                 dependentSet.getVMList().forEach(vm -> {
                                             findMigrationOfVM(vm, migrations)
                                                     .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
-
                                         }
-
                                 );
                             });
                         }
                         removedInEdge.add(set);
                     }
-
-                }
+               }
             });
         }
 
@@ -581,7 +580,7 @@ public class Cloud {
                 PM pm = getPmList().get((int) (Math.random() * (pmList.size())));
                 if (hasFreeCapacityFor(currentAssignments, pm, vm)) {
                     try {
-                        assignToCurrentLocation(vm, pm);
+                        assignToCurrentLocation(vm, pm, false);
                     } catch (Exception e) {
                     }
 
@@ -631,6 +630,8 @@ public class Cloud {
     }
 
 
+
+    //draw a dependency graph based on the nodes as vm sets
     public void draw(DependencyGraph dependencyGraph) {
         Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
 
@@ -639,9 +640,9 @@ public class Cloud {
 
         for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
 
-            g.addVertex(String.valueOf(entry.getKey().getVMList().get(0).getName()));
+            g.addVertex(entry.getKey().toString());
             entry.getValue().forEach(vmSet -> {
-                g.addVertex(vmSet.getVMList().get(0).getName());
+                g.addVertex(vmSet.toString());
             });
 
         }
@@ -649,7 +650,7 @@ public class Cloud {
         final int[] counter = {0};
         for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
             entry.getValue().forEach(vmSet -> {
-                g.addEdge(String.valueOf(counter[0]++), String.valueOf(entry.getKey().getVMList().get(0).getName()), String.valueOf(vmSet.getVMList().get(0).getName()),
+                g.addEdge(String.valueOf(counter[0]++), (entry.getKey().toString()), (vmSet.toString()),
                         EdgeType.DIRECTED);
             });
 
@@ -662,6 +663,7 @@ public class Cloud {
                 new BasicVisualizationServer<String, String>(layout);
         vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
         vv.setPreferredSize(new Dimension(420, 420));
+
 
         JFrame frame = new JFrame("Simple Graph View");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

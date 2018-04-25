@@ -58,7 +58,7 @@ public class SetUp {
                     for (int v=1;v<assignment.length;v++){
                         int finalV = v;
                         VM vm = vmList.stream().filter(thisvm -> thisvm.getName().equals(assignment[finalV])).findFirst().orElse(null);
-                        cloud.assignToCurrentLocation(vm, pm);
+                        cloud.assignToCurrentLocation(vm, pm, false);
 
                     }
             }
