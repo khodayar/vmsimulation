@@ -11,6 +11,8 @@ import java.awt.Dimension;
 import java.util.*;
 import java.util.function.Predicate;
 import javax.swing.JFrame;
+import javax.xml.crypto.dsig.Transform;
+import org.apache.commons.collections15.Transformer;
 
 /**
  * Created by I857455 on 1/18/2018.
@@ -107,7 +109,7 @@ public class Cloud {
     //change assignment of a vm to new location
     //no need to check here
     //if (hasFreeCapacityFor(pm, vm)) {
-    public void assignToCurrentLocation(VM vm, PM pm) throws Exception {
+    public void assignToCurrentLocation(VM vm, PM pm, boolean inMigration) throws Exception {
 
         if (!hasFreeCapacityFor(currentAssignments, pm, vm)) {
             throw new Exception(
@@ -115,7 +117,7 @@ public class Cloud {
         }
         Assignment newAssignment = new Assignment(pm, vm);
         Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
-        currentAssignments.removeIf(assignmentPredicate);
+        if (!inMigration) currentAssignments.removeIf(assignmentPredicate);
         currentAssignments.add(newAssignment);
     }
 
@@ -136,7 +138,7 @@ public class Cloud {
     public void removeFromCurrent(VM vm, PM pm) {
         final Assignment[] remove = new Assignment[1];
         currentAssignments.forEach(assignment -> {
-            if (assignment.getVm().equals(vm)) {
+            if (assignment.getVm().equals(vm) && assignment.getPm().equals(pm)) {
                 remove[0] = assignment;
             }
         });
@@ -164,8 +166,8 @@ public class Cloud {
         return vms;
     }
 
-    public void showAssignments() {
-        System.out.println("-------------------------legacy Assignments");
+    public void showAssignments(boolean end) {
+        System.out.println("-------------------------current Assignments");
         pmList.forEach(pm -> {
             System.out.print(pm.getName() + " [free memory:" + freeMemory(currentAssignments, pm) + ", free CPU:"
                     + freeProcessor(currentAssignments, pm) + ",free network:" + freeNetwork(currentAssignments, pm)
@@ -175,16 +177,18 @@ public class Cloud {
             });
             System.out.println();
         });
-        System.out.println("-------------------------New Assignments");
-        pmList.forEach(pm -> {
-            System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:"
-                    + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm)
-                    + "]   assigned VMs: ");
-            getVMForPM(newAssignments, pm).forEach(vm -> {
-                System.out.print(vm.getName() + " ");
+        if (!end) {
+            System.out.println("-------------------------New Assignments");
+            pmList.forEach(pm -> {
+                System.out.print(pm.getName() + " [free memory:" + freeMemory(newAssignments, pm) + ", free CPU:"
+                        + freeProcessor(newAssignments, pm) + ",free network:" + freeNetwork(newAssignments, pm)
+                        + "]   assigned VMs: ");
+                getVMForPM(newAssignments, pm).forEach(vm -> {
+                    System.out.print(vm.getName() + " ");
+                });
+                System.out.println();
             });
-            System.out.println();
-        });
+        }
     }
 
 
@@ -342,13 +346,19 @@ public class Cloud {
             getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
                 PM destination = findMigrationOfVM(vmSet.getVMList().get(0), migrationList).getDestination();
                 if (!hasFreeCapacityFor(currentAssignments, destination, vmSet)) {
+
+                    //adding individual vm set
                     getOutgoingVmSetsFrom(migrationList, destination).forEach(destOutSet -> {
-                        // System.out.println(vmSet + "->" + destOutSet);
                         dependencyGraph.addDependent(vmSet, destOutSet);
                     });
+
+                    PM source = findMigrationOfVM(vmSet.getVMList().get(0) , migrationList).getSource();
+                    ComplexDependency complexDependency=  new ComplexDependency(vmSet , source , destination);
+                    dependencyGraph.getCmplxDepend().add(complexDependency);
                 }
             });
         });
+
         return dependencyGraph;
     }
 
@@ -361,7 +371,7 @@ public class Cloud {
 
     public void setDependencyWeights(List<Migration> migrations) {
         DependencyGraph dependencyGraph = generateDependencyGraph(migrations);
-        Map<VMSet, List<VMSet>> map = dependencyGraph.getDependencyMap();
+        Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
 
         List<VMSet> removedInEdge = new ArrayList<>();
         List<VMSet> allSets = getAllOutGoingSets(migrations);
@@ -371,7 +381,7 @@ public class Cloud {
             allSets.forEach(set -> {
                 if (!removedInEdge.contains(set)) {
                     boolean hasInEdge = false;
-                    for (Map.Entry<VMSet, List<VMSet>> entry : map.entrySet()) {
+                    for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
                         if (entry.getValue().contains(set) && !removedInEdge.contains(entry.getKey())) {
                             hasInEdge = true;
                         }
@@ -379,24 +389,20 @@ public class Cloud {
 
                     if (!hasInEdge) {
                         int setWeight = maxWeightOfSet(set, migrations);
-                        if (map.get(set) != null) {
-                            map.get(set).forEach(dependentSet -> {
+                        if (dependencyMap.get(set) != null) {
+                            dependencyMap.get(set).forEach(dependentSet -> {
                                 dependentSet.getVMList().forEach(vm -> {
                                             findMigrationOfVM(vm, migrations)
                                                     .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
-
                                         }
-
                                 );
                             });
                         }
                         removedInEdge.add(set);
                     }
-
-                }
+               }
             });
         }
-
 
     }
 
@@ -456,6 +462,21 @@ public class Cloud {
 
         });
     }
+
+    public void detectCycles(DependencyGraph dependencyGraph){
+
+        dependencyGraph.getCmplxDepend();
+
+
+
+        //i need to get all the cycles and decide for the temp migration here
+
+
+
+
+    }
+
+
 
     private void updateMigration(VMSet bestCandidate, PM bestPm) {
         List<VM> vmList = bestCandidate.getVMList();
@@ -558,7 +579,7 @@ public class Cloud {
                 PM pm = getPmList().get((int) (Math.random() * (pmList.size())));
                 if (hasFreeCapacityFor(currentAssignments, pm, vm)) {
                     try {
-                        assignToCurrentLocation(vm, pm);
+                        assignToCurrentLocation(vm, pm, false);
                     } catch (Exception e) {
                     }
 
@@ -580,16 +601,47 @@ public class Cloud {
     }
 
 
+    public void drawComplex(DependencyGraph dependencyGraph){
+        Graph<String, String> g = new SparseMultigraph<String, String>();
+        dependencyGraph.getCmplxDepend().forEach(complexDependency -> {
+            g.addVertex(complexDependency.getSource().getName());
+            g.addVertex(complexDependency.getDestination().getName());
+
+            g.addEdge(complexDependency.getVmSet().toString() , complexDependency.getSource().getName() , complexDependency.getDestination().getName() , EdgeType.DIRECTED );
+        });
+
+
+
+
+        Layout<String, String> layout = new CircleLayout(g);
+        layout.setSize(new Dimension(400, 400));
+        BasicVisualizationServer<String, String> vv =
+                new BasicVisualizationServer<String, String>(layout);
+        vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+        vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller());
+        vv.setPreferredSize(new Dimension(420, 420));
+
+        JFrame frame = new JFrame("Simple Graph View");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(vv);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+
+
+    //draw a dependency graph based on the nodes as vm sets
     public void draw(DependencyGraph dependencyGraph) {
         Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
+
 
         Graph<String, String> g = new SparseMultigraph<String, String>();
 
         for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
 
-            g.addVertex(String.valueOf(entry.getKey()));
+            g.addVertex(entry.getKey().toString());
             entry.getValue().forEach(vmSet -> {
-                g.addVertex(String.valueOf(vmSet));
+                g.addVertex(vmSet.toString());
             });
 
         }
@@ -597,7 +649,7 @@ public class Cloud {
         final int[] counter = {0};
         for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
             entry.getValue().forEach(vmSet -> {
-                g.addEdge(String.valueOf(counter[0]++), String.valueOf(entry.getKey()), String.valueOf(vmSet),
+                g.addEdge(String.valueOf(counter[0]++), (entry.getKey().toString()), (vmSet.toString()),
                         EdgeType.DIRECTED);
             });
 
@@ -610,6 +662,7 @@ public class Cloud {
                 new BasicVisualizationServer<String, String>(layout);
         vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
         vv.setPreferredSize(new Dimension(420, 420));
+
 
         JFrame frame = new JFrame("Simple Graph View");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

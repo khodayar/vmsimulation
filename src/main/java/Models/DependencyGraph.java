@@ -19,6 +19,7 @@ import java.util.List;
  */
 public class DependencyGraph {
     private Map<VMSet, List<VMSet>> dependencyMap;
+    private List<ComplexDependency> cmplxDepend;
 
     public Map<VMSet, List<VMSet>> getDependencyMap() {
         return dependencyMap;
@@ -27,6 +28,11 @@ public class DependencyGraph {
 
     public DependencyGraph() {
         dependencyMap = new HashMap<>();
+        cmplxDepend = new ArrayList<>();
+    }
+
+    public List<ComplexDependency> getCmplxDepend() {
+        return cmplxDepend;
     }
 
     public void addDependent(VMSet dep, VMSet source) {
@@ -41,6 +47,7 @@ public class DependencyGraph {
         }
 
     }
+
 
 
     public void printDependency() {
