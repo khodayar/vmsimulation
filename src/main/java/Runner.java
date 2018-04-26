@@ -11,6 +11,9 @@ public class Runner {
 
 
         Cloud current = new Cloud();
+
+
+        //we can use this function to read the set up and current and new placements from setup.txt
         SetUp.readSetUp(current);
 
         /*  alternative way to set up , create an optimal new assignment and a random current
@@ -44,17 +47,13 @@ public class Runner {
         });
         System.out.println(current.getMigrations());
 
-
-
-
-//
         dependencyGraph.printDependency();
 
 
         //****  two option to draw the dependency graph, based on VMs and based on PMs
 
        current.draw(dependencyGraph);
-       current.drawComplex(dependencyGraph);
+     //  current.drawComplex(dependencyGraph);
 
 
         current.solveCycles();

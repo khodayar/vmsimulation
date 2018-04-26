@@ -1,23 +1,30 @@
 pm definition
-pm-1 15 10 10
-pm-2 15 10 10
-pm-3 15 10 10
-pm-4 20 10 10
-pm-5 20 10 10
+pm-1 10 10 10
+pm-2 10 10 10
+pm-3 10 10 10
+pm-4 10 10 10
+pm-5 10 10 10
+pm-6 10 10 10
+pm-7 10 10 10
 vm definition
-vm-1 12 1 1
-vm-2 7 1 1
-vm-3 8 1 1
-vm-4 9 1 1
+vm-1 8 1 1
+vm-2 4 1 1
+vm-3 4 1 1
+vm-4 4 1 1
 vm-5 8 1 1
+vm-6 8 1 1
+vm-7 4 1 1
 current assignment definition
 pm-1 vm-1
-pm-2 vm-2 vm-3
-pm-3 vm-4
-pm-4 vm-5
+pm-2 vm-2
+pm-3 vm-5
+pm-4 vm-3 vm-4
+pm-5 vm-6
+pm-6 vm-7
 new assignment definition
-pm-1
+pm-1 vm-5
 pm-2 vm-1
-pm-3 vm-2
-pm-4 vm-3
-pm-5 vm-5 vm-4
+pm-3 vm-3
+pm-4 vm-2 vm-7
+pm-5 vm-4
+pm-6 vm-6
