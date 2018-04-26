@@ -604,10 +604,13 @@ public class Cloud {
     public void drawComplex(DependencyGraph dependencyGraph){
         Graph<String, String> g = new SparseMultigraph<String, String>();
         dependencyGraph.getCmplxDepend().forEach(complexDependency -> {
-            g.addVertex(complexDependency.getSource().getName());
-            g.addVertex(complexDependency.getDestination().getName());
 
-            g.addEdge(complexDependency.getVmSet().toString() , complexDependency.getSource().getName() , complexDependency.getDestination().getName() , EdgeType.DIRECTED );
+            String firstNode = getCurrentVMSetsForPM(complexDependency.getSource()).toString();
+            String secondNode = getCurrentVMSetsForPM(complexDependency.getDestination()).toString();
+            g.addVertex(firstNode);
+            g.addVertex(secondNode);
+
+            g.addEdge(complexDependency.getVmSet().toString() , firstNode , secondNode , EdgeType.DIRECTED );
         });
 
 
@@ -669,6 +672,20 @@ public class Cloud {
         frame.getContentPane().add(vv);
         frame.pack();
         frame.setVisible(true);
+    }
+
+
+
+
+    public VMSet getCurrentVMSetsForPM(PM pm){
+        VMSet vmSet = new VMSet();
+        this.getCurrentAssignments().forEach(assignment -> {
+            if (assignment.getPm().equals(pm)){
+                vmSet.add(assignment.getVm());
+            }
+        });
+
+        return vmSet;
     }
 
 }
