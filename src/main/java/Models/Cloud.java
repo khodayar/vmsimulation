@@ -577,60 +577,6 @@ public class Cloud {
         return pms;
     }
 
-    //add initial creation of pms and vms and assigns as FFD
-    public void addOptimalPlacement(int numberOfPMs, int numberOfVMs) {
-
-        PM[] pms = new PM[numberOfPMs];
-
-        for (int i = 0; i < numberOfPMs; i++) {
-            pms[i] = new PM("pm" + i, 12, 12, 12);
-            this.getPmList().add(pms[i]);
-        }
-
-        for (int j = 0; j < numberOfVMs; j++) {
-            VM currentVm = createRndVM(j);
-            for (int i = 0; i < numberOfPMs; i++) {
-                if (hasFreeCapacityFor(newAssignments, pms[i], currentVm)) {
-                    try {
-                        assignToNewLocation(currentVm, pms[i]);
-                    } catch (Exception e) {
-                        //handled in assignToCurrentLocation
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-
-    public void assignRndNewLocations() {
-        newAssignments.forEach(assignment -> {
-            VM vm = assignment.getVm();
-            boolean assigned = false;
-            while (!assigned) {
-                PM pm = getPmList().get((int) (Math.random() * (pmList.size())));
-                if (hasFreeCapacityFor(currentAssignments, pm, vm)) {
-                    try {
-                        assignToCurrentLocation(vm, pm, false);
-                    } catch (Exception e) {
-                    }
-
-                    assigned = true;
-                }
-
-            }
-
-
-        });
-    }
-
-
-    private VM createRndVM(int index) {
-        int min = 3;
-        int max = 6;
-        return new VM("vm" + index, (int) (Math.random() * ((max - min) + 1)) + min,
-                (int) (Math.random() * ((max - min) + 1)) + min, (int) (Math.random() * ((max - min) + 1)) + min);
-    }
 
 
     public void drawComplexGraph(DependencyGraph dependencyGraph){
