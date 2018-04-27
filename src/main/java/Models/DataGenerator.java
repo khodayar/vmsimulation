@@ -42,7 +42,7 @@ public class DataGenerator {
             VM vm = assignment.getVm();
             boolean assigned = false;
             while (!assigned) {
-                PM pm = cloud.getPmList().get((int) (Math.random() * (cloud.getPmList().size())));
+                PM pm = cloud.getPmList().get((int) (Math.random() * (cloud.getPmList().size() - numberOfFreePms)));
                 if (cloud.hasFreeCapacityFor(cloud.getCurrentAssignments(), pm, vm)) {
                     try {
                         cloud.assignToCurrentLocation(vm, pm, false);
