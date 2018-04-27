@@ -351,7 +351,7 @@ public class Cloud {
     //check of logic is not deteriorated
     //done : it's each pm must be sets
     //I made it private so not to be used in code
-    private DependencyGraph generateDependencyGraph(List<Migration> migrationList) {
+    public DependencyGraph generateDependencyGraph(List<Migration> migrationList) {
         DependencyGraph dependencyGraph = new DependencyGraph();
         pmList.forEach(sourcePm -> {
             getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
@@ -402,7 +402,7 @@ public class Cloud {
 
 
     public void setDependencyWeights(List<Migration> migrations) {
-        DependencyGraph dependencyGraph = generateOnoueDependencyGraph(migrations);
+        DependencyGraph dependencyGraph = generateDependencyGraph(migrations);
         Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
 
         List<VMSet> removedInEdge = new ArrayList<>();
@@ -477,7 +477,7 @@ public class Cloud {
 
     public void solveCycles() {
         getAllOutGoingSets(migrations).forEach(vmSet -> {
-            DependencyGraph dGraph = generateOnoueDependencyGraph(migrations);
+            DependencyGraph dGraph = generateDependencyGraph(migrations);
             if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
                 System.out.println("There is a cycle :");
                 System.out.println(dGraph.getPath(vmSet, vmSet));
