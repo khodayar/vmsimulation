@@ -27,7 +27,7 @@ public class Runner {
 
 
         DependencyGraph dependencyGraph;
-        dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
+        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
 
 
 //        //setting default migration weights
@@ -57,7 +57,7 @@ public class Runner {
 
 
         //recreate dependency graph after solving the deadlocks
-        dependencyGraph = current.generateOnoueDependencyGraph(current.getMigrations());
+        dependencyGraph = current.generateDependencyGraph(current.getMigrations());
 
       // current.drawComplexGraph(dependencyGraph);
 
