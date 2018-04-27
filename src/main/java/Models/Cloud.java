@@ -243,6 +243,16 @@ public class Cloud {
 
     }
 
+    public VMSet getSetOfAllMigratingVMsFrom(List<Migration> migrations , PM pm){
+        VMSet vmSet = new VMSet();
+        migrations.forEach(migration -> {
+            if (migration.getSource().equals(pm)){
+                vmSet.add(migration.getVm());
+            }
+        });
+        return vmSet;
+    }
+
 
     //get outgoing vmset from pm to pm
     public VMSet getVMGoingFromTo(List<Migration> migrations, PM source, PM destination) {
@@ -340,7 +350,8 @@ public class Cloud {
 
     //check of logic is not deteriorated
     //done : it's each pm must be sets
-    public DependencyGraph generateDependencyGraph(List<Migration> migrationList) {
+    //I made it private so not to be used in code
+    private DependencyGraph generateDependencyGraph(List<Migration> migrationList) {
         DependencyGraph dependencyGraph = new DependencyGraph();
         pmList.forEach(sourcePm -> {
             getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
@@ -362,6 +373,27 @@ public class Cloud {
         return dependencyGraph;
     }
 
+    //from a vm set that is going to a pm to all vms that are leaving that pm
+    public DependencyGraph generateOnoueDependencyGraph(List<Migration> migrationList) {
+        DependencyGraph dependencyGraph = new DependencyGraph();
+        pmList.forEach(sourcePm -> {
+            getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
+                PM destination = findMigrationOfVM(vmSet.getVMList().get(0), migrationList).getDestination();
+                if (!hasFreeCapacityFor(currentAssignments, destination, vmSet)) {
+
+                    //adding individual vm set
+                    dependencyGraph.addDependent(vmSet, getSetOfAllMigratingVMsFrom(migrationList , destination));
+
+                    PM source = findMigrationOfVM(vmSet.getVMList().get(0) , migrationList).getSource();
+                    ComplexDependency complexDependency=  new ComplexDependency(vmSet , source , destination);
+                    dependencyGraph.getCmplxDepend().add(complexDependency);
+                }
+            });
+        });
+
+        return dependencyGraph;
+    }
+
     public void setMigrationWeights(List<Migration> migrations) {
         migrations.forEach(migration -> {
             migration.setWeight(migration.getVm().getMemorySize());
@@ -370,7 +402,7 @@ public class Cloud {
 
 
     public void setDependencyWeights(List<Migration> migrations) {
-        DependencyGraph dependencyGraph = generateDependencyGraph(migrations);
+        DependencyGraph dependencyGraph = generateOnoueDependencyGraph(migrations);
         Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
 
         List<VMSet> removedInEdge = new ArrayList<>();
@@ -445,7 +477,7 @@ public class Cloud {
 
     public void solveCycles() {
         getAllOutGoingSets(migrations).forEach(vmSet -> {
-            DependencyGraph dGraph = generateDependencyGraph(migrations);
+            DependencyGraph dGraph = generateOnoueDependencyGraph(migrations);
             if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
                 System.out.println("There is a cycle :");
                 System.out.println(dGraph.getPath(vmSet, vmSet));
@@ -601,12 +633,12 @@ public class Cloud {
     }
 
 
-    public void drawComplex(DependencyGraph dependencyGraph){
+    public void drawComplexGraph(DependencyGraph dependencyGraph){
         Graph<String, String> g = new SparseMultigraph<String, String>();
         dependencyGraph.getCmplxDepend().forEach(complexDependency -> {
 
-            String firstNode = getCurrentVMSetsForPM(complexDependency.getSource()).toString();
-            String secondNode = getCurrentVMSetsForPM(complexDependency.getDestination()).toString();
+            String firstNode = getSetOfAllMigratingVMsFrom(migrations , complexDependency.getSource()).toString();
+            String secondNode = getSetOfAllMigratingVMsFrom(migrations , complexDependency.getDestination()).toString();
             g.addVertex(firstNode);
             g.addVertex(secondNode);
 

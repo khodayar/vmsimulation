@@ -28,10 +28,8 @@ public class Runner {
 
 
         DependencyGraph dependencyGraph;
-        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
+        dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
 
-        //it will fill the list of migrations for the network
-        current.generateMigrations();
 
 //        //setting default migration weights
         current.setMigrationWeights(current.getMigrations());
@@ -52,17 +50,17 @@ public class Runner {
 
         //****  two option to draw the dependency graph, based on VMs and based on PMs
 
-       current.draw(dependencyGraph);
-     //  current.drawComplex(dependencyGraph);
+      // current.draw(dependencyGraph);
+       current.drawComplexGraph(dependencyGraph);
 
 
         current.solveCycles();
 
 
         //recreate dependency graph after solving the deadlocks
-        dependencyGraph = current.generateDependencyGraph(current.getMigrations());
+        dependencyGraph = current.generateOnoueDependencyGraph(current.getMigrations());
 
-      // current.drawComplex(dependencyGraph);
+      // current.drawComplexGraph(dependencyGraph);
 
 
 
