@@ -14,10 +14,10 @@ public class Runner {
 
 
         //we can use this function to read the set up and current and new placements from setup.txt
-       // SetUp.readSetUp(current);
+        SetUp.readSetUp(current);
 
         //  alternative way to set up , create an optimal new assignment and a random current
-        DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
+        //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
 
         //end of setting up the network
@@ -50,10 +50,12 @@ public class Runner {
         //****  two option to draw the dependency graph, based on VMs and based on PMs
 
       // current.draw(dependencyGraph);
-      // current.drawComplexGraph(dependencyGraph);
+       current.drawComplexGraph(dependencyGraph);
 
 
-        current.solveCycles();
+       current.showCycles();
+
+//       current.solveCycles();
 
 
         //recreate dependency graph after solving the deadlocks

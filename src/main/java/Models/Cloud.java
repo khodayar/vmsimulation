@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import javax.swing.JFrame;
 import javax.xml.crypto.dsig.Transform;
+import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.collections15.Transformer;
 
 /**
@@ -474,6 +475,48 @@ public class Cloud {
 
     }
 
+    public void showCycles(){
+        Set<List<VMSet>> allCyleSet = new HashSet<List<VMSet>>();
+        getAllOutGoingSets(migrations).forEach(vmSet -> {
+            DependencyGraph dGraph = generateDependencyGraph(migrations);
+            if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
+
+                List<VMSet> cycle = dGraph.getPath(vmSet, vmSet);
+                cycle.remove(cycle.size() - 1);
+                Collections.sort(cycle, new Comparator<VMSet>() {
+                    @Override
+                    public int compare(VMSet o1, VMSet o2) {
+                        return o1.getVMList().toString().compareTo(o2.getVMList().toString());
+                    }
+                });
+                CollectionUtils.isEqualCollection(cycle , new ArrayList<>());
+
+                allCyleSet.add(cycle);
+             }
+
+        });
+
+      System.out.println("There are cycles :");
+      Set<List<VMSet>> cyleSet = new HashSet<List<VMSet>>();
+        final boolean[] itThere = {false};
+        allCyleSet.forEach(set -> {
+            cyleSet.forEach(newset -> {
+                if (CollectionUtils.isEqualCollection(set ,newset)){
+                    itThere[0] = true;
+                }
+            });
+            if (!itThere[0]){
+                cyleSet.add(set);
+            }
+
+      });
+
+
+        cyleSet.forEach(newset -> {
+            System.out.println(newset);
+        });
+    }
+
 
     public void solveCycles() {
         getAllOutGoingSets(migrations).forEach(vmSet -> {
@@ -516,7 +559,7 @@ public class Cloud {
             Migration oldmig = findMigrationOfVM(vm, migrations);
             Migration newMig = new Migration(oldmig.getSource(), bestPm, vm);
             newMig.setWeight(oldmig.getWeight());
-            System.out.println("new temp Migration has been added :" + newMig);
+            System.out.println("new temp Migration :" + newMig);
             nextPhaseMigrations.add(new Migration(bestPm , oldmig.getDestination() , vm));
             migrations.remove(oldmig);
             migrations.add(newMig);
