@@ -16,10 +16,9 @@ public class Runner {
         //we can use this function to read the set up and current and new placements from setup.txt
         SetUp.readSetUp(current);
 
-        /*  alternative way to set up , create an optimal new assignment and a random current
-        current.addOptimalPlacement(4 , 6);
-        current.assignRndNewLocations();
-        */
+        //  alternative way to set up , create an optimal new assignment and a random current
+        //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
+
 
         //end of setting up the network
 
@@ -54,7 +53,9 @@ public class Runner {
        current.drawComplexGraph(dependencyGraph);
 
 
-        current.solveCycles();
+       current.showCycles();
+
+//       current.solveCycles();
 
 
         //recreate dependency graph after solving the deadlocks
