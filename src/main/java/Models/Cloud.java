@@ -393,7 +393,13 @@ public class Cloud {
             VMSet depTo = getSetOfAllMigratingVMsFrom(migrationList , destinationPM);
             VMSet allComing = getAllIncomingVMsTo(migrationList , destinationPM);
             VMSet excess= getExcessVMSet(allComing,destinationPM);
-            if (!excess.getVMList().isEmpty()) dependencyGraph.addDependent(excess , depTo);
+            if (!excess.getVMList().isEmpty()) {
+                dependencyGraph.addDependent(excess, depTo);
+
+                //complex dependency won't work here ,
+                //it needs from one pm to one pm dependency
+
+            }
         });
 
 

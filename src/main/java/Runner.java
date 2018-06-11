@@ -39,17 +39,17 @@ public class Runner {
         dependencyGraph.printDependency();
         //****  two option to draw the dependency graph, based on VMs and based on PMs
 
-      // current.draw(dependencyGraph);
-       current.drawComplexGraph(dependencyGraph);
+       current.draw(dependencyGraph);
+      // current.drawComplexGraph(dependencyGraph);
 
        current.showCycles();
 
        current.solveCycles();
 
         //recreate dependency graph after solving the deadlocks
-        dependencyGraph = current.generateDependencyGraph(current.getMigrations());
+       dependencyGraph = current.generateOnoueDependencyGraph(current.getMigrations());
 
-       current.drawComplexGraph(dependencyGraph);
+       current.draw(dependencyGraph);
 
 
 
