@@ -109,6 +109,7 @@ public class Cloud {
 
     //change assignment of a vm to new location
     //no need to check here
+    //in migration = true for migration process, remove the other assignment in current (initial one)
     //if (hasFreeCapacityFor(pm, vm)) {
     public void assignToCurrentLocation(VM vm, PM pm, boolean inMigration) throws Exception {
 
@@ -766,4 +767,7 @@ public class Cloud {
         return vmSet;
     }
 
+    public PM findPMByName(String s) {
+       return pmList.stream().filter(thispm -> thispm.getName().equals(s)).findFirst().orElse(null);
+    }
 }
