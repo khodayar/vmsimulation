@@ -554,7 +554,11 @@ public class Cloud {
 
         });
 
-      System.out.println("There are cycles :");
+      if (allCyleSet.isEmpty()) {
+          System.out.println("There is no cycles");
+      }else {
+          System.out.println("There are cycles :");
+      }
       Set<List<VMSet>> cyleSet = new HashSet<List<VMSet>>();
         final boolean[] itThere = {false};
         allCyleSet.forEach(set -> {

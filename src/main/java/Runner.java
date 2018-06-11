@@ -9,8 +9,17 @@ public class Runner {
     public static void main(String[] args) throws Exception {
 
         Cloud current = new Cloud();
+        CsvReader.readFile(current , "src/main/Feed/final_state_CONS-0.3-0.8_1.csv");
+        System.out.println(current.getPmList().size());
         //we can use this function to read the set up and current and new placements from setup.txt
-        SetUp.readSetUp(current);
+
+
+
+
+
+
+
+      //  SetUp.readSetUp(current);
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
@@ -25,7 +34,8 @@ public class Runner {
 //        //setting default migration weights
         current.setMigrationWeights(current.getMigrations());
 
-        List<Migration> migrationsOFCurrent = current.getMigrations();
+
+        System.out.println("Number of Migrations :" + current.getMigrations().size());
 
         System.out.println("migration with initial weights :");
         Collections.sort(current.getMigrations(), new Comparator<Migration>() {
@@ -59,8 +69,8 @@ public class Runner {
         dependencyGraph.printDependency();
 
         MigrationProcess migrationProcess = new MigrationProcess();
-        migrationProcess.setPipelineDegree(2);
-        migrationProcess.setLinkDegree(2);
+        migrationProcess.setPipelineDegree(20);
+        migrationProcess.setLinkDegree(10);
         migrationProcess.setCloud(current);
         try {
             migrationProcess.doMigration();
