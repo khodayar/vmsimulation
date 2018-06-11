@@ -12,3 +12,4 @@ VM_Migration.iml
 *.ear
 #Maven
 .mvn/
+.idea/workspace.xml

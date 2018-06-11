@@ -244,6 +244,17 @@ public class Cloud {
 
     }
 
+
+    public VMSet getAllIncomingVMsTo (List<Migration> migrations , PM pm){
+        VMSet vmSet = new VMSet();
+        migrations.forEach(migration -> {
+            if (migration.getDestination().equals(pm)){
+                vmSet.add(migration.getVm());
+            }
+        });
+        return vmSet;
+    }
+
     public VMSet getSetOfAllMigratingVMsFrom(List<Migration> migrations , PM pm){
         VMSet vmSet = new VMSet();
         migrations.forEach(migration -> {
@@ -377,22 +388,62 @@ public class Cloud {
     //from a vm set that is going to a pm to all vms that are leaving that pm
     public DependencyGraph generateOnoueDependencyGraph(List<Migration> migrationList) {
         DependencyGraph dependencyGraph = new DependencyGraph();
-        pmList.forEach(sourcePm -> {
-            getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
-                PM destination = findMigrationOfVM(vmSet.getVMList().get(0), migrationList).getDestination();
-                if (!hasFreeCapacityFor(currentAssignments, destination, vmSet)) {
 
-                    //adding individual vm set
-                    dependencyGraph.addDependent(vmSet, getSetOfAllMigratingVMsFrom(migrationList , destination));
-
-                    PM source = findMigrationOfVM(vmSet.getVMList().get(0) , migrationList).getSource();
-                    ComplexDependency complexDependency=  new ComplexDependency(vmSet , source , destination);
-                    dependencyGraph.getCmplxDepend().add(complexDependency);
-                }
-            });
+        pmList.forEach(destinationPM -> {
+            VMSet depTo = getSetOfAllMigratingVMsFrom(migrationList , destinationPM);
+            VMSet allComing = getAllIncomingVMsTo(migrationList , destinationPM);
+            VMSet excess= getExcessVMSet(allComing,destinationPM);
+            if (!excess.getVMList().isEmpty()) dependencyGraph.addDependent(excess , depTo);
         });
 
+
+
+//        pmList.forEach(sourcePm -> {
+//            getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
+//                PM destination = findMigrationOfVM(vmSet.getVMList().get(0), migrationList).getDestination();
+//                if (!hasFreeCapacityFor(currentAssignments, destination, vmSet)) {
+//
+//                    //adding individual vm set
+//                    dependencyGraph.addDependent(vmSet, getSetOfAllMigratingVMsFrom(migrationList , destination));
+//
+//                    PM source = findMigrationOfVM(vmSet.getVMList().get(0) , migrationList).getSource();
+//                    ComplexDependency complexDependency=  new ComplexDependency(vmSet , source , destination);
+//                    dependencyGraph.getCmplxDepend().add(complexDependency);
+//                }
+//            });
+//        });
+
         return dependencyGraph;
+    }
+
+
+    //get incoming VMs that can not be migrated to
+    private VMSet getExcessVMSet(VMSet allComing, PM destinationPM) {
+        List<Assignment> copyOfAssignments = new ArrayList<Assignment>(currentAssignments);
+
+        VMSet vmSet = new VMSet();
+        List<VM> allComingVMs = allComing.getVMList();
+        Collections.sort(allComingVMs, new Comparator<VM>() {
+            @Override
+            public int compare(VM o1, VM o2) {
+                return o2.getMemorySize() - o1.getMemorySize();
+            }
+        });
+
+
+        allComingVMs.forEach(vm -> {
+            if (hasFreeCapacityFor(copyOfAssignments , destinationPM , vm)){
+                Assignment assignment = new Assignment(destinationPM , vm);
+                copyOfAssignments.add(assignment);
+            }
+            else {
+                vmSet.add(vm);
+            }
+        });
+
+
+        return vmSet;
+
     }
 
     public void setMigrationWeights(List<Migration> migrations) {

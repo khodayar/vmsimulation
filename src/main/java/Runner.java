@@ -8,27 +8,19 @@ public class Runner {
 
     public static void main(String[] args) throws Exception {
 
-
-
         Cloud current = new Cloud();
-
-
         //we can use this function to read the set up and current and new placements from setup.txt
         SetUp.readSetUp(current);
-
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
-
 
         //end of setting up the network
 
         current.displayCloudInfo();
         current.showAssignments(false);
 
-
         DependencyGraph dependencyGraph;
-        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
-
+        dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
 
 //        //setting default migration weights
         current.setMigrationWeights(current.getMigrations());
@@ -45,23 +37,19 @@ public class Runner {
         System.out.println(current.getMigrations());
 
         dependencyGraph.printDependency();
-
-
         //****  two option to draw the dependency graph, based on VMs and based on PMs
 
       // current.draw(dependencyGraph);
        current.drawComplexGraph(dependencyGraph);
 
-
        current.showCycles();
 
-//       current.solveCycles();
-
+       current.solveCycles();
 
         //recreate dependency graph after solving the deadlocks
         dependencyGraph = current.generateDependencyGraph(current.getMigrations());
 
-      // current.drawComplexGraph(dependencyGraph);
+       current.drawComplexGraph(dependencyGraph);
 
 
 

@@ -81,4 +81,9 @@ public class PM {
         result = 31 * result + processorCapacity;
         return result;
     }
+
+
+    public PM copy(){
+        return new PM(this.getName() + "-copy" , this.memoryCapacity , this.networkCapacity , this.processorCapacity);
+    }
 }
