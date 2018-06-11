@@ -9,17 +9,14 @@ public class Runner {
     public static void main(String[] args) throws Exception {
 
         Cloud current = new Cloud();
+
+        //read Charles's version
         CsvReader.readFile(current , "src/main/Feed/final_state_CONS-0.3-0.8_1.csv");
-        System.out.println(current.getPmList().size());
+
+
         //we can use this function to read the set up and current and new placements from setup.txt
 
-
-
-
-
-
-
-      //  SetUp.readSetUp(current);
+        //  SetUp.readSetUp(current);
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
