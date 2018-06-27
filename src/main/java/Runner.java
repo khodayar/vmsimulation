@@ -11,7 +11,7 @@ public class Runner {
         Cloud current = new Cloud();
 
         //read Charles's version
-        CsvReader.readFile(current , "src/main/Feed/final_state_CONS-0.3-0.8_1.csv");
+        CsvReader.readFile(current , "src/main/Feed/2018_00-25-23-458.csv");
 
 
         //we can use this function to read the set up and current and new placements from setup.txt
