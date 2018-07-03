@@ -55,4 +55,13 @@ public class VMSet {
     public int hashCode() {
         return VMList != null ? VMList.hashCode() : 0;
     }
+
+
+    public int getWeightSum(){
+        final int[] weight = {0};
+        VMList.forEach(vm -> {
+            weight[0] += vm.getMemorySize();
+        });
+        return weight[0];
+    }
 }

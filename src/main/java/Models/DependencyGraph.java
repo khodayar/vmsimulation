@@ -58,17 +58,28 @@ public class DependencyGraph {
         System.out.println();
     }
 
-
-
-
+    public VMSet getKeyContaining (VM vm) {
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+            if (entry.getKey().getVMList().contains(vm)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
     //return chain between any two this works fine -- update return chain based on this
     //return all the chain except dependant , if add set1, set1 and set1 is there , that's a cycle
     public List<VMSet> chainBetween(VMSet dependant, VMSet destination, List<VMSet> visited, List<VMSet> found) {
+        //adds already dependant
+
+
+        //first here , we must get the correct left side of the dep-map
         visited.add(dependant);
+        //if in current loop we reached destination from dependant
         if (dependencyMap.get(dependant) != null && dependencyMap.get(dependant).contains(destination)) {
               found.add(destination);
         }
          else if (dependencyMap.get(dependant) != null) {
+            //get the list of VMset in the map, and for each of them checks if they are not visited , tries it
             dependencyMap.get(dependant).forEach(vmSet -> {
                 if (!visited.contains(vmSet)) {
                     int checkSize = found.size();
@@ -83,6 +94,50 @@ public class DependencyGraph {
         }
         return found;
     }
+
+
+
+    //todo :
+    public List<VMSet> chainBetweenOn(VM dependant, VM destination, List<VMSet> visited, List<VMSet> found) {
+        //adds already dependant
+
+
+//        VMSet dependantLeft = getKeyContaining(dependant);
+//        //first here , we must get the correct left side of the dep-map
+//        visited.add(dependantLeft);
+//        //if in current loop we reached destination from dependant
+//        if (dependencyMap.get(dependantLeft) != null && dependencyMap.get(dependantLeft).contains(destination)) {
+//            found.add(destination);
+//        }
+//        else if (dependencyMap.get(dependant) != null) {
+//            //get the list of VMset in the map, and for each of them checks if they are not visited , tries it
+//            dependencyMap.get(dependant).forEach(vmSet -> {
+//                if (!visited.contains(vmSet)) {
+//                    int checkSize = found.size();
+//                    chainBetween(vmSet, destination, visited, found);
+//                    //we found something ?
+//                    if (found.size() > checkSize) {
+//                        found.add(vmSet);
+//                    }
+//
+//                }
+//            });
+//        }
+        return found;
+    }
+
+
+//
+//    public List<VMSet> chainBetweenOn(VMSet dependant, VMSet destination, List<VMSet> visited, List<VMSet> found){
+//        visited.add(dependant);
+//        if (dependencyMap.get(dependant) != null && dependencyMap.get(dependant).contains(destination)){
+//            found.add(destination);
+//        }
+//
+//    }
+
+
+
 
 
     public List<VMSet> getPath(VMSet dependant, VMSet destination){

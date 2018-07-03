@@ -102,7 +102,7 @@ public class MigrationProcess {
     public void doMigration() throws Exception {
         List<Migration> queue = cloud.getMigrations();
 
-      //  cloud.setMigrationWeights(queue);
+      //  cloud.setMigrationTimes(queue);
         Collections.sort(queue);
 
         queue.addAll(cloud.getNextPhaseMigrations());

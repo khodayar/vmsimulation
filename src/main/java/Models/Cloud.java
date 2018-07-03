@@ -365,6 +365,9 @@ public class Cloud {
     //done : it's each pm must be sets
     //I made it private so not to be used in code
     public DependencyGraph generateDependencyGraph(List<Migration> migrationList) {
+
+       // return generateOnoueDependencyGraph(migrationList);
+
         DependencyGraph dependencyGraph = new DependencyGraph();
         pmList.forEach(sourcePm -> {
             getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
@@ -387,41 +390,25 @@ public class Cloud {
     }
 
     //from a vm set that is going to a pm to all vms that are leaving that pm
-    public DependencyGraph generateOnoueDependencyGraph(List<Migration> migrationList) {
-        DependencyGraph dependencyGraph = new DependencyGraph();
-
-        pmList.forEach(destinationPM -> {
-            VMSet depTo = getSetOfAllMigratingVMsFrom(migrationList , destinationPM);
-            VMSet allComing = getAllIncomingVMsTo(migrationList , destinationPM);
-            VMSet excess= getExcessVMSet(allComing,destinationPM);
-            if (!excess.getVMList().isEmpty()) {
-                dependencyGraph.addDependent(excess, depTo);
-
-                //complex dependency won't work here ,
-                //it needs from one pm to one pm dependency
-
-            }
-        });
-
-
-
-//        pmList.forEach(sourcePm -> {
-//            getOutgoingVmSetsFrom(migrationList, sourcePm).forEach(vmSet -> {
-//                PM destination = findMigrationOfVM(vmSet.getVMList().get(0), migrationList).getDestination();
-//                if (!hasFreeCapacityFor(currentAssignments, destination, vmSet)) {
+//    public DependencyGraph generateOnoueDependencyGraph(List<Migration> migrationList) {
+//        DependencyGraph dependencyGraph = new DependencyGraph();
 //
-//                    //adding individual vm set
-//                    dependencyGraph.addDependent(vmSet, getSetOfAllMigratingVMsFrom(migrationList , destination));
+//        pmList.forEach(destinationPM -> {
+//            VMSet depTo = getSetOfAllMigratingVMsFrom(migrationList , destinationPM);
+//            VMSet allComing = getAllIncomingVMsTo(migrationList , destinationPM);
+//            VMSet excess= getExcessVMSet(allComing,destinationPM);
+//            if (!excess.getVMList().isEmpty()) {
+//                dependencyGraph.addDependent(excess, depTo);
 //
-//                    PM source = findMigrationOfVM(vmSet.getVMList().get(0) , migrationList).getSource();
-//                    ComplexDependency complexDependency=  new ComplexDependency(vmSet , source , destination);
-//                    dependencyGraph.getCmplxDepend().add(complexDependency);
-//                }
-//            });
+//                //complex dependency won't work here ,
+//                //it needs from one pm to one pm dependency
+//
+//            }
 //        });
-
-        return dependencyGraph;
-    }
+//
+//
+//        return dependencyGraph;
+//    }
 
 
     //get incoming VMs that can not be migrated to
@@ -447,13 +434,10 @@ public class Cloud {
                 vmSet.add(vm);
             }
         });
-
-
         return vmSet;
-
     }
 
-    public void setMigrationWeights(List<Migration> migrations) {
+    public void setMigrationTimes(List<Migration> migrations) {
         migrations.forEach(migration -> {
             migration.setWeight(migration.getVm().getMemorySize());
         });
@@ -497,6 +481,72 @@ public class Cloud {
 
     }
 
+
+
+
+    //this is setting dependency weights before solving the cycles (just removing the
+    public void setDependencyWeightsO(List<Migration> migrations) {
+        DependencyGraph dg = generateDependencyGraph(migrations);
+        Set<List<VMSet>> cycles = detectCycles(dg);
+
+        //now we must detect and remove one edge for cycles
+        cycles.stream().forEach(vmSets -> {
+
+            final VMSet[] minWeightSet = {vmSets.get(0)};
+            vmSets.forEach(vmSet -> {
+                if (vmSet.getWeightSum() < minWeightSet[0].getWeightSum()){
+                    minWeightSet[0] = vmSet;
+                }
+            });
+
+            //remove the dependency of the minWeight , remove it's outgoing edges
+            dg.getDependencyMap().remove(minWeightSet[0]);
+        });
+
+        //now we should have a dg without any cycles
+        Set<List<VMSet>> cycles2 = detectCycles(dg);
+        System.out.println(cycles2.isEmpty());
+        Map<VMSet , List<VMSet>> dependencyMap = dg.getDependencyMap();
+
+        List<VMSet> removedInEdge = new ArrayList<>();
+        List<VMSet> allSets = getAllOutGoingSets(migrations);
+
+        while (removedInEdge.size() < allSets.size()) {
+
+            allSets.forEach(set -> {
+                if (!removedInEdge.contains(set)) {
+                    boolean hasInEdge = false;
+                    for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+                        if (entry.getValue().contains(set) && !removedInEdge.contains(entry.getKey())) {
+                            hasInEdge = true;
+                        }
+                    }
+
+                    if (!hasInEdge) {
+                        int setWeight = maxWeightOfSet(set, migrations);
+                        if (dependencyMap.get(set) != null) {
+                            dependencyMap.get(set).forEach(dependentSet -> {
+                                dependentSet.getVMList().forEach(vm -> {
+                                            findMigrationOfVM(vm, migrations)
+                                                    .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
+                                        }
+                                );
+                            });
+                        }
+                        removedInEdge.add(set);
+                    }
+                }
+            });
+        }
+
+
+
+    }
+
+
+
+
+
     private int maxWeightOfSet(VMSet set, List<Migration> migrations) {
         final int[] weight = {0};
         set.getVMList().forEach(vm -> {
@@ -533,48 +583,17 @@ public class Cloud {
 
     }
 
-    public void showCycles(){
-        Set<List<VMSet>> allCyleSet = new HashSet<List<VMSet>>();
-        getAllOutGoingSets(migrations).forEach(vmSet -> {
-            DependencyGraph dGraph = generateDependencyGraph(migrations);
-            if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
+    public void showCycles(DependencyGraph dGraph){
 
-                List<VMSet> cycle = dGraph.getPath(vmSet, vmSet);
-                cycle.remove(cycle.size() - 1);
-                Collections.sort(cycle, new Comparator<VMSet>() {
-                    @Override
-                    public int compare(VMSet o1, VMSet o2) {
-                        return o1.getVMList().toString().compareTo(o2.getVMList().toString());
-                    }
-                });
-                CollectionUtils.isEqualCollection(cycle , new ArrayList<>());
+        Set<List<VMSet>> cycleSet = detectCycles(dGraph);
 
-                allCyleSet.add(cycle);
-             }
+        if (cycleSet.isEmpty()) {
+            System.out.println("There is no cycles");
+        }else {
+            System.out.println("There are cycles :");
+        }
 
-        });
-
-      if (allCyleSet.isEmpty()) {
-          System.out.println("There is no cycles");
-      }else {
-          System.out.println("There are cycles :");
-      }
-      Set<List<VMSet>> cyleSet = new HashSet<List<VMSet>>();
-        final boolean[] itThere = {false};
-        allCyleSet.forEach(set -> {
-            cyleSet.forEach(newset -> {
-                if (CollectionUtils.isEqualCollection(set ,newset)){
-                    itThere[0] = true;
-                }
-            });
-            if (!itThere[0]){
-                cyleSet.add(set);
-            }
-
-      });
-
-
-        cyleSet.forEach(newset -> {
+        cycleSet.forEach(newset -> {
             System.out.println(newset);
         });
     }
@@ -600,17 +619,42 @@ public class Cloud {
         });
     }
 
-    public void detectCycles(DependencyGraph dependencyGraph){
+    public Set<List<VMSet>> detectCycles(DependencyGraph dGraph){
 
-        dependencyGraph.getCmplxDepend();
+        Set<List<VMSet>> allCyleSet = new HashSet<List<VMSet>>();
+        getAllOutGoingSets(migrations).forEach(vmSet -> {
+            if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
 
+                List<VMSet> cycle = dGraph.getPath(vmSet, vmSet);
+                cycle.remove(cycle.size() - 1);
+                Collections.sort(cycle, new Comparator<VMSet>() {
+                    @Override
+                    public int compare(VMSet o1, VMSet o2) {
+                        return o1.getVMList().toString().compareTo(o2.getVMList().toString());
+                    }
+                });
+                CollectionUtils.isEqualCollection(cycle , new ArrayList<>());
 
+                allCyleSet.add(cycle);
+            }
 
-        //i need to get all the cycles and decide for the temp migration here
+        });
 
+        Set<List<VMSet>> cyleSet = new HashSet<List<VMSet>>();
+        final boolean[] itThere = {false};
+        allCyleSet.forEach(set -> {
+            cyleSet.forEach(newset -> {
+                if (CollectionUtils.isEqualCollection(set ,newset)){
+                    itThere[0] = true;
+                }
+            });
+            if (!itThere[0]){
+                cyleSet.add(set);
+            }
 
+        });
 
-
+        return cyleSet;
     }
 
 

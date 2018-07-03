@@ -2,7 +2,6 @@ import Models.*;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 public class Runner {
 
@@ -11,12 +10,12 @@ public class Runner {
         Cloud current = new Cloud();
 
         //read Charles's version
-        CsvReader.readFile(current , "src/main/Feed/2018_00-25-23-458.csv");
+     //  CsvReader.readFile(current , "src/main/Feed/2018_00-25-23-458.csv");
 
 
         //we can use this function to read the set up and current and new placements from setup.txt
 
-        //  SetUp.readSetUp(current);
+          SetUp.readSetUp(current);
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
@@ -26,10 +25,18 @@ public class Runner {
         current.showAssignments(false);
 
         DependencyGraph dependencyGraph;
-        dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
+
+        System.out.println("Onoue dependency graph");
+        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
+        dependencyGraph.printDependency();
+
+
+        System.out.println("old dependency graph");
+        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
+        dependencyGraph.printDependency();
 
 //        //setting default migration weights
-        current.setMigrationWeights(current.getMigrations());
+        current.setMigrationTimes(current.getMigrations());
 
 
         System.out.println("Number of Migrations :" + current.getMigrations().size());
@@ -46,21 +53,26 @@ public class Runner {
         dependencyGraph.printDependency();
         //****  two option to draw the dependency graph, based on VMs and based on PMs
 
-       current.draw(dependencyGraph);
+      // current.draw(dependencyGraph);
       // current.drawComplexGraph(dependencyGraph);
 
-       current.showCycles();
+       current.showCycles(dependencyGraph);
 
-       current.solveCycles();
+
+       /*
+       current.setDependencyWeightsO(current.getMigrations());
+
+
+      // current.solveCycles();
 
         //recreate dependency graph after solving the deadlocks
-       dependencyGraph = current.generateOnoueDependencyGraph(current.getMigrations());
+     //  dependencyGraph = current.generateOnoueDependencyGraph(current.getMigrations());
 
        current.draw(dependencyGraph);
 
 
 
-        current.setDependencyWeights(current.getMigrations());
+      //  current.setDependencyWeights(current.getMigrations());
         System.out.println("migration with dependency weights :");
         System.out.println(current.getMigrations());
         dependencyGraph.printDependency();
@@ -78,5 +90,6 @@ public class Runner {
         current.showAssignments(true);
 
 
+*/
     }
 }

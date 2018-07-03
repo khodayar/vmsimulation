@@ -171,3 +171,34 @@ pm-3 vm-2
 pm-4 vm-3
 pm-5 vm-5 vm-4
 
+
+------cycle samples #1
+pm definition
+pm-1 30 40 10
+pm-2 20 20 10
+pm-3 40 40 10
+pm-4 15 30 10
+pm-5 20 30 10
+vm definition
+vm-1 10 20 1
+vm-2 10 10 1
+vm-3 10 10 1
+vm-4 10 10 1
+vm-5 10 10 1
+vm-6 20 20 1
+current assignment definition
+pm-1 vm-1 vm-2
+pm-2 vm-3
+pm-3 vm-4
+pm-4 vm-5
+pm-5 vm-6
+new assignment definition
+pm-1 vm-4 vm-5
+pm-2 vm-6
+pm-3 vm-1
+pm-4 vm-2
+pm-5 vm-3
+
+
+
+
