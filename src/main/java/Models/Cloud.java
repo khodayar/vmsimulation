@@ -670,14 +670,14 @@ public class Cloud {
             List<VMSet> path = dGraph.getPathO(vm , vm);
             if (path.size() > 1) {
                 List<VMSet> cycle = path;
-              //  cycle.remove(cycle.size() - 1);
-                Collections.sort(cycle, new Comparator<VMSet>() {
-                    @Override
-                    public int compare(VMSet o1, VMSet o2) {
-                        return o1.getVMList().toString().compareTo(o2.getVMList().toString());
-                    }
-                });
-                CollectionUtils.isEqualCollection(cycle , new ArrayList<>());
+               // cycle.remove(cycle.size() - 1);
+//                Collections.sort(cycle, new Comparator<VMSet>() {
+//                    @Override
+//                    public int compare(VMSet o1, VMSet o2) {
+//                        return o1.getVMList().toString().compareTo(o2.getVMList().toString());
+//                    }
+//                });
+//                CollectionUtils.isEqualCollection(cycle , new ArrayList<>());
 
                 allCyleSet.add(cycle);
             }
@@ -687,6 +687,7 @@ public class Cloud {
         Set<List<VMSet>> cyleSet = new HashSet<List<VMSet>>();
         final boolean[] itThere = {false};
         allCyleSet.forEach(set -> {
+            itThere[0] = false;
             cyleSet.forEach(newset -> {
                 if (CollectionUtils.isEqualCollection(set ,newset)){
                     itThere[0] = true;
@@ -709,10 +710,12 @@ public class Cloud {
         if (cycleSet.isEmpty()) {
             System.out.println("There is no cycles");
         }else {
-            System.out.println("There are cycles :");
+            System.out.println("There are " + cycleSet.size() + "  cycles :");
         }
 
+        final int[] index = {0};
         cycleSet.forEach(newset -> {
+            System.out.println("--------------cycle number : " + (++index[0]));
             System.out.println(newset);
         });
     }

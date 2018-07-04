@@ -101,13 +101,11 @@ public class DependencyGraph {
                     if (found.size() > checkSize) {
                         found.add(vmSet);
                     }
-
                 }
             });
         }
         return found;
     }
-
 
 
     //todo :
@@ -131,6 +129,7 @@ public class DependencyGraph {
                     //we found something ?
                     if (found.size() > checkSize) {
                         found.add(getEntryContaining(vm));
+                        found.add(getKeyContaining(vm));
                     }
 
                 }
