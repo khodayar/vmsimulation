@@ -390,25 +390,25 @@ public class Cloud {
     }
 
     //from a vm set that is going to a pm to all vms that are leaving that pm
-//    public DependencyGraph generateOnoueDependencyGraph(List<Migration> migrationList) {
-//        DependencyGraph dependencyGraph = new DependencyGraph();
-//
-//        pmList.forEach(destinationPM -> {
-//            VMSet depTo = getSetOfAllMigratingVMsFrom(migrationList , destinationPM);
-//            VMSet allComing = getAllIncomingVMsTo(migrationList , destinationPM);
-//            VMSet excess= getExcessVMSet(allComing,destinationPM);
-//            if (!excess.getVMList().isEmpty()) {
-//                dependencyGraph.addDependent(excess, depTo);
-//
-//                //complex dependency won't work here ,
-//                //it needs from one pm to one pm dependency
-//
-//            }
-//        });
-//
-//
-//        return dependencyGraph;
-//    }
+    public DependencyGraph generateOnoueDependencyGraph(List<Migration> migrationList) {
+        DependencyGraph dependencyGraph = new DependencyGraph();
+
+        pmList.forEach(destinationPM -> {
+            VMSet depTo = getSetOfAllMigratingVMsFrom(migrationList , destinationPM);
+            VMSet allComing = getAllIncomingVMsTo(migrationList , destinationPM);
+            VMSet excess= getExcessVMSet(allComing,destinationPM);
+            if (!excess.getVMList().isEmpty()) {
+                dependencyGraph.addDependent(excess, depTo);
+
+                //complex dependency won't work here ,
+                //it needs from one pm to one pm dependency
+
+            }
+        });
+
+
+        return dependencyGraph;
+    }
 
 
     //get incoming VMs that can not be migrated to
@@ -651,10 +651,70 @@ public class Cloud {
             if (!itThere[0]){
                 cyleSet.add(set);
             }
+        });
+
+        return cyleSet;
+    }
+
+
+
+
+
+
+    public Set<List<VMSet>> detectCyclesO(DependencyGraph dGraph){
+
+        Set<List<VMSet>> allCyleSet = new HashSet<List<VMSet>>();
+
+        getVMs().forEach(vm -> {
+
+            List<VMSet> path = dGraph.getPathO(vm , vm);
+            if (path.size() > 1) {
+                List<VMSet> cycle = path;
+              //  cycle.remove(cycle.size() - 1);
+                Collections.sort(cycle, new Comparator<VMSet>() {
+                    @Override
+                    public int compare(VMSet o1, VMSet o2) {
+                        return o1.getVMList().toString().compareTo(o2.getVMList().toString());
+                    }
+                });
+                CollectionUtils.isEqualCollection(cycle , new ArrayList<>());
+
+                allCyleSet.add(cycle);
+            }
+
+        });
+
+        Set<List<VMSet>> cyleSet = new HashSet<List<VMSet>>();
+        final boolean[] itThere = {false};
+        allCyleSet.forEach(set -> {
+            cyleSet.forEach(newset -> {
+                if (CollectionUtils.isEqualCollection(set ,newset)){
+                    itThere[0] = true;
+                }
+            });
+            if (!itThere[0]){
+                cyleSet.add(set);
+            }
 
         });
 
         return cyleSet;
+    }
+
+
+    public void showCyclesO(DependencyGraph dGraph){
+
+        Set<List<VMSet>> cycleSet = detectCyclesO(dGraph);
+
+        if (cycleSet.isEmpty()) {
+            System.out.println("There is no cycles");
+        }else {
+            System.out.println("There are cycles :");
+        }
+
+        cycleSet.forEach(newset -> {
+            System.out.println(newset);
+        });
     }
 
 

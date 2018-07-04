@@ -66,6 +66,19 @@ public class DependencyGraph {
         }
         return null;
     }
+
+
+
+    public VMSet getEntryContaining (VM vm) {
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+            if (entry.getValue().get(0).getVMList().contains(vm)) {
+                //the entry is a singleton list
+                return entry.getValue().get(0);
+            }
+        }
+        return null;
+    }
+
     //return chain between any two this works fine -- update return chain based on this
     //return all the chain except dependant , if add set1, set1 and set1 is there , that's a cycle
     public List<VMSet> chainBetween(VMSet dependant, VMSet destination, List<VMSet> visited, List<VMSet> found) {
@@ -99,44 +112,32 @@ public class DependencyGraph {
 
     //todo :
     public List<VMSet> chainBetweenOn(VM dependant, VM destination, List<VMSet> visited, List<VMSet> found) {
-        //adds already dependant
 
 
-//        VMSet dependantLeft = getKeyContaining(dependant);
-//        //first here , we must get the correct left side of the dep-map
-//        visited.add(dependantLeft);
-//        //if in current loop we reached destination from dependant
-//        if (dependencyMap.get(dependantLeft) != null && dependencyMap.get(dependantLeft).contains(destination)) {
-//            found.add(destination);
-//        }
-//        else if (dependencyMap.get(dependant) != null) {
-//            //get the list of VMset in the map, and for each of them checks if they are not visited , tries it
-//            dependencyMap.get(dependant).forEach(vmSet -> {
-//                if (!visited.contains(vmSet)) {
-//                    int checkSize = found.size();
-//                    chainBetween(vmSet, destination, visited, found);
-//                    //we found something ?
-//                    if (found.size() > checkSize) {
-//                        found.add(vmSet);
-//                    }
-//
-//                }
-//            });
-//        }
+        VMSet dependantLeft = getKeyContaining(dependant);
+        //first here , we must get the correct left side of the dep-map
+        if (dependantLeft != null){ visited.add(dependantLeft);}
+        //if in current loop we reached destination from dependant
+        if (dependantLeft != null && dependencyMap.get(dependantLeft).get(0).getVMList().contains(destination)) {
+            VMSet destinationRight = getEntryContaining(destination);
+            found.add(destinationRight);
+        }
+        else if (dependantLeft != null) {
+            //get the list of VMset in the map, and for each of them checks if they are not visited , tries it
+            dependencyMap.get(dependantLeft).get(0).getVMList().forEach(vm -> {
+                if (!visited.contains(getKeyContaining(vm))) {
+                    int checkSize = found.size();
+                    chainBetweenOn(vm, destination, visited, found);
+                    //we found something ?
+                    if (found.size() > checkSize) {
+                        found.add(getEntryContaining(vm));
+                    }
+
+                }
+            });
+        }
         return found;
     }
-
-
-//
-//    public List<VMSet> chainBetweenOn(VMSet dependant, VMSet destination, List<VMSet> visited, List<VMSet> found){
-//        visited.add(dependant);
-//        if (dependencyMap.get(dependant) != null && dependencyMap.get(dependant).contains(destination)){
-//            found.add(destination);
-//        }
-//
-//    }
-
-
 
 
 
@@ -146,6 +147,23 @@ public class DependencyGraph {
 
         Collections.reverse(path);
         path.add(0, dependant);
+        return path;
+
+    }
+
+
+    public List<VMSet> getPathO(VM dependant, VM destination){
+
+        List<VMSet> path =  chainBetweenOn(dependant , destination , new ArrayList<>() ,  new ArrayList<>());
+
+        if (path.size() > 0) {
+            Collections.reverse(path);
+
+            //not sure
+            path.add(0, getKeyContaining(dependant));
+        }
+
+        //todo here the path is correct, the way we check if there is cycle in the path is not correct
         return path;
 
     }

@@ -27,10 +27,12 @@ public class Runner {
         DependencyGraph dependencyGraph;
 
         System.out.println("Onoue dependency graph");
-        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
+        dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
         dependencyGraph.printDependency();
 
+        current.showCyclesO(dependencyGraph);
 
+ /*
         System.out.println("old dependency graph");
         dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
         dependencyGraph.printDependency();
@@ -59,7 +61,7 @@ public class Runner {
        current.showCycles(dependencyGraph);
 
 
-       /*
+
        current.setDependencyWeightsO(current.getMigrations());
 
 
