@@ -10,12 +10,10 @@ public class Runner {
         Cloud current = new Cloud();
 
         //read Charles's version
-       CsvReader.readFile(current , "src/main/Feed/2018_00-25-23-458.csv");
-
-
+       //CsvReader.readFile(current , "src/main/Feed/out_inst_100_CONS-20-80_50_80-85.csv");
         //we can use this function to read the set up and current and new placements from setup.txt
 
-        //  SetUp.readSetUp(current);
+          SetUp.readSetUp(current);
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
@@ -55,17 +53,24 @@ public class Runner {
         dependencyGraph.printDependency();
         //****  two option to draw the dependency graph, based on VMs and based on PMs
 
-      // current.draw(dependencyGraph);
+       current.draw(dependencyGraph);
       // current.drawComplexGraph(dependencyGraph);
 
        current.showCycles(dependencyGraph);
 
 
+*/
+       // current.draw(dependencyGraph);
 
-       current.setDependencyWeightsO(current.getMigrations());
+        current.setMigrationTimes(current.getMigrations());
+        System.out.println(current.getMigrations());
+       //current.setDependencyWeightsO(current.getMigrations());
+        System.out.println(current.getMigrations());
 
+        current.solveCycles();
 
-      // current.solveCycles();
+       /*
+
 
         //recreate dependency graph after solving the deadlocks
      //  dependencyGraph = current.generateOnoueDependencyGraph(current.getMigrations());
@@ -75,13 +80,17 @@ public class Runner {
 
 
       //  current.setDependencyWeights(current.getMigrations());
-        System.out.println("migration with dependency weights :");
-        System.out.println(current.getMigrations());
-        dependencyGraph.printDependency();
+      */
+
+      //  System.out.println("migration with dependency weights :");
+      //  System.out.println(current.getMigrations());
+
+
+        //dependencyGraph.printDependency();
 
         MigrationProcess migrationProcess = new MigrationProcess();
-        migrationProcess.setPipelineDegree(20);
-        migrationProcess.setLinkDegree(10);
+        migrationProcess.setPipelineDegree(1000);
+        migrationProcess.setLinkDegree(1000);
         migrationProcess.setCloud(current);
         try {
             migrationProcess.doMigration();
@@ -92,6 +101,6 @@ public class Runner {
         current.showAssignments(true);
 
 
-*/
+
     }
 }

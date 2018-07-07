@@ -486,65 +486,71 @@ public class Cloud {
 
     //this is setting dependency weights before solving the cycles (just removing the
     public void setDependencyWeightsO(List<Migration> migrations) {
-        DependencyGraph dg = generateDependencyGraph(migrations);
-        Set<List<VMSet>> cycles = detectCycles(dg);
+        DependencyGraph dg = generateOnoueDependencyGraph(migrations);
+        Set<List<VMSet>> cycles = detectCyclesO(dg);
 
         //now we must detect and remove one edge for cycles
+        final int[] index = {0};
         cycles.stream().forEach(vmSets -> {
 
             final VMSet[] minWeightSet = {vmSets.get(0)};
             vmSets.forEach(vmSet -> {
-                if (vmSet.getWeightSum() < minWeightSet[0].getWeightSum()){
+                //must be a key, left side of dependency
+                if (dg.getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0].getWeightSum()){
                     minWeightSet[0] = vmSet;
                 }
             });
+            System.out.println("cycle " + (++index[0]) + " --> " + minWeightSet[0]);
 
             //remove the dependency of the minWeight , remove it's outgoing edges
             dg.getDependencyMap().remove(minWeightSet[0]);
         });
 
-        //now we should have a dg without any cycles
-        Set<List<VMSet>> cycles2 = detectCycles(dg);
-        System.out.println(cycles2.isEmpty());
-        Map<VMSet , List<VMSet>> dependencyMap = dg.getDependencyMap();
 
-        List<VMSet> removedInEdge = new ArrayList<>();
-        List<VMSet> allSets = getAllOutGoingSets(migrations);
+        //now we have dg without cycles
+        List<VM> node = getVMs();
 
-        while (removedInEdge.size() < allSets.size()) {
+        while (!node.isEmpty()){
+            List<VM> o = getVMsWihoutInEdge(node , dg);
+            o.forEach(oVM->{
+                if (dg.getKeyContaining(oVM) != null) {
+                    dg.getDependencyMap().get(dg.getKeyContaining(oVM)).get(0).getVMList().forEach(dependentVM -> {
+                            Migration depMig = findMigrationOfVM(dependentVM , migrations);
+                            depMig.setWeight(depMig.getWeight() + findMigrationOfVM(oVM , migrations).getWeight());
 
-            allSets.forEach(set -> {
-                if (!removedInEdge.contains(set)) {
-                    boolean hasInEdge = false;
-                    for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
-                        if (entry.getValue().contains(set) && !removedInEdge.contains(entry.getKey())) {
-                            hasInEdge = true;
-                        }
-                    }
-
-                    if (!hasInEdge) {
-                        int setWeight = maxWeightOfSet(set, migrations);
-                        if (dependencyMap.get(set) != null) {
-                            dependencyMap.get(set).forEach(dependentSet -> {
-                                dependentSet.getVMList().forEach(vm -> {
-                                            findMigrationOfVM(vm, migrations)
-                                                    .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
-                                        }
-                                );
-                            });
-                        }
-                        removedInEdge.add(set);
-                    }
+                    });
                 }
             });
+
+            for (VM vm: o)
+             {
+                 if (dg.getKeyContaining(vm) != null) {
+                     dg.getDependencyMap().remove(dg.getKeyContaining(vm));
+                 }
+
+            }
+
+            node.removeAll(o);
+            o.clear();
         }
+
+
+
 
 
 
     }
 
+    private List<VM> getVMsWihoutInEdge(List<VM> node, DependencyGraph dg) {
+        List<VM> wie = new ArrayList<>();
+        node.forEach(nodeVM ->{
+            if (dg.getEntryContaining(nodeVM) == null){
+                wie.add(nodeVM);
+            }
+        });
 
-
+        return wie;
+    }
 
 
     private int maxWeightOfSet(VMSet set, List<Migration> migrations) {
@@ -667,7 +673,7 @@ public class Cloud {
 
         getVMs().forEach(vm -> {
 
-            List<VMSet> path = dGraph.getPathO(vm , vm);
+            List<VMSet> path = dGraph.getPathO(vm , vm );
             if (path.size() > 1) {
                 List<VMSet> cycle = path;
                // cycle.remove(cycle.size() - 1);

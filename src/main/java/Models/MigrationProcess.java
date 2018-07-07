@@ -103,7 +103,7 @@ public class MigrationProcess {
         List<Migration> queue = cloud.getMigrations();
 
       //  cloud.setMigrationTimes(queue);
-        Collections.sort(queue);
+    //    Collections.sort(queue);
 
         queue.addAll(cloud.getNextPhaseMigrations());
 

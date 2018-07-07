@@ -129,7 +129,7 @@ public class DependencyGraph {
                     //we found something ?
                     if (found.size() > checkSize) {
                         found.add(getEntryContaining(vm));
-                        found.add(getKeyContaining(vm));
+                       found.add(getKeyContaining(vm));
                     }
 
                 }
