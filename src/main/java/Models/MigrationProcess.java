@@ -3,6 +3,7 @@ package Models;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by I857455 on 2/2/2018.
@@ -133,6 +134,56 @@ public class MigrationProcess {
         }
 
     }
+
+
+
+    public void doMigrationsOnoue (DependencyGraph d) throws Exception {
+
+        Set<List<VMSet>> c = cloud.detectCyclesO(d);
+        List<VM> l = new ArrayList<>();
+
+        //line 4--8 of onoue
+        l.addAll(cloud.getVMsWithoutOutEdges(d));
+
+        List<VM> x = new ArrayList<>();
+        List<VM> t = new ArrayList<>();
+        do {
+            //transformMDG
+            if (!c.isEmpty()) {
+                cloud.solveCycles();
+                t.addAll(cloud.getVMsWithoutOutEdges(d));
+            }
+
+            List<Migration> migrations = cloud.getMigrations();
+            for (int i=0; i<l.size();i++) {
+
+                Migration m = cloud.findMigrationOfVM(l.get(i), migrations);
+                if (cloud.hasFreeCapacityFor(cloud.getCurrentAssignments(), m.getDestination(), l.get(i)) &&
+                        linksHaveCapacity(m)) {
+                    try {
+                        startMigration(m);
+                        x.add(l.get(i));
+                        l.remove(l.get(i));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            l.addAll(t);
+            if (x.isEmpty() && l.isEmpty()){
+                throw new Exception("unsolvable cycles");
+            }
+            //line 21 of Onoue
+            cloud.getMigrations().removeAll(finishNextMigration());
+            d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+            Set<List<VMSet>> ct = cloud.detectCycles(d);
+            if (!ct.isEmpty()) {
+                cloud.solveCycles();
+                l.addAll(cloud.getVMsWithoutOutEdges(d));
+            }
+        } while (cloud.getMigrations().isEmpty());
+   }
 
     private boolean linksHaveCapacity(Migration migration) {
         final int[] sourceTraffic = {0};

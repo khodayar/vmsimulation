@@ -30,14 +30,19 @@ public class Runner {
 
         current.showCyclesO(dependencyGraph);
 
- /*
-        System.out.println("old dependency graph");
-        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
-        dependencyGraph.printDependency();
+        current.getVMsWithoutOutEdges(dependencyGraph).forEach(vm->{
+            System.out.println(vm);
+        });
+
+        current.draw(dependencyGraph);
+
+//        System.out.println("old dependency graph");
+//        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
+//        dependencyGraph.printDependency();
 
 //        //setting default migration weights
         current.setMigrationTimes(current.getMigrations());
-
+/*
 
         System.out.println("Number of Migrations :" + current.getMigrations().size());
 
@@ -61,15 +66,15 @@ public class Runner {
 
 */
        // current.draw(dependencyGraph);
-
+ /*
         current.setMigrationTimes(current.getMigrations());
         System.out.println(current.getMigrations());
-       //current.setDependencyWeightsO(current.getMigrations());
+        current.setDependencyWeightsO(current.getMigrations());
         System.out.println(current.getMigrations());
 
-        current.solveCycles();
+      //  current.solveCycles();
 
-       /*
+
 
 
         //recreate dependency graph after solving the deadlocks
@@ -80,20 +85,20 @@ public class Runner {
 
 
       //  current.setDependencyWeights(current.getMigrations());
-      */
+
 
       //  System.out.println("migration with dependency weights :");
       //  System.out.println(current.getMigrations());
 
 
         //dependencyGraph.printDependency();
-
+*/
         MigrationProcess migrationProcess = new MigrationProcess();
         migrationProcess.setPipelineDegree(1000);
         migrationProcess.setLinkDegree(1000);
         migrationProcess.setCloud(current);
         try {
-            migrationProcess.doMigration();
+            migrationProcess.doMigrationsOnoue(dependencyGraph);
         } catch (Exception e) {
             e.printStackTrace();
         }
