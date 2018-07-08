@@ -68,7 +68,7 @@ public class MigrationProcess {
         onGoingMigrations.add(m);
         pipelineDegree--;
         System.out.println("Migration Started " + m + " at " + timeStamp);
-
+        cloud.getMigrations().remove(m);
     }
 
     private List<Migration> finishNextMigration() {
@@ -147,12 +147,16 @@ public class MigrationProcess {
 
         List<VM> x = new ArrayList<>();
         List<VM> t = new ArrayList<>();
+
         do {
             //transformMDG
-            if (!c.isEmpty()) {
-                cloud.solveCycles();
-                t.addAll(cloud.getVMsWithoutOutEdges(d));
+            if (!c.isEmpty()){
+                cloud.solveCyclesOn(c, d);
+                d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                t.addAll(cloud.getVMsWithoutOutEdges(d));  //in next iteration will be added to l
+                t.removeAll(l);   //only new woe resulted form solving cycle
             }
+
 
             List<Migration> migrations = cloud.getMigrations();
             for (int i=0; i<l.size();i++) {
@@ -163,26 +167,45 @@ public class MigrationProcess {
                     try {
                         startMigration(m);
                         x.add(l.get(i));
-                        l.remove(l.get(i));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
 
+            l.removeAll(x);
             l.addAll(t);
+            t.clear();
+
+            //must be fixed
             if (x.isEmpty() && l.isEmpty()){
                 throw new Exception("unsolvable cycles");
             }
             //line 21 of Onoue
-            cloud.getMigrations().removeAll(finishNextMigration());
+            List<Migration> finished = finishNextMigration();
+          //  cloud.getMigrations().removeAll(finished);
+
+            //todo it stocks in a situation where there is no feasible migration
+            //but also no cycles !
+
+            finished.forEach(finishedMigration -> {
+                if (finishedMigration.getVm().getName().equals("VM-125")){
+                    System.out.println();
+                }
+                x.remove(finishedMigration.getVm());
+            });
             d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
-            Set<List<VMSet>> ct = cloud.detectCycles(d);
+            Set<List<VMSet>> ct = cloud.detectCyclesO(d);
             if (!ct.isEmpty()) {
-                cloud.solveCycles();
-                l.addAll(cloud.getVMsWithoutOutEdges(d));
+                c.addAll(ct);
+            } else {
+
+                //for new ones after the migrations has finished
+                cloud.getVMsWithoutOutEdges(d).forEach(vm ->{
+                    if (l.indexOf(vm)<0) {l.add(vm);}
+                 });
             }
-        } while (cloud.getMigrations().isEmpty());
+        } while (!cloud.getMigrations().isEmpty());
    }
 
     private boolean linksHaveCapacity(Migration migration) {
