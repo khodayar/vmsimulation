@@ -11,12 +11,12 @@ public class Runner {
         Cloud current = new Cloud();
 
         //read Charles's version
-        CsvReader.readFile(current , "src/main/Feed/2018_00-25-23-458.csv");
+       //CsvReader.readFile(current , "src/main/Feed/2018_00-25-23-458.csv");
 
 
         //we can use this function to read the set up and current and new placements from setup.txt
 
-        //  SetUp.readSetUp(current);
+          SetUp.readSetUp(current);
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
@@ -26,7 +26,7 @@ public class Runner {
         current.showAssignments(false);
 
         DependencyGraph dependencyGraph;
-        dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
+        dependencyGraph = current.generateDependencyGraph(current.generateMigrations());
 
 //        //setting default migration weights
         current.setMigrationWeights(current.getMigrations());
@@ -54,7 +54,7 @@ public class Runner {
        current.solveCycles();
 
         //recreate dependency graph after solving the deadlocks
-       dependencyGraph = current.generateOnoueDependencyGraph(current.getMigrations());
+       dependencyGraph = current.generateDependencyGraph(current.getMigrations());
 
        current.draw(dependencyGraph);
 
