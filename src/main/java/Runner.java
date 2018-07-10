@@ -25,7 +25,7 @@ public class Runner {
                 BufferedWriter bw = new BufferedWriter(fw);
                 PrintWriter out = new PrintWriter(bw))
         {
-           readFiles("D:\\google drive\\vm migration\\generator\\build_29-06-2018\\outputx" , files);
+           readFiles("C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\build_29-06-2018\\outputx" , files);
             files.forEach(file -> {
                 //out.println(runTheFile(file));
                 out.println(file.toString());

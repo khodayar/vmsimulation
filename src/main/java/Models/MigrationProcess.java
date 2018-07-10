@@ -200,6 +200,9 @@ public class MigrationProcess {
             //todo it stocks in a situation where there is no feasible migration
             //but also no cycles !
 
+
+            //infimnite loop of cycles
+            //l is not empty but all the vm are in ccycles
             finished.forEach(finishedMigration -> {
                 x.remove(finishedMigration.getVm());
             });
