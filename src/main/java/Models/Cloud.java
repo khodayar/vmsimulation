@@ -121,7 +121,9 @@ public class Cloud {
         }
         Assignment newAssignment = new Assignment(pm, vm);
         Predicate<Assignment> assignmentPredicate = p -> p.getVm() == vm;
-        if (!inMigration) currentAssignments.removeIf(assignmentPredicate);
+        if (!inMigration) {
+            currentAssignments.removeIf(assignmentPredicate);
+        }
         currentAssignments.add(newAssignment);
     }
 
@@ -408,7 +410,6 @@ public class Cloud {
             }
         });
 
-
         return dependencyGraph;
     }
 
@@ -425,7 +426,6 @@ public class Cloud {
                 return o2.getMemorySize() - o1.getMemorySize();
             }
         });
-
 
         allComingVMs.forEach(vm -> {
             if (hasFreeCapacityFor(copyOfAssignments, destinationPM, vm)) {
@@ -505,7 +505,6 @@ public class Cloud {
             dg.getDependencyMap().remove(minWeightSet[0]);
         });
 
-
         //now we have dg without cycles
         List<VM> node = getVMs();
 
@@ -549,9 +548,9 @@ public class Cloud {
     public List<VM> getVMsWithoutOutEdges(DependencyGraph dg) {
         List<VM> woe = new ArrayList<>();
         getMigrations().forEach(migration -> {
-          VM vm = migration.getVm();
-          //remove the second ?
-          if (dg.getKeyContaining(vm) == null || dg.getDependencyMap().get(dg.getKeyContaining(vm)).get(0).getVMList().isEmpty()) {
+            VM vm = migration.getVm();
+            //remove the second ?
+            if (dg.getKeyContaining(vm) == null) {
                 woe.add(vm);
             }
         });
@@ -632,9 +631,9 @@ public class Cloud {
     }
 
 
-   // In Onoue, the path and cycles are based on the VMs not VM sets, because the cycles
-   //are complex and not from set to the same set
-    public void solveCyclesOn(Set<List<VMSet>> cycles , DependencyGraph dg) {
+    // In Onoue, the path and cycles are based on the VMs not VM sets, because the cycles
+    //are complex and not from set to the same set
+    public void solveCyclesOn(Set<List<VMSet>> cycles, DependencyGraph dg) {
 
         final DependencyGraph[] d = {dg};
         Set<List<VMSet>> solved = new HashSet<>();
@@ -643,18 +642,19 @@ public class Cloud {
             final VMSet[] minWeightSet = {vmSets.get(0)};
             vmSets.forEach(vmSet -> {
                 //must be a key, left side of dependency
-                if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0].getWeightSum()) {
+                if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
+                        .getWeightSum()) {
                     minWeightSet[0] = vmSet;
                 }
             });
             PM tempLocation = null;
             try {
-                tempLocation =  findBestTempPM(vmSets , minWeightSet[0]);
+                tempLocation = findBestTempPM(vmSets, minWeightSet[0]);
                 solved.add(vmSets);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            updateMigration(minWeightSet[0] , tempLocation);
+            updateMigration(minWeightSet[0], tempLocation);
             d[0] = generateOnoueDependencyGraph(migrations);
         });
         cycles.removeAll(solved);
@@ -840,7 +840,6 @@ public class Cloud {
             g.addEdge(complexDependency.getVmSet().toString(), firstNode, secondNode, EdgeType.DIRECTED);
         });
 
-
         Layout<String, String> layout = new CircleLayout(g);
         layout.setSize(new Dimension(400, 400));
         BasicVisualizationServer<String, String> vv =
@@ -860,7 +859,6 @@ public class Cloud {
     //draw a dependency graph based on the nodes as vm sets
     public void draw(DependencyGraph dependencyGraph) {
         Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
-
 
         Graph<String, String> g = new SparseMultigraph<String, String>();
 
@@ -890,7 +888,6 @@ public class Cloud {
         vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
         vv.setPreferredSize(new Dimension(420, 420));
 
-
         JFrame frame = new JFrame("Simple Graph View");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().add(vv);
@@ -912,5 +909,16 @@ public class Cloud {
 
     public PM findPMByName(String s) {
         return pmList.stream().filter(thispm -> thispm.getName().equals(s)).findFirst().orElse(null);
+    }
+
+
+    //for migration process, where there are some infeasible VMs waiting for migration
+    //but newly generated cycles won't let them
+    public void removeVMsInCycle(Set<List<VMSet>> c, List<VM> l) {
+        c.forEach(setList ->{
+            setList.forEach(vmSet -> {
+                l.removeAll(vmSet.getVMList());
+            });
+        });
     }
 }

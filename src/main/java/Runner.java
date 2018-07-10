@@ -10,12 +10,12 @@ public class Runner {
         Cloud current = new Cloud();
 
         //read Charles's version
-       CsvReader.readFile(current , "src/main/Feed/out_inst_100_CONS-20-80_50_80-85.csv");
+      //CsvReader.readFile(current , "src/main/Feed/out_inst_100_CONS-20-80_50_80-85.csv");
         //out_inst_100_CONS-20-80_50_90-95.csv
         //out_inst_100_CONS-20-80_50_80-85.csv
         //we can use this function to read the set up and current and new placements from setup.txt
 
-        //  SetUp.readSetUp(current);
+         SetUp.readSetUp(current);
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 

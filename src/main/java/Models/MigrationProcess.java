@@ -159,6 +159,7 @@ public class MigrationProcess {
 
 
             List<Migration> migrations = cloud.getMigrations();
+
             for (int i=0; i<l.size();i++) {
 
                 Migration m = cloud.findMigrationOfVM(l.get(i), migrations);
@@ -166,7 +167,7 @@ public class MigrationProcess {
                         linksHaveCapacity(m)) {
                     try {
                         startMigration(m);
-                        x.add(l.get(i));
+                        x.add(l.get(i));  //ongoing migrating VMs
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -198,6 +199,7 @@ public class MigrationProcess {
             Set<List<VMSet>> ct = cloud.detectCyclesO(d);
             if (!ct.isEmpty()) {
                 c.addAll(ct);
+                cloud.removeVMsInCycle(c , l);
             } else {
 
                 //for new ones after the migrations has finished
