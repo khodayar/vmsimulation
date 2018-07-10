@@ -180,7 +180,8 @@ public class MigrationProcess {
 
             //must be fixed
             if (x.isEmpty() && l.isEmpty()){
-                throw new Exception("unsolvable cycles");
+                throw new Exception("infeasible migration(s)");
+                //if there is no temp location, it will throw exception in finding temp pm
             }
             //line 21 of Onoue
             List<Migration> finished = finishNextMigration();

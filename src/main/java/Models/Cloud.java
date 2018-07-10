@@ -12,10 +12,8 @@ import java.awt.Dimension;
 import java.util.*;
 import java.util.function.Predicate;
 import javax.swing.JFrame;
-import javax.xml.crypto.dsig.Transform;
 
 import org.apache.commons.collections15.CollectionUtils;
-import org.apache.commons.collections15.Transformer;
 
 /**
  * Created by I857455 on 1/18/2018.
@@ -787,7 +785,7 @@ public class Cloud {
 
     private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) throws Exception {
         final PM[] pm = new PM[1];
-        List<PM> candidatePms = tempLocationPMs(cycleVMSetList);
+        List<PM> candidatePms = pmsNotInCycle(cycleVMSetList);
         candidatePms.forEach(candidatePm -> {
             if (hasFreeCapacityForSet(newAssignments, candidatePm, candidate)) {
                 pm[0] = candidatePm;
@@ -813,7 +811,7 @@ public class Cloud {
     }
 
 
-    private List<PM> tempLocationPMs(List<VMSet> cycleVMSetList) {
+    private List<PM> pmsNotInCycle(List<VMSet> cycleVMSetList) {
         List<PM> pms = new ArrayList<PM>(pmList);
         cycleVMSetList.forEach(vmSet -> {
             vmSet.getVMList().forEach(vm -> {
