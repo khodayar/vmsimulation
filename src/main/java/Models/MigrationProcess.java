@@ -215,7 +215,7 @@ public class MigrationProcess {
                     if (l.indexOf(vm)<0) {l.add(vm);}
                  });
             }
-        } while (!cloud.getMigrations().isEmpty());
+        } while (!cloud.getMigrations().isEmpty() || !onGoingMigrations.isEmpty());
         cloud.printReport();
    }
 
