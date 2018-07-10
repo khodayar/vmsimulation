@@ -1,36 +1,100 @@
 import Models.*;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class Runner {
 
     public static void main(String[] args) throws Exception {
+        List<String> files = new ArrayList<>();
+
+        try(FileWriter fw = new FileWriter("myfile.txt", true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                PrintWriter out = new PrintWriter(bw))
+        {
+           readFiles("D:\\google drive\\vm migration\\generator\\build_29-06-2018\\outputx" , files);
+            files.forEach(file -> {
+                //out.println(runTheFile(file));
+                out.println(file.toString());
+            });
+            //more code
+        } catch (IOException e) {
+            //exception handling left as an exercise for the reader
+        }
+
+        try(FileWriter fw = new FileWriter("report.txt", true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                PrintWriter out = new PrintWriter(bw))
+        {
+            files.forEach(file -> {
+                //out.println(runTheFile(file));
+                out.println(runTheFile(file));
+            });
+            //more code
+        } catch (IOException e) {
+            //exception handling left as an exercise for the reader
+        }
+
+
+    }
+
+    private static void readFiles(String folderPath , List<String> files) {
+
+        File folder = new File(folderPath);
+        File[] listOfFiles = folder.listFiles();
+
+        for (File directory : listOfFiles) {
+
+             if (directory.isDirectory()){
+                files.add(directory.listFiles()[1].toString());
+            }
+        }
+
+    }
+
+
+    public static String runTheFile(String filePath){
+
+
 
         Cloud current = new Cloud();
 
         //read Charles's version
-      //CsvReader.readFile(current , "src/main/Feed/out_inst_100_CONS-20-80_50_80-85.csv");
+         CsvReader.readFile(current , filePath);
+
         //out_inst_100_CONS-20-80_50_90-95.csv
         //out_inst_100_CONS-20-80_50_80-85.csv
         //we can use this function to read the set up and current and new placements from setup.txt
 
-         SetUp.readSetUp(current);
+        //  SetUp.readSetUp(current);
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
         //end of setting up the network
 
-        current.displayCloudInfo();
-        current.showAssignments(false);
+        // current.displayCloudInfo();
+        // current.showAssignments(false);
 
         DependencyGraph dependencyGraph;
 
-        System.out.println("Onoue dependency graph");
+       // System.out.println("Onoue dependency graph");
         dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
-        dependencyGraph.printDependency();
+        //  dependencyGraph.printDependency();
 
-        current.showCyclesO(dependencyGraph);
+        //  current.showCyclesO(dependencyGraph);
 
 //        current.getVMsWithoutOutEdges(dependencyGraph).forEach(vm->{
 //            System.out.println(vm);
@@ -44,6 +108,9 @@ public class Runner {
 
 //        //setting default migration weights
         current.setMigrationTimes(current.getMigrations());
+        current.setDependencyWeightsO(current.getMigrations());
+       // System.out.println(current.getMigrations());
+
 /*
 
         System.out.println("Number of Migrations :" + current.getMigrations().size());
@@ -67,7 +134,7 @@ public class Runner {
 
 
 */
-       // current.draw(dependencyGraph);
+        // current.draw(dependencyGraph);
  /*
         current.setMigrationTimes(current.getMigrations());
         System.out.println(current.getMigrations());
@@ -97,7 +164,7 @@ public class Runner {
 */
 
 
-        System.out.println(current.getMigrations());
+        //  System.out.println(current.getMigrations());
 //        System.out.println("-------solving-----------");
 //        current.solveCyclesOn(current.detectCyclesO(dependencyGraph) , dependencyGraph);
 //
@@ -113,11 +180,15 @@ public class Runner {
 //        System.out.println(current.getMigrations());
 //
 //        System.out.println("-------------------------------");
-        System.out.println("-------------------------------process-------------");
+        System.out.println("-------------------------------process-------------"+ filePath);
         MigrationProcess migrationProcess = new MigrationProcess();
         migrationProcess.setPipelineDegree(1000);
         migrationProcess.setLinkDegree(1000);
         migrationProcess.setCloud(current);
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+        String timestamp = sdf.format(new Date());
+        current.getReport().setTimeStampMigStart(timestamp);
+
         try {
             migrationProcess.doMigrationsOnoue(dependencyGraph);
         } catch (Exception e) {
@@ -126,7 +197,9 @@ public class Runner {
 
         current.showAssignments(true);
 
+       return current.getReport().toString();
 
 
     }
+
 }

@@ -5,11 +5,12 @@ import java.util.Objects;
 /**
  * Created by I857455 on 1/18/2018.
  */
-public class VM {
+public class VM implements Comparable<VM>{
     private String name;
     private int memorySize;
     private int processorSize;
     private int networkSize;
+    private int migrationWeight;
 
 
     public int getMemorySize() {
@@ -42,6 +43,14 @@ public class VM {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getMigrationWeight() {
+        return migrationWeight;
+    }
+
+    public void setMigrationWeight(int migrationWeight) {
+        this.migrationWeight = migrationWeight;
     }
 
     public VM(String name, int memorySize, int processorSize, int network) {
@@ -87,5 +96,18 @@ public class VM {
                 ", processorSize=" + processorSize +
                 ", networkSize=" + networkSize +
                 '}';
+    }
+
+    @Override
+    public int compareTo(VM o) {
+        if (migrationWeight > o.getMigrationWeight()){
+            return -1;
+        }
+        else if (migrationWeight == o.getMigrationWeight()){
+            return 0;
+        }
+        else {
+            return 1;
+        }
     }
 }

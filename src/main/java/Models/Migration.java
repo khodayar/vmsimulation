@@ -40,6 +40,7 @@ public class Migration implements Comparable<Migration>{
 
     public void setWeight(int weight) {
         this.weight = weight;
+        this.getVm().setMigrationWeight(weight);
     }
 
     public int getRemainingSize() {

@@ -22,17 +22,16 @@ public class CsvReader {
 
         String stage = "";
 
-        ArrayList<String> VMRead= new ArrayList<String>();
+        ArrayList<String> VMRead = new ArrayList<String>();
 
         try {
 
             br = new BufferedReader(new FileReader(csvFile));
 
-
             while ((line = br.readLine()) != null) {
                 String[] thisline = line.split(cvsSplitBy);
 
-                if (stage ==""){
+                if (stage == "") {
                     VMRead.add(line);
                 }
 
@@ -42,15 +41,16 @@ public class CsvReader {
                 }
 
                 //reading PMs
-                if (thisline.length > 0 && stage.equals("servers")){
-                    PM pm = new PM( "PM-" + thisline[0] , Integer.parseInt(thisline[4]) , defaultCapacity , Integer.parseInt(thisline[1]));
+                if (thisline.length > 0 && stage.equals("servers") && !thisline[0].equals("TREE DATA") && !thisline[0].equals("CLASSES:")) {
+                    PM pm = new PM("PM-" + thisline[0], Integer.parseInt(thisline[4]), defaultCapacity,
+                            Integer.parseInt(thisline[1]));
                     cloud.getPmList().add(pm);
                 }
             }
 
             //now read VMs
 
-            for (String s : VMRead){
+            for (String s : VMRead) {
                 String[] thisline = s.split(cvsSplitBy);
 
                 if (thisline.length > 0 && thisline[0].equals("VM")) {
@@ -59,15 +59,16 @@ public class CsvReader {
                 }
 
                 //reading PMs
-                if (thisline.length > 0 && stage.equals("vms")){
-                    VM vm = new VM("VM-" + thisline[0] , Integer.parseInt(thisline[5]) , Integer.parseInt(thisline[4]) ,1);
+                if (thisline.length > 0 && stage.equals("vms")) {
+                    VM vm = new VM("VM-" + thisline[0], Integer.parseInt(thisline[5]), Integer.parseInt(thisline[4]),
+                            1);
                     PM iPm = cloud.findPMByName("PM-" + thisline[1]);
-                    cloud.assignToCurrentLocation(vm , iPm , false);
+                    cloud.assignToCurrentLocation(vm, iPm, false);
                     PM fPm = cloud.findPMByName("PM-" + thisline[2]);
-                    cloud.assignToNewLocation(vm , fPm);
+                    cloud.assignToNewLocation(vm, fPm);
                 }
 
-                if (thisline.length == 0 && stage.equals("vms")){
+                if (thisline.length == 0 && stage.equals("vms")) {
                     stage = "finished";
                 }
             }
@@ -77,7 +78,6 @@ public class CsvReader {
             1	1	1	8	2	8	    1
             0   1   2   3   4   5       6
 */
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -92,7 +92,10 @@ public class CsvReader {
             }
         }
 
-
+        cloud.getReport().setFileName(filePath);
+        cloud.getReport().setNumberOFPms(cloud.getPmList().size());
+        cloud.getReport().setNumberOfVMs(cloud.getVMs().size());
+        cloud.getReport().setNumberOFMig(cloud.generateMigrations().size());
     }
 
 

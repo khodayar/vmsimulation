@@ -9,6 +9,11 @@ import edu.uci.ics.jung.visualization.BasicVisualizationServer;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 
 import java.awt.Dimension;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Predicate;
 import javax.swing.JFrame;
@@ -25,6 +30,7 @@ public class Cloud {
     List<Assignment> newAssignments;
     List<Migration> migrations;
     List<Migration> nextPhaseMigrations;
+    Report report;
 
     public List<Assignment> getCurrentAssignments() {
         return currentAssignments;
@@ -66,6 +72,14 @@ public class Cloud {
         return nextPhaseMigrations;
     }
 
+    public Report getReport() {
+        return report;
+    }
+
+    public void setReport(Report report) {
+        this.report = report;
+    }
+
     public void setNextPhaseMigrations(List<Migration> nextPhaseMigrations) {
         this.nextPhaseMigrations = nextPhaseMigrations;
     }
@@ -80,6 +94,11 @@ public class Cloud {
         this.currentAssignments = new ArrayList<>();
         this.newAssignments = new ArrayList<>();
         this.nextPhaseMigrations = new ArrayList<>();
+        this.report = new Report();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+        String timestamp = sdf.format(new Date());
+        report.setTimeStampCalcStarted(timestamp);
     }
 
 
@@ -336,6 +355,10 @@ public class Cloud {
                 && freeProcessor(assignments, pm) >= vm.getProcessorSize();
     }
 
+
+    public String getFreeCapacity(List<Assignment> assignments, PM pm) {
+        return "free memory:" + freeMemory(assignments, pm) + " / free CPU" + freeProcessor(assignments, pm);
+    }
 
     public boolean hasFreeCapacityFor(List<Assignment> assignments, PM pm, VMSet vmSet) {
         int neededMemory = 0, neededCpu = 0, neededNet = 0;
@@ -648,13 +671,18 @@ public class Cloud {
             PM tempLocation = null;
             try {
                 tempLocation = findBestTempPM(vmSets, minWeightSet[0]);
-                solved.add(vmSets);
+                //as a test
+                if (tempLocation != null) {
+                    solved.add(vmSets);
+                    updateMigration(minWeightSet[0], tempLocation);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            updateMigration(minWeightSet[0], tempLocation);
+
             d[0] = generateOnoueDependencyGraph(migrations);
         });
+        report.setNumberOfSolvedCycles(report.getNumberOfSolvedCycles() + solved.size());
         cycles.removeAll(solved);
     }
 
@@ -761,11 +789,26 @@ public class Cloud {
         List<VM> vmList = bestCandidate.getVMList();
         vmList.forEach(vm -> {
             Migration oldmig = findMigrationOfVM(vm, migrations);
-            Migration newMig = new Migration(oldmig.getSource(), bestPm, vm);
-            newMig.setWeight(oldmig.getWeight());
+            Migration oldTemp = findMigrationOfVM(vm, nextPhaseMigrations);
+            Migration newMig = null;
+            if (oldmig != null) {
+                newMig = new Migration(oldmig.getSource(), bestPm, vm);
+                newMig.setWeight(oldmig.getWeight());
+                migrations.remove(oldmig);
+            }
+            if (oldTemp != null) {
+                newMig = new Migration(oldTemp.getSource(), bestPm, vm);
+                newMig.setWeight(oldTemp.getWeight());
+                nextPhaseMigrations.remove(oldTemp);
+            }
+
             System.out.println("new temp Migration :" + newMig);
-            nextPhaseMigrations.add(new Migration(bestPm, oldmig.getDestination(), vm));
-            migrations.remove(oldmig);
+            nextPhaseMigrations.remove(oldTemp);
+            nextPhaseMigrations
+                    .add(new Migration(bestPm, oldmig != null ? oldmig.getDestination() : oldTemp.getDestination(),
+                            vm));
+            // migrations.remove(oldmig);
+            report.setNumberOFTempMig(report.getNumberOFTempMig() + 1);
             migrations.add(newMig);
         });
         System.out.println("--------------------------");
@@ -786,14 +829,19 @@ public class Cloud {
     private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) throws Exception {
         final PM[] pm = new PM[1];
         List<PM> candidatePms = pmsNotInCycle(cycleVMSetList);
+
         candidatePms.forEach(candidatePm -> {
-            if (hasFreeCapacityForSet(newAssignments, candidatePm, candidate)) {
+            if (candidatePm.getName().equals("PM-97")) {
+                System.out.println();
+            }
+            if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate)) {
                 pm[0] = candidatePm;
             }
         });
         if (pm[0] == null) {
-            System.out.println("there is no temp location for solving the cycle");
-            throw new Exception("Unsolvable Cycle");
+            printReport();
+            System.out.println("there is no temp location for solving a cycle");
+            report.setNumberOfFailedAttempts(report.getNumberOfFailedAttempts() + 1);
         }
         return pm[0];
 
@@ -913,10 +961,31 @@ public class Cloud {
     //for migration process, where there are some infeasible VMs waiting for migration
     //but newly generated cycles won't let them
     public void removeVMsInCycle(Set<List<VMSet>> c, List<VM> l) {
-        c.forEach(setList ->{
+        c.forEach(setList -> {
             setList.forEach(vmSet -> {
                 l.removeAll(vmSet.getVMList());
             });
         });
+    }
+
+    public void printReport() {
+
+        DependencyGraph d = generateOnoueDependencyGraph(getMigrations());
+        Set<List<VMSet>> ct = detectCyclesO(d);
+        report.setNumberOfCurrentCycles(ct.size());
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+        String timestamp = sdf.format(new Date());
+        report.setTimeStampFinished(timestamp);
+        System.out.println(report);
+    }
+
+    public void writeReport() {
+
+        try {
+            Files.write(Paths.get("myfile.txt"), "the text".getBytes(), StandardOpenOption.APPEND);
+        }catch (IOException e) {
+            //exception handling left as an exercise for the reader
+        }
+
     }
 }

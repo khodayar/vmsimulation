@@ -73,6 +73,9 @@ public class SetUp {
             }
 
         }
+        cloud.getReport().setNumberOFMig(cloud.generateMigrations().size());
     }
+
+
 
 }
