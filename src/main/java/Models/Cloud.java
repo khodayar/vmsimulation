@@ -659,6 +659,7 @@ public class Cloud {
         final DependencyGraph[] d = {dg};
         Set<List<VMSet>> solved = new HashSet<>();
         final int[] index = {0};
+        final int[] numberOfUnsolved = {0};
         cycles.stream().forEach(vmSets -> {
             final VMSet[] minWeightSet = {vmSets.get(0)};
             vmSets.forEach(vmSet -> {
@@ -675,6 +676,8 @@ public class Cloud {
                 if (tempLocation != null) {
                     solved.add(vmSets);
                     updateMigration(minWeightSet[0], tempLocation);
+                } else {
+                    numberOfUnsolved[0]++;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -682,6 +685,9 @@ public class Cloud {
 
             d[0] = generateOnoueDependencyGraph(migrations);
         });
+        if (numberOfUnsolved[0] > 0) {
+            System.out.println(" Unsolved cycles - not finding temporary servers for " + numberOfUnsolved[0] + " cycles");
+        }
         report.setNumberOfSolvedCycles(report.getNumberOfSolvedCycles() + solved.size());
         cycles.removeAll(solved);
     }
@@ -796,14 +802,21 @@ public class Cloud {
                 newMig.setWeight(oldmig.getWeight());
                 migrations.remove(oldmig);
             }
-            if (oldTemp != null) {
+            else if (oldTemp != null) {
                 newMig = new Migration(oldTemp.getSource(), bestPm, vm);
                 newMig.setWeight(oldTemp.getWeight());
                 nextPhaseMigrations.remove(oldTemp);
+            } else {
+                try {
+                    throw new Exception("can not find old migration for " + vm.getName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             System.out.println("new temp Migration :" + newMig);
             nextPhaseMigrations.remove(oldTemp);
+
             nextPhaseMigrations
                     .add(new Migration(bestPm, oldmig != null ? oldmig.getDestination() : oldTemp.getDestination(),
                             vm));
@@ -831,16 +844,11 @@ public class Cloud {
         List<PM> candidatePms = pmsNotInCycle(cycleVMSetList);
 
         candidatePms.forEach(candidatePm -> {
-            if (candidatePm.getName().equals("PM-97")) {
-                System.out.println();
-            }
             if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate)) {
                 pm[0] = candidatePm;
             }
         });
         if (pm[0] == null) {
-            printReport();
-            System.out.println("there is no temp location for solving a cycle");
             report.setNumberOfFailedAttempts(report.getNumberOfFailedAttempts() + 1);
         }
         return pm[0];
@@ -988,4 +996,15 @@ public class Cloud {
         }
 
     }
+
+    public void removeDependantVMs(DependencyGraph d, List<VM> l) {
+        List<VM> newL = new ArrayList<>();
+        for (int i = 0 ; i<l.size() ; i++){
+            if (d.getKeyContaining(l.get(i)) == null){
+                newL.add(l.get(i));
+            }
+        }
+        l =  newL;
+    }
+
 }

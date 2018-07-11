@@ -5,35 +5,21 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class Runner {
 
     public static void main(String[] args) throws Exception {
         List<String> files = new ArrayList<>();
 
-        try(FileWriter fw = new FileWriter("myfile.txt", true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                PrintWriter out = new PrintWriter(bw))
-        {
-           readFiles("C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\build_29-06-2018\\outputx" , files);
-            files.forEach(file -> {
-                //out.println(runTheFile(file));
-                out.println(file.toString());
-            });
+
+        readFiles("D:\\google drive\\vm migration\\generator\\build_29-06-2018\\outputx" , files);
             //more code
-        } catch (IOException e) {
-            //exception handling left as an exercise for the reader
-        }
 
         try(FileWriter fw = new FileWriter("report.txt", true);
                 BufferedWriter bw = new BufferedWriter(fw);

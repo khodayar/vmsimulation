@@ -69,7 +69,10 @@ public class MigrationProcess {
         onGoingMigrations.add(m);
         pipelineDegree--;
         System.out.println("Migration Started " + m + " at " + timeStamp);
+
         cloud.getMigrations().remove(m);
+        cloud.getNextPhaseMigrations().remove(m);
+
     }
 
     private List<Migration> finishNextMigration() {
@@ -186,8 +189,9 @@ public class MigrationProcess {
             t.clear();
 
 
-            if ((x.isEmpty() && l.isEmpty()) || (x.isEmpty() && c.isEmpty())){
-                cloud.printReport();
+            //if ((x.isEmpty() && l.isEmpty()) || (x.isEmpty() && c.isEmpty())){
+            if (x.isEmpty()){
+            cloud.printReport();
                 throw new Exception("infeasible migration(s)");
                 //if there is no temp location, it will continue
             }
@@ -209,8 +213,11 @@ public class MigrationProcess {
             d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
             Set<List<VMSet>> ct = cloud.detectCyclesO(d);
             if (!ct.isEmpty()) {
-                c.addAll(ct);
-                cloud.removeVMsInCycle(c , l);
+               c = ct;
+
+                //**** test, it will be replaced by following function
+                //***  cloud.removeVMsInCycle(c , l);
+                cloud.removeDependantVMs(d , l);
             } else {
 
                 //for new ones after the migrations has finished
