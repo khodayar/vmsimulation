@@ -356,8 +356,8 @@ public class Cloud {
     }
 
 
-    public String getFreeCapacity(List<Assignment> assignments, PM pm) {
-        return "free memory:" + freeMemory(assignments, pm) + " / free CPU" + freeProcessor(assignments, pm);
+    public String getFreeCapacity(PM pm) {
+        return "free memory:" + freeMemory(currentAssignments, pm) + " / free CPU" + freeProcessor(currentAssignments, pm);
     }
 
     public boolean hasFreeCapacityFor(List<Assignment> assignments, PM pm, VMSet vmSet) {
@@ -817,9 +817,12 @@ public class Cloud {
             System.out.println("new temp Migration :" + newMig);
             nextPhaseMigrations.remove(oldTemp);
 
+            Migration nextphaseMig = new Migration(bestPm, oldmig != null ? oldmig.getDestination() : oldTemp.getDestination(),
+                    vm);
+            nextphaseMig.setWeight(oldmig != null ? oldmig.getWeight() : oldTemp.getWeight());
+
             nextPhaseMigrations
-                    .add(new Migration(bestPm, oldmig != null ? oldmig.getDestination() : oldTemp.getDestination(),
-                            vm));
+                    .add(nextphaseMig);
             // migrations.remove(oldmig);
             report.setNumberOFTempMig(report.getNumberOFTempMig() + 1);
             migrations.add(newMig);

@@ -88,7 +88,7 @@ public class Runner {
 //        //setting default migration weights
         current.setMigrationTimes(current.getMigrations());
         current.setDependencyWeightsO(current.getMigrations());
-       // System.out.println(current.getMigrations());
+        System.out.println(current.getMigrations());
 
 /*
 
