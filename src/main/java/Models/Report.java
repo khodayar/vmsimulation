@@ -159,14 +159,6 @@ public class Report {
     }
 
 
-    public int getNumberOfFailedAttemptsForSolcingCycles() {
-        return numberOfFailedAttemptsForSolcingCycles;
-    }
-
-    public void setNumberOfFailedAttemptsForSolcingCycles(int numberOfFailedAttemptsForSolcingCycles) {
-        this.numberOfFailedAttemptsForSolcingCycles = numberOfFailedAttemptsForSolcingCycles;
-    }
-
     public int getNumberOFTempMig() {
         return numberOFTempMig;
     }

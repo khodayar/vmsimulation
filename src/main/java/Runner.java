@@ -1,11 +1,8 @@
 import Models.*;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
@@ -18,21 +15,17 @@ public class Runner {
         List<String> files = new ArrayList<>();
 
 
-        readFiles("D:\\google drive\\vm migration\\generator\\build_29-06-2018\\outputx" , files);
+        readFiles("D:\\google drive\\vm migration\\generator\\dataset_small-x" , files);
             //more code
 
-        try(FileWriter fw = new FileWriter("report.txt", true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                PrintWriter out = new PrintWriter(bw))
-        {
             files.forEach(file -> {
-                //out.println(runTheFile(file));
-                out.println(runTheFile(file));
+                try {
+                    CsvWriter.addReportToCsv(runTheFile(file));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             });
-            //more code
-        } catch (IOException e) {
-            //exception handling left as an exercise for the reader
-        }
+
 
 
     }
@@ -52,7 +45,7 @@ public class Runner {
     }
 
 
-    public static String runTheFile(String filePath){
+    public static Report runTheFile(String filePath){
 
 
 
@@ -183,7 +176,7 @@ public class Runner {
 
         current.showAssignments(true);
 
-       return current.getReport().toString();
+       return current.getReport();
 
 
     }
