@@ -16,6 +16,7 @@ import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.swing.JFrame;
 
 import org.apache.commons.collections15.CollectionUtils;
@@ -231,8 +232,9 @@ public class Cloud {
         currentAssignments.forEach(assignment -> {
             if (!getLegacyVMLocation(assignment.getVm())
                     .equals(findAssignment(newAssignments, assignment.getVm()).getPm())) {
+                PM destination = findAssignment(newAssignments, assignment.getVm()).getPm();
                 migrations.add(new Migration(assignment.getPm(),
-                        findAssignment(newAssignments, assignment.getVm()).getPm(), assignment.getVm()));
+                        destination, assignment.getVm(), destination));
             }
         });
         this.migrations = migrations;
@@ -505,8 +507,10 @@ public class Cloud {
 
 
     //this is setting dependency weights before solving the cycles (just removing the
-    public void setDependencyWeightsO(List<Migration> migrations) {
-        DependencyGraph dg = generateOnoueDependencyGraph(migrations);
+    public void setDependencyWeightsO(DependencyGraph dg) {
+
+        setMigrationTimes(migrations);
+        Map<VMSet , List<VMSet>> backup = new HashMap<VMSet , List<VMSet>>(dg.getDependencyMap());
         Set<List<VMSet>> cycles = detectCyclesO(dg);
 
         //now we must detect and remove one edge for cycles
@@ -520,7 +524,7 @@ public class Cloud {
                     minWeightSet[0] = vmSet;
                 }
             });
-            System.out.println("cycle " + (++index[0]) + " --> " + minWeightSet[0]);
+            System.out.println("min weight set of cycle " + (++index[0]) + " --> " + minWeightSet[0]);
 
             //remove the dependency of the minWeight , remove it's outgoing edges
             dg.getDependencyMap().remove(minWeightSet[0]);
@@ -552,6 +556,7 @@ public class Cloud {
             o.clear();
         }
 
+     //dg.setDependencyMap(backup);
 
     }
 
@@ -693,6 +698,34 @@ public class Cloud {
     }
 
 
+
+    public void solveEmptyDependencies(DependencyGraph d){
+        d.getDependencyMap().forEach((k,v) -> {
+            if (v.get(0).getVMList().isEmpty()){
+                List<VM> temporaryLocatedVMs = new ArrayList<>();
+                        k.getVMList().forEach(vm -> {
+                            Migration current =  findMigrationOfVM(vm , migrations);
+
+                            VMSet vmSet = getCurrentVMSetsForPM(current.getDestination());
+                            vmSet.getVMList().forEach(residedVm->{
+                                if (findMigrationOfVM(residedVm, nextPhaseMigrations) != null){
+                                    System.out.println();
+                                }
+                            });
+
+
+                        });
+
+            }
+        });
+
+
+
+
+
+
+    }
+
     public Set<List<VMSet>> detectCycles(DependencyGraph dGraph) {
 
         Set<List<VMSet>> allCyleSet = new HashSet<List<VMSet>>();
@@ -798,14 +831,15 @@ public class Cloud {
             Migration oldTemp = findMigrationOfVM(vm, nextPhaseMigrations);
             Migration newMig = null;
             if (oldmig != null) {
-                newMig = new Migration(oldmig.getSource(), bestPm, vm);
+                newMig = new Migration(oldmig.getSource(), bestPm, vm , oldmig.getFinalDestination());
                 newMig.setWeight(oldmig.getWeight());
                 migrations.remove(oldmig);
             }
             else if (oldTemp != null) {
-                newMig = new Migration(oldTemp.getSource(), bestPm, vm);
+                newMig = new Migration(oldTemp.getSource(), bestPm, vm, oldTemp.getFinalDestination());
                 newMig.setWeight(oldTemp.getWeight());
                 nextPhaseMigrations.remove(oldTemp);
+                System.out.println("temp replaced by a new temp");
             } else {
                 try {
                     throw new Exception("can not find old migration for " + vm.getName());
@@ -817,12 +851,14 @@ public class Cloud {
             System.out.println("new temp Migration :" + newMig);
             nextPhaseMigrations.remove(oldTemp);
 
-            Migration nextphaseMig = new Migration(bestPm, oldmig != null ? oldmig.getDestination() : oldTemp.getDestination(),
-                    vm);
+            Migration nextphaseMig = new Migration(bestPm, oldmig != null ? oldmig.getFinalDestination() : oldTemp.getFinalDestination(),
+                    vm , oldmig != null ? oldmig.getFinalDestination() : oldTemp.getFinalDestination());
             nextphaseMig.setWeight(oldmig != null ? oldmig.getWeight() : oldTemp.getWeight());
 
-            nextPhaseMigrations
-                    .add(nextphaseMig);
+            if (!bestPm.equals(nextphaseMig.getFinalDestination())) {
+                nextPhaseMigrations
+                        .add(nextphaseMig);
+            }
             // migrations.remove(oldmig);
             report.setNumberOFTempMig(report.getNumberOFTempMig() + 1);
             migrations.add(newMig);
@@ -844,7 +880,7 @@ public class Cloud {
 
     private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) throws Exception {
         final PM[] pm = new PM[1];
-        List<PM> candidatePms = pmsNotInCycle(cycleVMSetList);
+        List<PM> candidatePms = pmsNotInVMSets(cycleVMSetList);
 
         candidatePms.forEach(candidatePm -> {
             if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate)) {
@@ -870,7 +906,7 @@ public class Cloud {
     }
 
 
-    private List<PM> pmsNotInCycle(List<VMSet> cycleVMSetList) {
+    private List<PM> pmsNotInVMSets(List<VMSet> cycleVMSetList) {
         List<PM> pms = new ArrayList<PM>(pmList);
         cycleVMSetList.forEach(vmSet -> {
             vmSet.getVMList().forEach(vm -> {
@@ -1010,4 +1046,73 @@ public class Cloud {
         l =  newL;
     }
 
+    public List<Migration> getFeasibleNextPhase(List<Migration> tempFinished) {
+        List<Migration> feasibleNext = new ArrayList<>();
+
+        List<VM> vmsToCheck = tempFinished.stream()
+                .map(Migration::getVm)
+                .collect(Collectors.toList());
+        nextPhaseMigrations.forEach(nextPhaseMigration -> {
+
+            if (vmsToCheck.indexOf(nextPhaseMigration.getVm()) > -1){
+                feasibleNext.add(nextPhaseMigration);
+            }
+        });
+        return feasibleNext;
+    }
+
+    //these migrations are in the migration list (not next phase)
+    public boolean shuffleTempMigrations() {
+        boolean solved = true;
+        List<Migration> unfinishedTempMigrations = new ArrayList<>();
+        migrations.forEach(migration -> {
+            if (migration.isTemp()){
+                unfinishedTempMigrations.add(migration);
+            }
+        });
+
+        List<Migration> removeTemps = new ArrayList<>();
+        List<Migration> newTemps = new ArrayList<>();
+
+        unfinishedTempMigrations.forEach(tempmigration ->{
+
+            PM tempPm = getTampPmForVM(tempmigration);
+
+            if (tempPm != null){
+                removeTemps.add(tempmigration);
+                Migration newTempMigration = new Migration(tempmigration.getSource() , tempPm , tempmigration.getVm() ,tempmigration.getFinalDestination());
+
+                //it's a temp must have a next phase migration
+                Migration oldNextPhase = findMigrationOfVM(tempmigration.getVm(), nextPhaseMigrations);
+                nextPhaseMigrations.remove(oldNextPhase);
+
+                if (!tempPm.equals(tempmigration.getFinalDestination())){
+                    nextPhaseMigrations.add(new Migration(tempPm , tempmigration.getFinalDestination() , tempmigration.getVm() , tempmigration.getFinalDestination()));
+                }
+
+                newTemps.add(newTempMigration);
+
+            }
+         });
+
+        if (newTemps.isEmpty()){
+            System.out.println("**** no new temp location for blocked temp migrations");
+            solved = false;
+        }
+
+        migrations.removeAll(removeTemps);
+        migrations.addAll(newTemps);
+        return solved;
+   }
+
+    private PM getTampPmForVM(Migration tempmigration) {
+        final PM[] tempPM = {null};
+        pmList.forEach(pm->{
+            if (!pm.equals(tempmigration.getDestination()) && hasFreeCapacityFor(currentAssignments , pm , tempmigration.getVm())){
+                tempPM[0] = pm;
+            }
+        });
+
+        return tempPM[0];
+    }
 }

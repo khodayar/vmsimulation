@@ -15,7 +15,7 @@ public class Runner {
         List<String> files = new ArrayList<>();
 
 
-        readFiles("D:\\google drive\\vm migration\\generator\\dataset_small-x" , files);
+        readFiles("D:\\google drive\\vm migration\\generator\\dataset_small" , files);
             //more code
 
             files.forEach(file -> {
@@ -87,7 +87,7 @@ public class Runner {
 
 //        //setting default migration weights
         current.setMigrationTimes(current.getMigrations());
-        current.setDependencyWeightsO(current.getMigrations());
+        current.setDependencyWeightsO(dependencyGraph);
         System.out.println(current.getMigrations());
 
 /*
@@ -174,7 +174,8 @@ public class Runner {
             e.printStackTrace();
         }
 
-        current.showAssignments(true);
+        current.showAssignments(false);
+
 
        return current.getReport();
 

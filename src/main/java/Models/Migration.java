@@ -9,6 +9,16 @@ public class Migration implements Comparable<Migration>{
     private VM vm;
     private int weight;
     private int remainingSize;
+    private PM finalDestination;
+
+
+    public PM getFinalDestination() {
+        return finalDestination;
+    }
+
+    public void setFinalDestination(PM finalDestination) {
+        this.finalDestination = finalDestination;
+    }
 
     public PM getSource() {
         return source;
@@ -51,11 +61,12 @@ public class Migration implements Comparable<Migration>{
         this.remainingSize = remainingSize;
     }
 
-    public Migration(PM source, PM destination, VM vm) {
+    public Migration(PM source, PM destination, VM vm , PM finalDestination) {
         this.source = source;
         this.destination = destination;
         this.vm = vm;
         this.remainingSize = vm.getMemorySize();
+        this.finalDestination = finalDestination;
     }
 
     @Override
@@ -64,6 +75,7 @@ public class Migration implements Comparable<Migration>{
                 vm.getName() + " : " +
                 source.getName() +
                 " -> " + destination.getName() +
+                " final:" + finalDestination.getName() +
                 " weight :" + weight +
                "}";
     }
@@ -86,6 +98,11 @@ public class Migration implements Comparable<Migration>{
         result = 31 * result + destination.hashCode();
         result = 31 * result + vm.hashCode();
         return result;
+    }
+
+
+    public boolean isTemp(){
+        return !destination.getName().equals(finalDestination.getName());
     }
 
 

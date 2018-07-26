@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by I857455 on 2/2/2018.
@@ -17,6 +18,7 @@ public class MigrationProcess {
     private int linkDegree;
     private List<Migration> onGoingMigrations;
     private int timeStamp;
+
 
 
     public Cloud getCloud() {
@@ -75,9 +77,12 @@ public class MigrationProcess {
 
     }
 
+
+
+   //finishes the minimum remaining time migrations in the on going list and returns the finished ones
     private List<Migration> finishNextMigration() {
         List<Migration> finished = new ArrayList<>();
-        final int[] minRemainingTime = {1000};
+        final int[] minRemainingTime = {10000};
         onGoingMigrations.forEach(currentMigration -> {
             if (currentMigration.getRemainingSize() < minRemainingTime[0]) {
                 minRemainingTime[0] = currentMigration.getRemainingSize();
@@ -86,11 +91,10 @@ public class MigrationProcess {
 
         timeStamp += minRemainingTime[0];
         cloud.getReport().setTimeSteps(timeStamp);
-        List<Migration> toBeRemoved = new ArrayList<>();
         onGoingMigrations.forEach(currentMigration -> {
             currentMigration.setRemainingSize(currentMigration.getRemainingSize() - minRemainingTime[0]);
             if (currentMigration.getRemainingSize() == 0) {
-                toBeRemoved.add(currentMigration);
+
                 pipelineDegree++;
                 finished.add(currentMigration);
                 //remove initial vm running on source
@@ -100,8 +104,17 @@ public class MigrationProcess {
             }
         });
 
-        onGoingMigrations.removeAll(toBeRemoved);
-        cloud.report.setNumberOFFinishedMigs(cloud.report.getNumberOFFinishedMigs()+ toBeRemoved.size());
+        onGoingMigrations.removeAll(finished);
+     List<Migration> originalFinished = finished.stream().filter(finishedmigration -> finishedmigration.getDestination().equals(finishedmigration.getFinalDestination()))
+             .collect(Collectors.toList());
+
+        List<Migration> tempFinished = finished.stream().filter(finishedmigration -> !finishedmigration.getDestination().equals(finishedmigration.getFinalDestination()))
+                .collect(Collectors.toList());
+        List<Migration> feasibleFromNext = cloud.getFeasibleNextPhase(tempFinished);
+        cloud.getMigrations().addAll(feasibleFromNext);
+        cloud.getNextPhaseMigrations().removeAll(feasibleFromNext);
+
+        cloud.report.setNumberOFFinishedMigs(cloud.report.getNumberOFFinishedMigs()+ originalFinished.size());
         cloud.getReport().setNumberOfOnGoingMigs(onGoingMigrations.size());
         return finished;
     }
@@ -146,6 +159,8 @@ public class MigrationProcess {
 
     public void doMigrationsOnoue (DependencyGraph d) throws Exception {
 
+        cloud.setMigrationTimes(cloud.getMigrations());
+
         Set<List<VMSet>> c = cloud.detectCyclesO(d);
         cloud.getReport().setNumberOfInitialCycles(c.size());
         List<VM> l = new ArrayList<>();
@@ -161,17 +176,17 @@ public class MigrationProcess {
             if (!c.isEmpty()){
                 cloud.solveCyclesOn(c, d);
                 d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+              //  d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
                 t.addAll(cloud.getVMsWithoutOutEdges(d));  //in next iteration will be added to l
                 t.removeAll(l);   //only new woe resulted form solving cycle
             }
 
 
-            List<Migration> migrations = cloud.getMigrations();
-
             Collections.sort(l);
              for (int i=0; i<l.size();i++) {
 
-                Migration m = cloud.findMigrationOfVM(l.get(i), migrations);
+                Migration m = cloud.findMigrationOfVM(l.get(i), cloud.getMigrations());
                 if (cloud.hasFreeCapacityFor(cloud.getCurrentAssignments(), m.getDestination(), l.get(i)) &&
                         linksHaveCapacity(m)) {
                     try {
@@ -189,8 +204,20 @@ public class MigrationProcess {
             t.clear();
 
 
-            //if ((x.isEmpty() && l.isEmpty()) || (x.isEmpty() && c.isEmpty())){
             if (x.isEmpty()){
+                //stop sign
+           //     System.out.println();
+                //move temp migrations to a new temp server
+               if (!cloud.shuffleTempMigrations()){
+                   cloud.printReport();
+                   throw new Exception("blocked temp migration(s)");
+               }
+
+            }
+
+            //if ((x.isEmpty() && l.isEmpty()) || (x.isEmpty() && c.isEmpty())){
+            if (x.isEmpty() && l.isEmpty()){
+           // cloud.solveEmptyDependencies(d);
             cloud.printReport();
                 throw new Exception("infeasible migration(s)");
                 //if there is no temp location, it will continue
@@ -211,7 +238,12 @@ public class MigrationProcess {
                 x.remove(finishedMigration.getVm());
             });
             d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+            cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+          //  d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
             Set<List<VMSet>> ct = cloud.detectCyclesO(d);
+            if (ct.isEmpty() && x.isEmpty()){
+                System.out.println();
+            }
             if (!ct.isEmpty()) {
                c = ct;
 

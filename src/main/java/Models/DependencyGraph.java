@@ -31,6 +31,10 @@ public class DependencyGraph {
         cmplxDepend = new ArrayList<>();
     }
 
+    public void setDependencyMap(Map<VMSet, List<VMSet>> dependencyMap) {
+        this.dependencyMap = dependencyMap;
+    }
+
     public List<ComplexDependency> getCmplxDepend() {
         return cmplxDepend;
     }
