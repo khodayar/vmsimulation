@@ -90,7 +90,7 @@ public class MigrationProcess {
         });
 
         timeStamp += minRemainingTime[0];
-        cloud.getReport().setTimeSteps(timeStamp);
+        cloud.getReport().setTimeSteps(timeStamp +1);
         onGoingMigrations.forEach(currentMigration -> {
             currentMigration.setRemainingSize(currentMigration.getRemainingSize() - minRemainingTime[0]);
             if (currentMigration.getRemainingSize() == 0) {

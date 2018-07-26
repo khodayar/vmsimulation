@@ -15,7 +15,7 @@ public class Runner {
         List<String> files = new ArrayList<>();
 
 
-        readFiles("D:\\google drive\\vm migration\\generator\\dataset_small" , files);
+        readNestedFiles("D:\\google drive\\vm migration\\generator\\dataset_small-x" , files);
             //more code
 
             files.forEach(file -> {
@@ -45,6 +45,25 @@ public class Runner {
     }
 
 
+    private static void readNestedFiles(String folderPath , List<String> files) {
+
+        File folder = new File(folderPath);
+        File[] listOfFolders = folder.listFiles();
+
+        for (File directory : listOfFolders) {
+
+            File[] innerFolders = directory.listFiles();
+            for (File innerfolder : innerFolders ) {
+
+                if (innerfolder.isDirectory()) {
+                    files.add(innerfolder.listFiles()[1].toString());
+                }
+            }
+        }
+
+    }
+
+
     public static Report runTheFile(String filePath){
 
 
@@ -53,6 +72,7 @@ public class Runner {
 
         //read Charles's version
          CsvReader.readFile(current , filePath);
+        System.out.println("Start of file" +  filePath);
 
         //out_inst_100_CONS-20-80_50_90-95.csv
         //out_inst_100_CONS-20-80_50_80-85.csv
