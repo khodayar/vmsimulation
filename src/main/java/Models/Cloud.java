@@ -510,7 +510,6 @@ public class Cloud {
     public void setDependencyWeightsO(DependencyGraph dg) {
 
         setMigrationTimes(migrations);
-        Map<VMSet , List<VMSet>> backup = new HashMap<VMSet , List<VMSet>>(dg.getDependencyMap());
         Set<List<VMSet>> cycles = detectCyclesO(dg);
 
         //now we must detect and remove one edge for cycles
@@ -531,16 +530,22 @@ public class Cloud {
         });
 
         //now we have dg without cycles
-        List<VM> node = getVMs();
+        List<VM> node = getMigrationVMs();
 
+
+        //we have a cese where node is not empty and o is empty after several loops
         while (!node.isEmpty()) {
             List<VM> o = getVMsWihoutInEdge(node, dg);
+            for (VM x : o){
+                if (x.getName().equals("VM-134")){
+                    System.out.println();
+                }
+            }
             o.forEach(oVM -> {
                 if (dg.getKeyContaining(oVM) != null) {
                     dg.getDependencyMap().get(dg.getKeyContaining(oVM)).get(0).getVMList().forEach(dependentVM -> {
                         Migration depMig = findMigrationOfVM(dependentVM, migrations);
                         depMig.setWeight(depMig.getWeight() + findMigrationOfVM(oVM, migrations).getWeight());
-
                     });
                 }
             });
@@ -830,17 +835,21 @@ public class Cloud {
             Migration oldmig = findMigrationOfVM(vm, migrations);
             Migration oldTemp = findMigrationOfVM(vm, nextPhaseMigrations);
             Migration newMig = null;
+            //we have a bug here
+            //sometime both of them are not null and it creates a repeated migration in 'migrations'.
+            //vm-112 in \out_inst_50_FAIL-32_100_80-100_1.csv   5th data set
             if (oldmig != null) {
                 newMig = new Migration(oldmig.getSource(), bestPm, vm , oldmig.getFinalDestination());
                 newMig.setWeight(oldmig.getWeight());
                 migrations.remove(oldmig);
             }
+            //we shouldn't reach here most of the times
             else if (oldTemp != null) {
                 newMig = new Migration(oldTemp.getSource(), bestPm, vm, oldTemp.getFinalDestination());
                 newMig.setWeight(oldTemp.getWeight());
                 nextPhaseMigrations.remove(oldTemp);
                 System.out.println("temp replaced by a new temp");
-            } else {
+            } else if (oldmig == null && oldTemp == null) {
                 try {
                     throw new Exception("can not find old migration for " + vm.getName());
                 } catch (Exception e) {
@@ -848,7 +857,12 @@ public class Cloud {
                 }
             }
 
+            if (newMig.getVm().getName().equals("VM-112")){
+                System.out.println();
+            }
             System.out.println("new temp Migration :" + newMig);
+
+            //we need it here
             nextPhaseMigrations.remove(oldTemp);
 
             Migration nextphaseMig = new Migration(bestPm, oldmig != null ? oldmig.getFinalDestination() : oldTemp.getFinalDestination(),
@@ -859,11 +873,29 @@ public class Cloud {
                 nextPhaseMigrations
                         .add(nextphaseMig);
             }
+            if (!checkRepeatedMigrations().isEmpty()){
+                System.out.println();
+            };
             // migrations.remove(oldmig);
             report.setNumberOFTempMig(report.getNumberOFTempMig() + 1);
             migrations.add(newMig);
         });
         System.out.println("--------------------------");
+    }
+
+
+    //for debugging, might be removed later
+    private List<VM> checkRepeatedMigrations() {
+        List<VM> doublicates = new ArrayList<>();
+        List<VM> vms = new ArrayList<>();
+        migrations.forEach(migration -> {
+            if (vms.contains(migration.getVm())) {
+                doublicates.add(migration.getVm());
+            }
+            vms.add(migration.getVm());
+        });
+
+        return doublicates;
     }
 
 
@@ -1114,5 +1146,15 @@ public class Cloud {
         });
 
         return tempPM[0];
+    }
+
+
+
+    public List<VM> getMigrationVMs(){
+        List<VM> vms = new ArrayList<>();
+        migrations.forEach(migration -> {
+            vms.add(migration.getVm());
+        });
+        return vms;
     }
 }

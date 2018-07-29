@@ -99,6 +99,9 @@ public class MigrationProcess {
                 finished.add(currentMigration);
                 //remove initial vm running on source
                 cloud.removeFromCurrent(currentMigration.getVm() , currentMigration.getSource());
+                if (timeStamp == 490){
+                    System.out.println();
+                }
                 System.out.println("Migration Finished " + currentMigration + " at " + timeStamp);
                 System.out.println("free pipelineDegree :" + pipelineDegree);
             }
@@ -226,6 +229,8 @@ public class MigrationProcess {
 
             //line 21 of Onoue
             List<Migration> finished = finishNextMigration();
+
+
           //  cloud.getMigrations().removeAll(finished);
 
             //todo it stocks in a situation where there is no feasible migration

@@ -14,7 +14,7 @@ public class CsvWriter {
 
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 
-        //Instance,Total Time,SV,VM,VM To Move (Migrations),optimal,time, Finished Migrations, Temporary Migrations, Initial Cycles,Solved Cycles,Failed Attempts For Solving Cycles
+        //Instance,Total Time,SV,VM,VM To Move (Migrations),optimal,time, Finished Migrations, Temporary Migrations, Initial Cycles,Solved Cycles,Failed Attempts For Solving Cycles, CPU Time
         FileWriter pw = null;
         pw = new FileWriter ("report.csv", true);
 
