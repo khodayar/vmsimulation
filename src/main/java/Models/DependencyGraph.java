@@ -83,6 +83,16 @@ public class DependencyGraph {
         return null;
     }
 
+    public VMSet getTargetNodeEqual (VMSet vmSet) {
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+            if (entry.getValue().equals(vmSet)) {
+                //the entry is a singleton list
+                return entry.getValue().get(0);
+            }
+        }
+        return null;
+    }
+
     //return chain between any two this works fine -- update return chain based on this
     //return all the chain except dependant , if add set1, set1 and set1 is there , that's a cycle
     public List<VMSet> chainBetween(VMSet dependant, VMSet destination, List<VMSet> visited, List<VMSet> found) {

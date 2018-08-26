@@ -71,6 +71,9 @@ public class MigrationProcess {
         onGoingMigrations.add(m);
         pipelineDegree--;
         System.out.println("Migration Started " + m + " at " + timeStamp);
+        if (!m.getDestination().equals(m.getFinalDestination())){
+            cloud.getReport().setNumberOFTempMig(cloud.getReport().getNumberOFTempMig() + 1);
+        }
 
         cloud.getMigrations().remove(m);
         cloud.getNextPhaseMigrations().remove(m);
@@ -82,7 +85,7 @@ public class MigrationProcess {
    //finishes the minimum remaining time migrations in the on going list and returns the finished ones
     private List<Migration> finishNextMigration() {
         List<Migration> finished = new ArrayList<>();
-        final int[] minRemainingTime = {10000};
+        final int[] minRemainingTime = {!onGoingMigrations.isEmpty()? onGoingMigrations.get(0).getWeight() : 0};
         onGoingMigrations.forEach(currentMigration -> {
             if (currentMigration.getRemainingSize() < minRemainingTime[0]) {
                 minRemainingTime[0] = currentMigration.getRemainingSize();

@@ -519,6 +519,7 @@ public class Cloud {
             final VMSet[] minWeightSet = {vmSets.get(0)};
             vmSets.forEach(vmSet -> {
                 //must be a key, left side of dependency
+                //the same as Onoue
                 if (dg.getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0].getWeightSum()) {
                     minWeightSet[0] = vmSet;
                 }
@@ -673,8 +674,10 @@ public class Cloud {
         cycles.stream().forEach(vmSets -> {
             final VMSet[] minWeightSet = {vmSets.get(0)};
             vmSets.forEach(vmSet -> {
-                //must be a key, left side of dependency
-                if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
+                //must be a key, left side of dependency , in Onoue is right side
+                //data set results is with left side 2018-08-26
+                //d[0].getDependencyMap().get(vmSet) != null
+                if (d[0].getTargetNodeEqual(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
                         .getWeightSum()) {
                     minWeightSet[0] = vmSet;
                 }
@@ -857,9 +860,7 @@ public class Cloud {
                 }
             }
 
-            if (newMig.getVm().getName().equals("VM-112")){
-                System.out.println();
-            }
+
             System.out.println("new temp Migration :" + newMig);
 
             //we need it here
@@ -869,16 +870,24 @@ public class Cloud {
                     vm , oldmig != null ? oldmig.getFinalDestination() : oldTemp.getFinalDestination());
             nextphaseMig.setWeight(oldmig != null ? oldmig.getWeight() : oldTemp.getWeight());
 
+            if (newMig.getVm().getName().equals("VM-112")){
+                System.out.println();
+            }
+
             if (!bestPm.equals(nextphaseMig.getFinalDestination())) {
                 nextPhaseMigrations
                         .add(nextphaseMig);
             }
+
+
+            //in wrong palce, I count it only if temp migration starts
+           // report.setNumberOFTempMig(report.getNumberOFTempMig() + 1);
+
+
+            migrations.add(newMig);
             if (!checkRepeatedMigrations().isEmpty()){
                 System.out.println();
             };
-            // migrations.remove(oldmig);
-            report.setNumberOFTempMig(report.getNumberOFTempMig() + 1);
-            migrations.add(newMig);
         });
         System.out.println("--------------------------");
     }
@@ -1086,7 +1095,7 @@ public class Cloud {
                 .collect(Collectors.toList());
         nextPhaseMigrations.forEach(nextPhaseMigration -> {
 
-            if (vmsToCheck.indexOf(nextPhaseMigration.getVm()) > -1){
+            if (vmsToCheck.indexOf(nextPhaseMigration.getVm()) > -1 && findMigrationOfVM(nextPhaseMigration.getVm(), migrations) == null){
                 feasibleNext.add(nextPhaseMigration);
             }
         });
