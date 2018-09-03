@@ -424,6 +424,15 @@ public class Cloud {
             VMSet depTo = getSetOfAllMigratingVMsFrom(migrationList, destinationPM);
             VMSet allComing = getAllIncomingVMsTo(migrationList, destinationPM);
             VMSet excess = getExcessVMSet(allComing, destinationPM);
+
+            //block for checking
+            //todo includes the ongoing migrations
+            if (freeMemory(currentAssignments, destinationPM) + sumMemorySizeOfVmSet(depTo) < sumMemorySizeOfVmSet(excess)){
+                System.out.println();
+            }
+            //
+
+
             if (!excess.getVMList().isEmpty()) {
                 dependencyGraph.addDependent(excess, depTo);
 
@@ -614,6 +623,18 @@ public class Cloud {
     }
 
 
+
+    private int sumMemorySizeOfVmSet(VMSet vmSet){
+        final int[] weight = {0};
+        vmSet.getVMList().forEach( vm -> {
+            weight[0] += vm.getMemorySize();
+                }
+        );
+
+        return weight[0];
+    }
+
+
     public Migration findMigrationOfVM(VM vm, List<Migration> migrations) {
         final Migration[] migration = new Migration[1];
         migrations.forEach(mig -> {
@@ -676,12 +697,16 @@ public class Cloud {
             vmSets.forEach(vmSet -> {
                 //must be a key, left side of dependency , in Onoue is right side
                 //data set results is with left side 2018-08-26
-                //d[0].getDependencyMap().get(vmSet) != null
-                if (d[0].getTargetNodeEqual(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
+                //Onoue original is d[0].getTargetNodeEqual(vmSet) != null
+                //o2 results : d[0].getDependencyMap().get(vmSet) != null
+                if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
                         .getWeightSum()) {
                     minWeightSet[0] = vmSet;
                 }
             });
+
+            VMSet tmCandidates = findCandidatesInTarget(dg, minWeightSet[0]);
+
             PM tempLocation = null;
             try {
                 tempLocation = findBestTempPM(vmSets, minWeightSet[0]);
@@ -705,6 +730,21 @@ public class Cloud {
         cycles.removeAll(solved);
     }
 
+    //vm set is min source of cMDG
+    private VMSet findCandidatesInTarget(DependencyGraph dg, VMSet vmSet) {
+        List<VMSet> target  =  dg.getDependencyMap().get(vmSet);
+        int sumOfWeightTarget = sumMemorySizeOfVmSet(target.get(0));
+        int sumOfWeightsSource = sumMemorySizeOfVmSet(vmSet);
+        if (sumOfWeightsSource > sumOfWeightTarget){
+            try {
+                throw new Exception("sum is not correct");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+     return null;
+    }
 
 
     public void solveEmptyDependencies(DependencyGraph d){
