@@ -15,3 +15,6 @@ VM_Migration.iml
 .idea/workspace.xml
 VM_Migration.iml
 report.csv
+.idea
+*.xlsx
+*.xml
