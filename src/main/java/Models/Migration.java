@@ -108,6 +108,8 @@ public class Migration implements Comparable<Migration>{
 
     @Override
     public int compareTo(Migration o) {
-        return weight > o.getWeight()? -1 : 1;
+        if (weight > o.getWeight()) return -1;
+        else if (weight < o.getWeight()) return 1;
+        else return 0;
     }
 }
