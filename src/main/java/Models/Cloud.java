@@ -428,7 +428,7 @@ public class Cloud {
             //block for checking
             //todo includes the ongoing migrations
             if (freeMemory(currentAssignments, destinationPM) + sumMemorySizeOfVmSet(depTo) < sumMemorySizeOfVmSet(excess)){
-                System.out.println();
+              //  System.out.println();
             }
             //
 
@@ -705,7 +705,7 @@ public class Cloud {
                 }
             });
 
-            VMSet tmCandidates = findCandidatesInTarget(dg, minWeightSet[0]);
+          //  VMSet tmCandidates = findCandidatesInTarget(dg, minWeightSet[0]);
 
             PM tempLocation = null;
             try {
@@ -735,13 +735,13 @@ public class Cloud {
         List<VMSet> target  =  dg.getDependencyMap().get(vmSet);
         int sumOfWeightTarget = sumMemorySizeOfVmSet(target.get(0));
         int sumOfWeightsSource = sumMemorySizeOfVmSet(vmSet);
-        if (sumOfWeightsSource > sumOfWeightTarget){
-            try {
-                throw new Exception("sum is not correct");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+//        if (sumOfWeightsSource > sumOfWeightTarget){
+//            try {
+//                throw new Exception("sum is not correct");
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
 
      return null;
     }
