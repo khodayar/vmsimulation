@@ -426,18 +426,19 @@ public class Cloud {
             VMSet excess = getExcessVMSet(allComing, destinationPM);
 
             //block for checking
-            //todo includes the ongoing migrations
-            if (freeMemory(currentAssignments, destinationPM) + sumMemorySizeOfVmSet(depTo) < sumMemorySizeOfVmSet(excess)){
-              //  System.out.println();
-            }
-            //
+            //not only memory, but also cpu
+//            if (freeMemory(currentAssignments, destinationPM) + sumMemorySizeOfVmSet(depTo) < sumMemorySizeOfVmSet(excess)){
+//              //  Sshoudldn'r happen enymore
+//                System.out.println();
+//            }
+
 
 
             if (!excess.getVMList().isEmpty()) {
                 dependencyGraph.addDependent(excess, depTo);
 
                 //complex dependency won't work here ,
-                //it needs from one pm to one pm dependency
+               //it needs from one pm to one pm dependency
 
             }
         });
@@ -448,7 +449,15 @@ public class Cloud {
 
     //get incoming VMs that can not be migrated to
     private VMSet getExcessVMSet(VMSet allComing, PM destinationPM) {
+
+        //current assignment include ongoing unfinished migrations
         List<Assignment> copyOfAssignments = new ArrayList<Assignment>(currentAssignments);
+
+        currentAndOnGoingAsg().forEach(assignment -> {
+            copyOfAssignments.remove(assignment);
+        });
+
+
 
         VMSet vmSet = new VMSet();
         List<VM> allComingVMs = allComing.getVMList();
@@ -459,6 +468,9 @@ public class Cloud {
             }
         });
 
+        //here is not optimal , specially because we have memory and processor and just
+        //sorting on one of them does not make it optimized
+        //deviation of vm sizes must be less and cpu~memory
         allComingVMs.forEach(vm -> {
             if (hasFreeCapacityFor(copyOfAssignments, destinationPM, vm)) {
                 Assignment assignment = new Assignment(destinationPM, vm);
@@ -477,42 +489,6 @@ public class Cloud {
     }
 
 
-    public void setDependencyWeights(List<Migration> migrations) {
-        DependencyGraph dependencyGraph = generateDependencyGraph(migrations);
-        Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
-
-        List<VMSet> removedInEdge = new ArrayList<>();
-        List<VMSet> allSets = getAllOutGoingSets(migrations);
-
-        while (removedInEdge.size() < allSets.size()) {
-
-            allSets.forEach(set -> {
-                if (!removedInEdge.contains(set)) {
-                    boolean hasInEdge = false;
-                    for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
-                        if (entry.getValue().contains(set) && !removedInEdge.contains(entry.getKey())) {
-                            hasInEdge = true;
-                        }
-                    }
-
-                    if (!hasInEdge) {
-                        int setWeight = maxWeightOfSet(set, migrations);
-                        if (dependencyMap.get(set) != null) {
-                            dependencyMap.get(set).forEach(dependentSet -> {
-                                dependentSet.getVMList().forEach(vm -> {
-                                            findMigrationOfVM(vm, migrations)
-                                                    .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
-                                        }
-                                );
-                            });
-                        }
-                        removedInEdge.add(set);
-                    }
-                }
-            });
-        }
-
-    }
 
 
     //this is setting dependency weights before solving the cycles (just removing the
@@ -647,41 +623,7 @@ public class Cloud {
 
     }
 
-    public void showCycles(DependencyGraph dGraph) {
 
-        Set<List<VMSet>> cycleSet = detectCycles(dGraph);
-
-        if (cycleSet.isEmpty()) {
-            System.out.println("There is no cycles");
-        } else {
-            System.out.println("There are cycles :");
-        }
-
-        cycleSet.forEach(newset -> {
-            System.out.println(newset);
-        });
-    }
-
-
-    public void solveCycles() {
-        getAllOutGoingSets(migrations).forEach(vmSet -> {
-            DependencyGraph dGraph = generateOnoueDependencyGraph(migrations);
-            if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
-                System.out.println("There is a cycle :");
-                System.out.println(dGraph.getPath(vmSet, vmSet));
-                VMSet bestCandidate = findTheMinWeightSet(dGraph.getPath(vmSet, vmSet));
-                PM bestPm = null;
-                try {
-                    bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                    System.exit(0);
-                }
-                updateMigration(bestCandidate, bestPm);
-            }
-
-        });
-    }
 
 
     // In Onoue, the path and cycles are based on the VMs not VM sets, because the cycles
@@ -690,7 +632,6 @@ public class Cloud {
 
         final DependencyGraph[] d = {dg};
         Set<List<VMSet>> solved = new HashSet<>();
-        final int[] index = {0};
         final int[] numberOfUnsolved = {0};
         cycles.stream().forEach(vmSets -> {
             final VMSet[] minWeightSet = {vmSets.get(0)};
@@ -705,7 +646,7 @@ public class Cloud {
                 }
             });
 
-          //  VMSet tmCandidates = findCandidatesInTarget(dg, minWeightSet[0]);
+            VMSet tmCandidates = findCandidatesInTarget(d[0], minWeightSet[0]);
 
             PM tempLocation = null;
             try {
@@ -731,17 +672,14 @@ public class Cloud {
     }
 
     //vm set is min source of cMDG
-    private VMSet findCandidatesInTarget(DependencyGraph dg, VMSet vmSet) {
-        List<VMSet> target  =  dg.getDependencyMap().get(vmSet);
-        int sumOfWeightTarget = sumMemorySizeOfVmSet(target.get(0));
-        int sumOfWeightsSource = sumMemorySizeOfVmSet(vmSet);
-//        if (sumOfWeightsSource > sumOfWeightTarget){
-//            try {
-//                throw new Exception("sum is not correct");
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
+    private VMSet findCandidatesInTarget(DependencyGraph dg, VMSet excessIncoming) {
+        List<VMSet> allGoings  =  dg.getDependencyMap().get(excessIncoming);
+        int sumOfWeightTarget = sumMemorySizeOfVmSet(allGoings.get(0));
+        int sumOfWeightsSource = sumMemorySizeOfVmSet(excessIncoming);
+        MigrationProcess.getOnGoingMigrations();
+        if (sumOfWeightsSource > sumOfWeightTarget){
+
+        }
 
      return null;
     }
@@ -854,22 +792,6 @@ public class Cloud {
     }
 
 
-    public void showCyclesO(DependencyGraph dGraph) {
-
-        Set<List<VMSet>> cycleSet = detectCyclesO(dGraph);
-
-        if (cycleSet.isEmpty()) {
-            System.out.println("There is no cycles");
-        } else {
-            System.out.println("There are " + cycleSet.size() + "  cycles :");
-        }
-
-        final int[] index = {0};
-        cycleSet.forEach(newset -> {
-            System.out.println("--------------cycle number : " + (++index[0]));
-            System.out.println(newset);
-        });
-    }
 
 
     private void updateMigration(VMSet bestCandidate, PM bestPm) {
@@ -899,7 +821,6 @@ public class Cloud {
                     e.printStackTrace();
                 }
             }
-
 
             System.out.println("new temp Migration :" + newMig);
 
@@ -1002,72 +923,6 @@ public class Cloud {
     }
 
 
-    public void drawComplexGraph(DependencyGraph dependencyGraph) {
-        Graph<String, String> g = new SparseMultigraph<String, String>();
-        dependencyGraph.getCmplxDepend().forEach(complexDependency -> {
-
-            String firstNode = getSetOfAllMigratingVMsFrom(migrations, complexDependency.getSource()).toString();
-            String secondNode = getSetOfAllMigratingVMsFrom(migrations, complexDependency.getDestination()).toString();
-            g.addVertex(firstNode);
-            g.addVertex(secondNode);
-
-            g.addEdge(complexDependency.getVmSet().toString(), firstNode, secondNode, EdgeType.DIRECTED);
-        });
-
-        Layout<String, String> layout = new CircleLayout(g);
-        layout.setSize(new Dimension(400, 400));
-        BasicVisualizationServer<String, String> vv =
-                new BasicVisualizationServer<String, String>(layout);
-        vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
-        vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller());
-        vv.setPreferredSize(new Dimension(420, 420));
-
-        JFrame frame = new JFrame("Simple Graph View");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(vv);
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-
-    //draw a dependency graph based on the nodes as vm sets
-    public void draw(DependencyGraph dependencyGraph) {
-        Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
-
-        Graph<String, String> g = new SparseMultigraph<String, String>();
-
-        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
-
-            g.addVertex(entry.getKey().toString());
-            entry.getValue().forEach(vmSet -> {
-                g.addVertex(vmSet.toString());
-            });
-
-        }
-
-        final int[] counter = {0};
-        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
-            entry.getValue().forEach(vmSet -> {
-                g.addEdge(String.valueOf(counter[0]++), (entry.getKey().toString()), (vmSet.toString()),
-                        EdgeType.DIRECTED);
-            });
-
-        }
-
-        // g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
-        Layout<String, String> layout = new CircleLayout(g);
-        layout.setSize(new Dimension(400, 400));
-        BasicVisualizationServer<String, String> vv =
-                new BasicVisualizationServer<String, String>(layout);
-        vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
-        vv.setPreferredSize(new Dimension(420, 420));
-
-        JFrame frame = new JFrame("Simple Graph View");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(vv);
-        frame.pack();
-        frame.setVisible(true);
-    }
 
 
     public VMSet getCurrentVMSetsForPM(PM pm) {
@@ -1081,6 +936,15 @@ public class Cloud {
         return vmSet;
     }
 
+    public Assignment getCurrentAssignmentForVM(VM vm){
+        for (int i =0; i < currentAssignments.size(); i++){
+            if (currentAssignments.get(i).getVm().equals(vm)) {
+                return currentAssignments.get(i);
+            }
+        }
+        return null;
+    }
+
     public PM findPMByName(String s) {
         return pmList.stream().filter(thispm -> thispm.getName().equals(s)).findFirst().orElse(null);
     }
@@ -1088,13 +952,6 @@ public class Cloud {
 
     //for migration process, where there are some infeasible VMs waiting for migration
     //but newly generated cycles won't let them
-    public void removeVMsInCycle(Set<List<VMSet>> c, List<VM> l) {
-        c.forEach(setList -> {
-            setList.forEach(vmSet -> {
-                l.removeAll(vmSet.getVMList());
-            });
-        });
-    }
 
     public void printReport() {
 
@@ -1107,15 +964,6 @@ public class Cloud {
         System.out.println(report);
     }
 
-    public void writeReport() {
-
-        try {
-            Files.write(Paths.get("myfile.txt"), "the text".getBytes(), StandardOpenOption.APPEND);
-        }catch (IOException e) {
-            //exception handling left as an exercise for the reader
-        }
-
-    }
 
     public void removeDependantVMs(DependencyGraph d, List<VM> l) {
         List<VM> newL = new ArrayList<>();
@@ -1206,4 +1054,206 @@ public class Cloud {
         });
         return vms;
     }
+
+
+    public List<Assignment> currentAndOnGoingAsg(){
+        List<Assignment> currentOngoing = new ArrayList<>();
+        if ( MigrationProcess.getOnGoingMigrations() != null) {
+            MigrationProcess.getOnGoingMigrations().forEach(onGoingMig -> {
+                VM vm = onGoingMig.getVm();
+                currentOngoing.add(getCurrentAssignmentForVM(vm));
+            });
+        }
+        return currentOngoing;
+
+    }
+
+    public List<Assignment> currentAndOnGoingAsgFromPm(PM pm){
+        List<Assignment> currentOngoing = new ArrayList<>();
+        currentAndOnGoingAsg().forEach( assignment -> {
+                if (assignment.getPm().equals(pm)) {
+                    currentOngoing.add(assignment);
+                }
+          }
+        );
+        return currentOngoing;
+    }
+
+
+    public VMSet currentOngoingVMsFromPM(PM pm){
+        List<VM> vms = new ArrayList<>();
+        currentAndOnGoingAsgFromPm(pm).forEach(assignment -> {
+            vms.add(assignment.getVm());
+        });
+        VMSet vmSet = new VMSet();
+        vmSet.setVMList(vms);
+        return vmSet;
+    }
+
+
+    public void showCycles(DependencyGraph dGraph) {
+
+        Set<List<VMSet>> cycleSet = detectCycles(dGraph);
+
+        if (cycleSet.isEmpty()) {
+            System.out.println("There is no cycles");
+        } else {
+            System.out.println("There are cycles :");
+        }
+
+        cycleSet.forEach(newset -> {
+            System.out.println(newset);
+        });
+    }
+
+    public void solveCycles() {
+        getAllOutGoingSets(migrations).forEach(vmSet -> {
+            DependencyGraph dGraph = generateOnoueDependencyGraph(migrations);
+            if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
+                System.out.println("There is a cycle :");
+                System.out.println(dGraph.getPath(vmSet, vmSet));
+                VMSet bestCandidate = findTheMinWeightSet(dGraph.getPath(vmSet, vmSet));
+                PM bestPm = null;
+                try {
+                    bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                    System.exit(0);
+                }
+                updateMigration(bestCandidate, bestPm);
+            }
+
+        });
+    }
+
+    public void removeVMsInCycle(Set<List<VMSet>> c, List<VM> l) {
+        c.forEach(setList -> {
+            setList.forEach(vmSet -> {
+                l.removeAll(vmSet.getVMList());
+            });
+        });
+    }
+
+
+    public void drawComplexGraph(DependencyGraph dependencyGraph) {
+        Graph<String, String> g = new SparseMultigraph<String, String>();
+        dependencyGraph.getCmplxDepend().forEach(complexDependency -> {
+
+            String firstNode = getSetOfAllMigratingVMsFrom(migrations, complexDependency.getSource()).toString();
+            String secondNode = getSetOfAllMigratingVMsFrom(migrations, complexDependency.getDestination()).toString();
+            g.addVertex(firstNode);
+            g.addVertex(secondNode);
+
+            g.addEdge(complexDependency.getVmSet().toString(), firstNode, secondNode, EdgeType.DIRECTED);
+        });
+
+        Layout<String, String> layout = new CircleLayout(g);
+        layout.setSize(new Dimension(400, 400));
+        BasicVisualizationServer<String, String> vv =
+                new BasicVisualizationServer<String, String>(layout);
+        vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+        vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller());
+        vv.setPreferredSize(new Dimension(420, 420));
+
+        JFrame frame = new JFrame("Simple Graph View");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(vv);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    //draw a dependency graph based on the nodes as vm sets
+    public void draw(DependencyGraph dependencyGraph) {
+        Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
+
+        Graph<String, String> g = new SparseMultigraph<String, String>();
+
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+
+            g.addVertex(entry.getKey().toString());
+            entry.getValue().forEach(vmSet -> {
+                g.addVertex(vmSet.toString());
+            });
+
+        }
+
+        final int[] counter = {0};
+        for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+            entry.getValue().forEach(vmSet -> {
+                g.addEdge(String.valueOf(counter[0]++), (entry.getKey().toString()), (vmSet.toString()),
+                        EdgeType.DIRECTED);
+            });
+
+        }
+
+        // g.addEdge("a1" , "a2" , "this" , EdgeType.DIRECTED);
+        Layout<String, String> layout = new CircleLayout(g);
+        layout.setSize(new Dimension(400, 400));
+        BasicVisualizationServer<String, String> vv =
+                new BasicVisualizationServer<String, String>(layout);
+        vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
+        vv.setPreferredSize(new Dimension(420, 420));
+
+        JFrame frame = new JFrame("Simple Graph View");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(vv);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public void showCyclesO(DependencyGraph dGraph) {
+
+        Set<List<VMSet>> cycleSet = detectCyclesO(dGraph);
+
+        if (cycleSet.isEmpty()) {
+            System.out.println("There is no cycles");
+        } else {
+            System.out.println("There are " + cycleSet.size() + "  cycles :");
+        }
+
+        final int[] index = {0};
+        cycleSet.forEach(newset -> {
+            System.out.println("--------------cycle number : " + (++index[0]));
+            System.out.println(newset);
+        });
+    }
+
+    public void setDependencyWeights(List<Migration> migrations) {
+        DependencyGraph dependencyGraph = generateDependencyGraph(migrations);
+        Map<VMSet, List<VMSet>> dependencyMap = dependencyGraph.getDependencyMap();
+
+        List<VMSet> removedInEdge = new ArrayList<>();
+        List<VMSet> allSets = getAllOutGoingSets(migrations);
+
+        while (removedInEdge.size() < allSets.size()) {
+
+            allSets.forEach(set -> {
+                if (!removedInEdge.contains(set)) {
+                    boolean hasInEdge = false;
+                    for (Map.Entry<VMSet, List<VMSet>> entry : dependencyMap.entrySet()) {
+                        if (entry.getValue().contains(set) && !removedInEdge.contains(entry.getKey())) {
+                            hasInEdge = true;
+                        }
+                    }
+
+                    if (!hasInEdge) {
+                        int setWeight = maxWeightOfSet(set, migrations);
+                        if (dependencyMap.get(set) != null) {
+                            dependencyMap.get(set).forEach(dependentSet -> {
+                                dependentSet.getVMList().forEach(vm -> {
+                                            findMigrationOfVM(vm, migrations)
+                                                    .setWeight(findMigrationOfVM(vm, migrations).getWeight() + setWeight);
+                                        }
+                                );
+                            });
+                        }
+                        removedInEdge.add(set);
+                    }
+                }
+            });
+        }
+
+    }
+
+
 }

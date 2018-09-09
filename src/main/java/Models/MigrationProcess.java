@@ -16,7 +16,7 @@ public class MigrationProcess {
     private Cloud cloud;
     private int pipelineDegree;
     private int linkDegree;
-    private List<Migration> onGoingMigrations;
+    private static List<Migration> onGoingMigrations;
     private int timeStamp;
 
 
@@ -45,7 +45,7 @@ public class MigrationProcess {
         this.pipelineDegree = pipelineDegree;
     }
 
-    public List<Migration> getOnGoingMigrations() {
+    public static List<Migration> getOnGoingMigrations() {
         return onGoingMigrations;
     }
 
@@ -59,6 +59,16 @@ public class MigrationProcess {
 
     public void setLinkDegree(int linkDegree) {
         this.linkDegree = linkDegree;
+    }
+
+    public static List<Migration> getOngoingMigrationFrom(PM pm){
+        List<Migration> goingFrom = new ArrayList<>();
+        for (Migration onGoingMigration : onGoingMigrations) {
+            if (onGoingMigration.getSource().equals(pm)){
+                goingFrom.add(onGoingMigration);
+            }
+        }
+        return goingFrom;
     }
 
     public MigrationProcess() {
