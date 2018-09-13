@@ -428,7 +428,7 @@ public class Cloud {
             //block for checking
             //todo includes the ongoing migrations
             if (freeMemory(currentAssignments, destinationPM) + sumMemorySizeOfVmSet(depTo) < sumMemorySizeOfVmSet(excess)){
-                System.out.println();
+                //System.out.println();
             }
             //
 
@@ -470,7 +470,7 @@ public class Cloud {
         return vmSet;
     }
 
-    public void setMigrationTimes(List<Migration> migrations) {
+    public void setInitialMigrationTimes(List<Migration> migrations) {
         migrations.forEach(migration -> {
             migration.setWeight(migration.getVm().getMemorySize());
         });
@@ -518,7 +518,7 @@ public class Cloud {
     //this is setting dependency weights before solving the cycles (just removing the
     public void setDependencyWeightsO(DependencyGraph dg) {
 
-        setMigrationTimes(migrations);
+        setInitialMigrationTimes(migrations);
         Set<List<VMSet>> cycles = detectCyclesO(dg);
 
         //now we must detect and remove one edge for cycles
@@ -546,11 +546,6 @@ public class Cloud {
         //we have a cese where node is not empty and o is empty after several loops
         while (!node.isEmpty()) {
             List<VM> o = getVMsWihoutInEdge(node, dg);
-            for (VM x : o){
-                if (x.getName().equals("VM-134")){
-                    System.out.println();
-                }
-            }
             o.forEach(oVM -> {
                 if (dg.getKeyContaining(oVM) != null) {
                     dg.getDependencyMap().get(dg.getKeyContaining(oVM)).get(0).getVMList().forEach(dependentVM -> {
@@ -735,13 +730,13 @@ public class Cloud {
         List<VMSet> target  =  dg.getDependencyMap().get(vmSet);
         int sumOfWeightTarget = sumMemorySizeOfVmSet(target.get(0));
         int sumOfWeightsSource = sumMemorySizeOfVmSet(vmSet);
-        if (sumOfWeightsSource > sumOfWeightTarget){
-            try {
-                throw new Exception("sum is not correct");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+//        if (sumOfWeightsSource > sumOfWeightTarget){
+//            try {
+//                throw new Exception("sum is not correct");
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
 
      return null;
     }
@@ -911,7 +906,7 @@ public class Cloud {
             nextphaseMig.setWeight(oldmig != null ? oldmig.getWeight() : oldTemp.getWeight());
 
             if (newMig.getVm().getName().equals("VM-112")){
-                System.out.println();
+              //  System.out.println();
             }
 
             if (!bestPm.equals(nextphaseMig.getFinalDestination())) {
@@ -926,7 +921,7 @@ public class Cloud {
 
             migrations.add(newMig);
             if (!checkRepeatedMigrations().isEmpty()){
-                System.out.println();
+              //  System.out.println();
             };
         });
         System.out.println("--------------------------");
@@ -1105,6 +1100,7 @@ public class Cloud {
         String timestamp = sdf.format(new Date());
         report.setTimeStampFinished(timestamp);
         System.out.println(report);
+        System.out.println("number of migrations remained " +this.getMigrations().size());
     }
 
     public void writeReport() {
@@ -1157,18 +1153,21 @@ public class Cloud {
 
         unfinishedTempMigrations.forEach(tempmigration ->{
 
-            PM tempPm = getTampPmForVM(tempmigration);
+            PM tempPm = getTempPmForVM(tempmigration);
 
             if (tempPm != null){
                 removeTemps.add(tempmigration);
                 Migration newTempMigration = new Migration(tempmigration.getSource() , tempPm , tempmigration.getVm() ,tempmigration.getFinalDestination());
+                newTempMigration.setWeight(tempmigration.getWeight());
 
                 //it's a temp must have a next phase migration
                 Migration oldNextPhase = findMigrationOfVM(tempmigration.getVm(), nextPhaseMigrations);
                 nextPhaseMigrations.remove(oldNextPhase);
 
                 if (!tempPm.equals(tempmigration.getFinalDestination())){
-                    nextPhaseMigrations.add(new Migration(tempPm , tempmigration.getFinalDestination() , tempmigration.getVm() , tempmigration.getFinalDestination()));
+                    Migration newNexTPhaseForNewTemp = new Migration(tempPm , tempmigration.getFinalDestination() , tempmigration.getVm() , tempmigration.getFinalDestination());
+                    newNexTPhaseForNewTemp.setWeight(tempmigration.getWeight());
+                    nextPhaseMigrations.add(newNexTPhaseForNewTemp);
                 }
 
                 newTemps.add(newTempMigration);
@@ -1186,8 +1185,11 @@ public class Cloud {
         return solved;
    }
 
-    private PM getTampPmForVM(Migration tempmigration) {
+    private PM getTempPmForVM(Migration tempmigration) {
         final PM[] tempPM = {null};
+        if (hasFreeCapacityFor(currentAssignments , tempmigration.getFinalDestination() , tempmigration.getVm())){
+            return tempmigration.getFinalDestination();
+        }
         pmList.forEach(pm->{
             if (!pm.equals(tempmigration.getDestination()) && hasFreeCapacityFor(currentAssignments , pm , tempmigration.getVm())){
                 tempPM[0] = pm;
@@ -1205,5 +1207,14 @@ public class Cloud {
             vms.add(migration.getVm());
         });
         return vms;
+    }
+
+    public Migration putBackTemp(Migration m) {
+        Migration original = new Migration(m.getSource() , m.getFinalDestination() ,m.getVm(), m.getFinalDestination());
+        original.setWeight(m.getWeight());
+        migrations.remove(m);
+        nextPhaseMigrations.remove(findMigrationOfVM(original.getVm() , nextPhaseMigrations));
+        migrations.add(original);
+        return original;
     }
 }

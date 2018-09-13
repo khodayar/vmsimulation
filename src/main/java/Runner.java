@@ -15,7 +15,7 @@ public class Runner {
         List<String> files = new ArrayList<>();
 
 
-        readNestedFiles("C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\dataset_small-x" , files);
+        readNestedFiles("D:\\google drive\\vm migration\\generator\\dataset_small-x" , files);
             //more code
 
             files.forEach(file -> {
@@ -106,7 +106,7 @@ public class Runner {
 //        dependencyGraph.printDependency();
 
 //        //setting default migration weights
-        current.setMigrationTimes(current.getMigrations());
+        current.setInitialMigrationTimes(current.getMigrations());
         current.setDependencyWeightsO(dependencyGraph);
         System.out.println(current.getMigrations());
 
@@ -135,7 +135,7 @@ public class Runner {
 */
         // current.draw(dependencyGraph);
  /*
-        current.setMigrationTimes(current.getMigrations());
+        current.setInitialMigrationTimes(current.getMigrations());
         System.out.println(current.getMigrations());
         current.setDependencyWeightsO(current.getMigrations());
         System.out.println(current.getMigrations());
@@ -189,7 +189,7 @@ public class Runner {
         current.getReport().setTimeStampMigStart(timestamp);
 
         try {
-            migrationProcess.doMigrationsOnoue(dependencyGraph);
+            migrationProcess.doMigrationsNew(dependencyGraph);
         } catch (Exception e) {
             e.printStackTrace();
         }

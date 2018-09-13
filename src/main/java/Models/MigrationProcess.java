@@ -2,6 +2,7 @@ package Models;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -102,9 +103,7 @@ public class MigrationProcess {
                 finished.add(currentMigration);
                 //remove initial vm running on source
                 cloud.removeFromCurrent(currentMigration.getVm() , currentMigration.getSource());
-                if (timeStamp == 490){
-                    System.out.println();
-                }
+
                 System.out.println("Migration Finished " + currentMigration + " at " + timeStamp);
                 System.out.println("free pipelineDegree :" + pipelineDegree);
             }
@@ -129,7 +128,7 @@ public class MigrationProcess {
     public void doMigration() throws Exception {
         List<Migration> queue = cloud.getMigrations();
 
-      //  cloud.setMigrationTimes(queue);
+      //  cloud.setInitialMigrationTimes(queue);
     //    Collections.sort(queue);
 
         queue.addAll(cloud.getNextPhaseMigrations());
@@ -161,11 +160,124 @@ public class MigrationProcess {
 
     }
 
+    public void doMigrationsNew (DependencyGraph dg) throws Exception {
+        cloud.setInitialMigrationTimes(cloud.getMigrations());
+
+
+        cloud.getReport().setNumberOfInitialCycles(cloud.detectCyclesO(dg).size());
+
+        Set<List<VMSet>> c = new HashSet<>();         //to keep cycles
+        HashSet<VM> l = new HashSet<>();  //list for feasible migration
+        List<VM> x = new ArrayList<>(); // ongoing migrations vms
+        List<VM> t = new ArrayList<>();  //temp for l after solving cycles
+
+
+
+        l.addAll(cloud.getVMsWithoutOutEdges(dg));
+        int loop = 0;
+
+        while (!cloud.getMigrations().isEmpty() || !onGoingMigrations.isEmpty()){
+            loop++;
+            //if there is any candidate start their migration
+            if (!l.isEmpty()){
+
+                List<Migration> lMigrations = new ArrayList<>();
+                l.forEach(vm -> {
+                    Migration m = cloud.findMigrationOfVM(vm, cloud.getMigrations());
+                    lMigrations.add(m);
+                });
+
+                Collections.sort(lMigrations);
+                for (int i=0; i<lMigrations.size();i++) {
+                    Migration m = lMigrations.get(i);
+                    if (cloud.hasFreeCapacityFor(cloud.getCurrentAssignments(), m.getDestination(), m.getVm()) &&
+                            linksHaveCapacity(m)) {
+                        try {
+                            startMigration(m);
+                            x.add(m.getVm());  //ongoing migrating VMs
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        if (m.isTemp()){
+                            if (cloud.hasFreeCapacityFor(cloud.getCurrentAssignments(), m.getFinalDestination(), m.getVm()) &&
+                                    linksHaveCapacity(m)){
+                                m = cloud.putBackTemp(m);
+                                startMigration(m);
+                                x.add(m.getVm());  //ongoing migrating VMs
+                            }
+                        }
+                    }
+                }
+                l.removeAll(x);
+
+                System.out.println("starting wave " + loop);
+            }
+
+
+
+            if (x.isEmpty() && !cloud.getMigrations().isEmpty()){
+                c = cloud.detectCyclesO(dg);
+                if (!c.isEmpty()) {
+                    System.out.println("start solving cycles" + loop);
+                    cloud.solveCyclesOn(c, dg);
+                    dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                    cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+                    System.out.println("get new vms without out edge" + loop);
+                    List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
+                    if (newL.isEmpty()){
+                        System.out.println("new L is empty");
+                    }
+                    if (newL.isEmpty() && !cloud.getMigrations().isEmpty()) {
+                        //change this with finish Report or something
+                        cloud.printReport();
+                        throw new Exception ("dead end");
+                    } else {
+                        l.addAll(newL) ;
+                        System.out.println("having new l" +  loop);
+                    }
+                } else  {
+                    //change the place of unfinished temp migrations
+                    if (cloud.shuffleTempMigrations()){
+                        dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                        l.addAll(cloud.getVMsWithoutOutEdges(dg));
+                    } else {
+                        System.out.println();
+                    }
+                }
+            }
+
+
+            //one wave of finished migrations
+            List<Migration> finished ;
+            if (!x.isEmpty()) {
+                finished = finishNextMigration();
+                finished.forEach(finishedMigration -> {
+                    x.remove(finishedMigration.getVm());
+                });
+                System.out.println("finishing wave" + loop + " size of ongoing " + x + "  ongoing" + onGoingMigrations.size());
+
+
+                //update dg and then l
+                dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                //  cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+                l.addAll(cloud.getVMsWithoutOutEdges(dg));
+
+            }
+
+
+
+
+        }
+
+        cloud.printReport();
+
+    }
 
 
     public void doMigrationsOnoue (DependencyGraph d) throws Exception {
 
-        cloud.setMigrationTimes(cloud.getMigrations());
+        cloud.setInitialMigrationTimes(cloud.getMigrations());
 
         Set<List<VMSet>> c = cloud.detectCyclesO(d);
         cloud.getReport().setNumberOfInitialCycles(c.size());
