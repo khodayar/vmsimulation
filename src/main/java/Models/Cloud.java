@@ -694,13 +694,15 @@ public class Cloud {
                 //data set results is with left side 2018-08-26
                 //Onoue original is d[0].getTargetNodeEqual(vmSet) != null
                 //o2 results : d[0].getDependencyMap().get(vmSet) != null
+                //todo decide which
                 if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
                         .getWeightSum()) {
                     minWeightSet[0] = vmSet;
                 }
             });
 
-            VMSet tmCandidates = findCandidatesInTarget(dg, minWeightSet[0]);
+            //todo
+           // VMSet tmCandidates = findCandidatesInTarget(dg, minWeightSet[0]);
 
             PM tempLocation = null;
             try {

@@ -162,8 +162,6 @@ public class MigrationProcess {
 
     public void doMigrationsNew (DependencyGraph dg) throws Exception {
         cloud.setInitialMigrationTimes(cloud.getMigrations());
-
-
         cloud.getReport().setNumberOfInitialCycles(cloud.detectCyclesO(dg).size());
 
         Set<List<VMSet>> c = new HashSet<>();         //to keep cycles
@@ -264,14 +262,8 @@ public class MigrationProcess {
                 l.addAll(cloud.getVMsWithoutOutEdges(dg));
 
             }
-
-
-
-
         }
-
         cloud.printReport();
-
     }
 
 
