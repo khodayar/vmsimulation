@@ -1166,4 +1166,36 @@ public class Cloud {
         });
         return vms;
     }
+
+     public List<VMSet> getConnectedComponents(DependencyGraph dg){
+
+        List<VMSet> cntComps = new ArrayList<>();
+
+        //LIST OF LSIT OF VMSETS ?
+
+
+
+
+
+     }
+
+
+     public void dfs(VMSet vmSet , List<VMSet> list , DependencyGraph dg){
+         add vmset to list;
+         if (vmSet is key){
+             add vmset value to list
+                     get key vmsets of value
+                        for each
+                            if not in the list
+                                dfs ()
+         } else {
+
+         }
+
+
+
+
+     }
+
+
 }
