@@ -1167,35 +1167,85 @@ public class Cloud {
         return vms;
     }
 
-     public List<VMSet> getConnectedComponents(DependencyGraph dg){
 
-        List<VMSet> cntComps = new ArrayList<>();
+    //return a set of connected component
+    //each connected component is a list of vmset
+     public Set<List<VMSet>> getConnectedComponents(DependencyGraph dg){
+        Set<List<VM>> connectedVms = new HashSet<>();
 
-        //LIST OF LSIT OF VMSETS ?
+         Set<List<VMSet>> connectSetCmps= new HashSet<>();
+         //todo loop over vm s not keys, for single vm connected components
+         Set<VMSet> allKeys = dg.getDependencyMap().keySet();
+        allKeys.forEach(key ->{
+           //each vmset (key) is only in one connected component
+            //duplicate , check second iteration , vm-23 for clue
+            if (!setOfListContains(connectSetCmps , key)){
+                List<VMSet> cncmp = new ArrayList<>();
+                dfs(key , cncmp , dg);
+                connectSetCmps.add(cncmp);
+                connectedVms.add(getVmListOfSets(cncmp));
+            }
+
+        });
+        return connectSetCmps;
+     }
 
 
 
+    private boolean setOfListContains(Set<List<VMSet>> connectCmps, VMSet key) {
+        final boolean[] thereIs = {false};
+         connectCmps.forEach(vmSetList -> {
+             if (vmSetList.contains(key)){
+                 thereIs[0] = true;
+             }
+         });
 
+         return thereIs[0];
+
+    }
+
+
+    public void dfs(VMSet vmSet , List<VMSet> list , DependencyGraph dg){
+         list.add(vmSet);
+             //must be a singleton list
+             List<VMSet> rightSide = dg.getDependencyMap().get(vmSet);
+
+             //we'll have duplicate vms once in left side (key) once in right side
+             list.addAll(rightSide);
+
+             Set<VMSet> getNewVmSet = new HashSet<>();
+             rightSide.get(0).getVMList().forEach(vm -> {
+                 //todo here beside the key itself, we must find the other keys for which this key is in the target
+                 //connection into right side
+                 //but does it affect the cycles ?
+                 VMSet newSet = dg.getKeyContaining(vm);
+                 if (newSet != null) {
+                     getNewVmSet.add(newSet);
+                 }
+             });
+             getNewVmSet.forEach(vmSet1 -> {
+                 if (!list.contains(vmSet1)){
+                     dfs(vmSet1 , list , dg);
+                 }
+             });
 
      }
 
 
-     public void dfs(VMSet vmSet , List<VMSet> list , DependencyGraph dg){
-         add vmset to list;
-         if (vmSet is key){
-             add vmset value to list
-                     get key vmsets of value
-                        for each
-                            if not in the list
-                                dfs ()
-         } else {
+    private List<VM> getVmListOfSets(List<VMSet> cncmp) {
+        Set<VM> uiqueListOfVms = new HashSet<>();
+        cncmp.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                uiqueListOfVms.add(vm);
+            });
+        });
 
-         }
+        List<VM> uniqueList = new ArrayList<>();
+        uiqueListOfVms.forEach(vm -> {
+            uniqueList.add(vm);
+        });
 
-
-
-
-     }
-
+        return  uniqueList;
+    }
 
 }

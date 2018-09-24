@@ -8,14 +8,17 @@ import java.util.ArrayList;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 public class Runner {
 
     public static void main(String[] args) throws Exception {
         List<String> files = new ArrayList<>();
 
+        boolean readNestedFolder = true;
 
-        readNestedFiles("C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\dataset_small-x" , files);
+        if (readNestedFolder) {
+            readNestedFiles("C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\dataset_small-x", files);
             //more code
 
             files.forEach(file -> {
@@ -25,6 +28,13 @@ public class Runner {
                     e.printStackTrace();
                 }
             });
+
+        }
+
+        else {
+
+            runTheFile(null);
+        }
 
 
 
@@ -70,15 +80,24 @@ public class Runner {
 
         Cloud current = new Cloud();
 
-        //read Charles's version
-         CsvReader.readFile(current , filePath);
+        if (filePath != null) {
+            //read Charles's version
+            CsvReader.readFile(current, filePath);
+        }
+
         System.out.println("Start of file" +  filePath);
 
         //out_inst_100_CONS-20-80_50_90-95.csv
         //out_inst_100_CONS-20-80_50_80-85.csv
         //we can use this function to read the set up and current and new placements from setup.txt
 
-        //  SetUp.readSetUp(current);
+        if (filePath == null) {
+            try {
+                SetUp.readSetUp(current);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
@@ -91,6 +110,9 @@ public class Runner {
 
        // System.out.println("Onoue dependency graph");
         dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
+
+        current.showAssignments(false);
+        Set<List<VMSet>> cmp = current.getConnectedComponents(dependencyGraph);
         //  dependencyGraph.printDependency();
 
         //  current.showCyclesO(dependencyGraph);
