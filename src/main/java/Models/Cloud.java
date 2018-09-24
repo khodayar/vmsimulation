@@ -1187,6 +1187,10 @@ public class Cloud {
             }
 
         });
+
+        //todo : must merge connected components , if they have a shared vm it's enough (most probably they have a shared key vmset)
+
+
         return connectSetCmps;
      }
 
