@@ -589,6 +589,17 @@ public class Cloud {
         return woe;
     }
 
+    public List<VM> getVMsWithoutOutEdges(DependencyGraph dg , Set<VM> vms) {
+        List<VM> woe = new ArrayList<>();
+        vms.forEach(vm -> {
+            //remove the second ?
+            if (dg.getKeyContaining(vm) == null) {
+                woe.add(vm);
+            }
+        });
+        return woe;
+    }
+
 
     private int maxWeightOfSet(VMSet set, List<Migration> migrations) {
         final int[] weight = {0};
@@ -660,6 +671,41 @@ public class Cloud {
             }
 
         });
+    }
+
+
+    public void solveCyclesOn(Set<List<VMSet>> cycles, DependencyGraph dg, List<Set<VM>> g) {
+        List<Set<VM>> tempG = new ArrayList<>(g); //copy it
+        Set<List<VMSet>> cyclesPerCC = new HashSet<>();
+        cycles.forEach(vmSetList -> {
+            Set<VM> correspondCC = findSetForCycle(vmSetList , tempG);
+            if (correspondCC != null) {
+                tempG.remove(correspondCC);
+                cyclesPerCC.add(vmSetList);
+            }
+        });
+
+
+        solveCyclesOn(cyclesPerCC , dg);
+    }
+
+    private Set<VM> findSetForCycle(List<VMSet> vmSetList, List<Set<VM>> g) {
+        final Set<VM>[] found = new HashSet[1];
+        vmSetList.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                if(found[0]== null) {
+                    g.forEach(setOfVM -> {
+                        if (setOfVM.contains(vm) && found[0] == null) {
+                            found[0] = setOfVM;
+                        }
+                    });
+                }
+
+           });
+        });
+
+        return found[0];
+
     }
 
 
@@ -1169,13 +1215,13 @@ public class Cloud {
 
 
     //return a set of connected component
-    //each connected component is a list of vmset
-     public Set<List<VMSet>> getConnectedComponents(DependencyGraph dg){
+    //each connected component is a set of vms
+     public List<Set<VM>> getConnectedComponents(DependencyGraph dg){
         Set<List<VM>> connectedVms = new HashSet<>();
+        Set<List<VMSet>> connectSetCmps= new HashSet<>();
 
-         Set<List<VMSet>> connectSetCmps= new HashSet<>();
          //todo loop over vm s not keys, for single vm connected components
-         Set<VMSet> allKeys = dg.getDependencyMap().keySet();
+        Set<VMSet> allKeys = dg.getDependencyMap().keySet();
         allKeys.forEach(key ->{
            //each vmset (key) is only in one connected component
             //duplicate , check second iteration , vm-23 for clue
@@ -1188,11 +1234,12 @@ public class Cloud {
 
         });
 
-        //todo : must merge connected components , if they have a shared vm it's enough (most probably they have a shared key vmset)
+       List<Set<VM>> merged  = mergeConnectedComponents(connectSetCmps);
+       addSoloVMS(merged);
 
-
-        return connectSetCmps;
+        return merged;
      }
+
 
 
 
@@ -1214,8 +1261,7 @@ public class Cloud {
              //must be a singleton list
              List<VMSet> rightSide = dg.getDependencyMap().get(vmSet);
 
-             //we'll have duplicate vms once in left side (key) once in right side
-             list.addAll(rightSide);
+
 
              Set<VMSet> getNewVmSet = new HashSet<>();
              rightSide.get(0).getVMList().forEach(vm -> {
@@ -1232,6 +1278,9 @@ public class Cloud {
                      dfs(vmSet1 , list , dg);
                  }
              });
+
+            //we'll have duplicate vms once in left side (key) once in right side
+            list.addAll(rightSide);
 
      }
 
@@ -1251,5 +1300,148 @@ public class Cloud {
 
         return  uniqueList;
     }
+
+
+//for merge lop over all set and compare one by one , if there is any match restart the loop
+
+    private List<Set<VM>> mergeConnectedComponents(Set<List<VMSet>> connectSetCmps) {
+    List<Set<VM>> merged = new ArrayList<>();
+
+
+       int setSize = connectSetCmps.size();
+        ArrayList<List<VMSet>> arrayOfSet= new ArrayList<>(setSize);
+        arrayOfSet.addAll(connectSetCmps);
+
+
+        boolean checkMap[][] = new boolean[setSize][setSize];
+
+        if (arrayOfSet.size() > 1) {
+
+            for (int i = 0; i < setSize; i++) {
+                for (int j = 0; j < setSize; j++) {
+                    if (i < j) {
+                        if (!intersection(arrayOfSet.get(i), arrayOfSet.get(j)).isEmpty()) {
+                            checkMap[i][j] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        int merge[] = new int[setSize];
+        Arrays.fill(merge, -1);
+        ArrayList<List<VMSet>> unique= new ArrayList<>();
+        int mergeDestination = 0;
+        for (int i = 0; i < setSize; i++) {
+            //first check if this has been merged to another list
+            //if i itself has been merged to other list
+            if (merge[i] == -1) {
+
+                mergeDestination = i;
+                unique.add(arrayOfSet.get(i));
+            } else {
+                mergeDestination = merge[i];
+                unique.add(new ArrayList<>());  //empty set
+            }
+            for (int j = 0; j < setSize; j++) {
+                if (i < j) {
+                    if (checkMap[i][j]){
+                       unique.get(mergeDestination).addAll(arrayOfSet.get(j));
+                       //j has been merge to mergeDestination
+                       merge[j] = mergeDestination;
+                    } else {
+                        //nothing should be done here ? no merge so move on
+                      //  unique.get(j).addAll(arrayOfSet.get(j));
+                    }
+
+                }
+
+            }
+
+        }
+        //unique seems ok
+        //todo up tp here is ok
+        for (int i =0 ; i<unique.size(); i++){
+            Set<VM> oneSet = new HashSet<>();
+            for (int j=0 ; j<unique.get(i).size(); j++){
+                oneSet.addAll(unique.get(i).get(j).getVMList());
+            }
+            if (oneSet.size() > 0) {
+                merged.add(oneSet);
+            }
+        }
+
+
+        return merged;
+
+    }
+
+
+    public List<VM> intersection(List<VMSet> set1 , List<VMSet> set2){
+
+        List<VM> vms1 = new ArrayList<>();
+        List<VM> vms2 = new ArrayList<>();
+
+        set1.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                if (!vms1.contains(vm)){
+                    vms1.add(vm);
+                }
+            });
+
+        });
+
+        set2.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                if (!vms2.contains(vm)){
+                    vms2.add(vm);
+                }
+            });
+
+        });
+
+        List<VM> sharedVMs = new ArrayList<>();
+
+        vms1.forEach(vm -> {
+            if (vms2.contains(vm)){
+                sharedVMs.add(vm);
+            }
+        });
+
+        return sharedVMs;
+
+    }
+
+    private void addSoloVMS(List<Set<VM>> merged) {
+        List<VM> alreadyIn = new ArrayList<>();
+        merged.forEach(set -> {
+            set.forEach(vm -> {
+                alreadyIn.add(vm);
+            });
+        });
+
+
+
+        List<VM> toBeAdded = new ArrayList<>();
+        migrations.forEach(migration -> {
+            toBeAdded.add(migration.getVm());
+        });
+        toBeAdded.removeAll(alreadyIn);
+
+        toBeAdded.forEach(vm -> {
+            merged.add(new HashSet<VM>(Collections.singleton(vm)));
+        });
+
+    }
+
+    public List<VM> transformMDG(List<Set<VM>> c, DependencyGraph dg) {
+        Set<List<VMSet>> cycles = detectCyclesO(dg);
+        return null;
+
+
+
+
+    }
+
 
 }

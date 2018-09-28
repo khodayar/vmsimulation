@@ -2,6 +2,7 @@ package Models;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -125,39 +126,149 @@ public class MigrationProcess {
         return finished;
     }
 
-    //old one
-    public void doMigration() throws Exception {
-        List<Migration> queue = cloud.getMigrations();
 
-      //  cloud.setMigrationTimes(queue);
-    //    Collections.sort(queue);
+    public void OnCcDoMigrations(DependencyGraph dg) throws Exception {
 
-        queue.addAll(cloud.getNextPhaseMigrations());
+        cloud.getReport().setNumberOfInitialCycles(0);
 
-        System.out.println("Migration Order :");
-        System.out.println(queue);
+        cloud.setMigrationTimes(cloud.getMigrations());
+        Set<List<VMSet>> cycles;
+        List<Set<VM>> c = new ArrayList<>();  //connected components with no candidate
+        List<VM> l = new ArrayList<>();
+        List<Set<VM>> g = cloud.getConnectedComponents(dg);
+        List<VM> t = new ArrayList<>();
+        List<VM> x = new ArrayList<>();
 
-        while (!queue.isEmpty()) {
 
-            boolean allIsChecked = false;
-            //we must handle a case where there is no feasible migration for a while to use all the pipelineDegree
-            while (pipelineDegree > 0  && !allIsChecked) {
+        DependencyGraph finalDg = dg;
+        List<Set<VM>> finalC = new ArrayList<>();
+        g.forEach(setOfVms -> {
+            List<VM> i = cloud.getVMsWithoutOutEdges(finalDg, setOfVms);
+            if (!i.isEmpty()){
+                l.addAll(i);
+            } else {
+                finalC.add(setOfVms);
+            }
+        });
+        c.addAll(finalC);
+        finalC.clear();
 
-                for (int i = 0; i < queue.size(); i++) {
-                    //second term checks if destination has capacity, otherwise checks next migration
-                    if (!onGoingMigrations.contains(queue.get(i)) && cloud.hasFreeCapacityFor(cloud.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())
-                            && linksHaveCapacity(queue.get(i))) {
-                        System.out.println("i" + i + "   free degree :" + pipelineDegree );
-                        startMigration(queue.get(i));
-                         break;
+        do {
+            if (!c.isEmpty()) {
+                cycles = cloud.detectCyclesO(dg);
+                cloud.solveCyclesOn(cycles, dg,g ); //here just one cycle per each c ?
+                dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+                g = cloud.getConnectedComponents(dg);
+                //  d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                t.addAll(cloud.getVMsWithoutOutEdges(dg));  //in next iteration will be added to l
+                t.removeAll(l);
+            }
+
+            Collections.sort(l);
+            for (int i=0; i<l.size();i++) {
+
+                Migration m = cloud.findMigrationOfVM(l.get(i), cloud.getMigrations());
+                if (m == null){
+                    System.out.println();
+                }
+                if (cloud.hasFreeCapacityFor(cloud.getCurrentAssignments(), m.getDestination(), l.get(i)) &&
+                        linksHaveCapacity(m)) {
+                    try {
+                        startMigration(m);
+                        x.add(l.get(i));  //ongoing migrating VMs
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                if (i == queue.size()-1 ) allIsChecked = true;
                 }
             }
 
-            queue.removeAll(finishNextMigration());
+            l.removeAll(x);
 
-        }
+            t.forEach(vm -> {
+                if (!l.contains(vm)) {
+                    l.add(vm);
+                }
+            });
+            t.clear();
+
+            if (x.isEmpty()){
+                //stop sign
+                //     System.out.println();
+                //move temp migrations to a new temp server
+                if (!cloud.shuffleTempMigrations()){
+                    cloud.printReport();
+                    throw new Exception("blocked temp migration(s)");
+                }
+
+            }
+
+
+            if (x.isEmpty() && l.isEmpty()){
+                // cloud.solveEmptyDependencies(d);
+                cloud.printReport();
+                throw new Exception("infeasible migration(s)");
+                //if there is no temp location, it will continue
+            }
+
+
+            //line 21 of Onoue
+            List<Migration> finished = finishNextMigration();
+
+
+            //  cloud.getMigrations().removeAll(finished);
+
+            //todo it stocks in a situation where there is no feasible migration
+            //but also no cycles !
+
+
+            //infimnite loop of cycles
+            //l is not empty but all the vm are in ccycles
+            finished.forEach(finishedMigration -> {
+                x.remove(finishedMigration.getVm());
+            });
+            dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+            cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+
+            //  d = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+           // Set<List<VMSet>> ct = cloud.ge(dg);
+            //todo : error we have common vm s in connected components
+            g = cloud.getConnectedComponents(dg);
+            DependencyGraph finalDg2  = dg;
+            l.clear();
+            g.forEach(setOfVms -> {
+                List<VM> i = cloud.getVMsWithoutOutEdges(finalDg2, setOfVms);
+                if (!i.isEmpty()){
+                    l.addAll(i);
+                } else {
+                    finalC.add(setOfVms);
+                }
+            });
+
+
+            if (!finalC.isEmpty()) {
+                c.addAll(finalC);
+
+                //**** test, it will be replaced by following function
+                //***  cloud.removeVMsInCycle(c , l);
+                cloud.removeDependantVMs(dg , l);
+            } else {
+
+                //for new ones after the migrations has finished
+//                cloud.getVMsWithoutOutEdges(dg).forEach(vm ->{
+//                    if (l.indexOf(vm)<0) {l.add(vm);}
+//                });
+            }
+
+
+
+
+
+        } while (!cloud.getMigrations().isEmpty() || !onGoingMigrations.isEmpty());
+
+        cloud.printReport();
+
+
 
     }
 

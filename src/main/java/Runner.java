@@ -18,7 +18,7 @@ public class Runner {
         boolean readNestedFolder = true;
 
         if (readNestedFolder) {
-            readNestedFiles("C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\dataset_small-x", files);
+            readNestedFiles("D:\\google drive\\vm migration\\generator\\dataset_small-x", files);
             //more code
 
             files.forEach(file -> {
@@ -28,16 +28,10 @@ public class Runner {
                     e.printStackTrace();
                 }
             });
-
         }
-
         else {
-
             runTheFile(null);
         }
-
-
-
     }
 
     private static void readFiles(String folderPath , List<String> files) {
@@ -112,7 +106,7 @@ public class Runner {
         dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
 
         current.showAssignments(false);
-        Set<List<VMSet>> cmp = current.getConnectedComponents(dependencyGraph);
+       // List<Set<VM>> cmp = current.getConnectedComponents(dependencyGraph);
         //  dependencyGraph.printDependency();
 
         //  current.showCyclesO(dependencyGraph);
@@ -211,7 +205,7 @@ public class Runner {
         current.getReport().setTimeStampMigStart(timestamp);
 
         try {
-            migrationProcess.doMigrationsOnoue(dependencyGraph);
+            migrationProcess.OnCcDoMigrations(dependencyGraph);
         } catch (Exception e) {
             e.printStackTrace();
         }
