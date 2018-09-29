@@ -1234,13 +1234,61 @@ public class Cloud {
 
         });
 
-       List<Set<VM>> merged  = mergeConnectedComponents(connectSetCmps);
+       List<Set<VM>> merged = mergedConnectedVMs(connectSetCmps);
        addSoloVMS(merged);
 
         return merged;
      }
 
+    private List<Set<VM>> mergedConnectedVMs(Set<List<VMSet>> connectSetCmps) {
+         ArrayList<List<VMSet>> all = new ArrayList<>();
+         connectSetCmps.forEach(setlist -> {
+             all.add(setlist);
+         });
 
+
+
+
+         boolean thereIsAMerge = false;
+
+         do{
+             thereIsAMerge = false;
+             for (int i = 0;i<all.size();i++){
+                 for (int j = i+1; j<all.size(); j++){
+                    if (!intersection(all.get(i) , all.get(j)).isEmpty()){
+                        thereIsAMerge = true;
+                        all.get(i).addAll(all.get(j));
+                        all.remove(j);
+                        break;
+                    }
+
+                    if (thereIsAMerge){
+                             break;
+                    }
+
+
+                 }
+
+
+             }
+
+
+
+         }while (thereIsAMerge && all.size()>1);
+
+         List<Set<VM>> mergedVMs = new ArrayList<>();
+         all.forEach(vmSetList -> {
+             Set<VM> vms = new HashSet<>();
+             vmSetList.forEach(vmSet -> {
+                 vms.addAll(vmSet.getVMList());
+             });
+             mergedVMs.add(vms);
+
+         });
+
+         return mergedVMs;
+
+    }
 
 
     private boolean setOfListContains(Set<List<VMSet>> connectCmps, VMSet key) {
@@ -1299,81 +1347,6 @@ public class Cloud {
         });
 
         return  uniqueList;
-    }
-
-
-//for merge lop over all set and compare one by one , if there is any match restart the loop
-
-    private List<Set<VM>> mergeConnectedComponents(Set<List<VMSet>> connectSetCmps) {
-    List<Set<VM>> merged = new ArrayList<>();
-
-
-       int setSize = connectSetCmps.size();
-        ArrayList<List<VMSet>> arrayOfSet= new ArrayList<>(setSize);
-        arrayOfSet.addAll(connectSetCmps);
-
-
-        boolean checkMap[][] = new boolean[setSize][setSize];
-
-        if (arrayOfSet.size() > 1) {
-
-            for (int i = 0; i < setSize; i++) {
-                for (int j = 0; j < setSize; j++) {
-                    if (i < j) {
-                        if (!intersection(arrayOfSet.get(i), arrayOfSet.get(j)).isEmpty()) {
-                            checkMap[i][j] = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        int merge[] = new int[setSize];
-        Arrays.fill(merge, -1);
-        ArrayList<List<VMSet>> unique= new ArrayList<>();
-        int mergeDestination = 0;
-        for (int i = 0; i < setSize; i++) {
-            //first check if this has been merged to another list
-            //if i itself has been merged to other list
-            if (merge[i] == -1) {
-
-                mergeDestination = i;
-                unique.add(arrayOfSet.get(i));
-            } else {
-                mergeDestination = merge[i];
-                unique.add(new ArrayList<>());  //empty set
-            }
-            for (int j = 0; j < setSize; j++) {
-                if (i < j) {
-                    if (checkMap[i][j]){
-                       unique.get(mergeDestination).addAll(arrayOfSet.get(j));
-                       //j has been merge to mergeDestination
-                       merge[j] = mergeDestination;
-                    } else {
-                        //nothing should be done here ? no merge so move on
-                      //  unique.get(j).addAll(arrayOfSet.get(j));
-                    }
-
-                }
-
-            }
-
-        }
-        //unique seems ok
-        //todo up tp here is ok
-        for (int i =0 ; i<unique.size(); i++){
-            Set<VM> oneSet = new HashSet<>();
-            for (int j=0 ; j<unique.get(i).size(); j++){
-                oneSet.addAll(unique.get(i).get(j).getVMList());
-            }
-            if (oneSet.size() > 0) {
-                merged.add(oneSet);
-            }
-        }
-
-
-        return merged;
-
     }
 
 
