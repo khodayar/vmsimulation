@@ -461,7 +461,7 @@ public class Cloud {
         return vmSet;
     }
 
-    public void setMigrationTimes(List<Migration> migrations) {
+    public void setInitialMigrationTimes(List<Migration> migrations) {
         migrations.forEach(migration -> {
             migration.setWeight(migration.getVm().getMemorySize());
         });
@@ -509,7 +509,7 @@ public class Cloud {
     //this is setting dependency weights before solving the cycles (just removing the
     public void setDependencyWeightsO(DependencyGraph dg) {
 
-        setMigrationTimes(migrations);
+        setInitialMigrationTimes(migrations);
         Set<List<VMSet>> cycles = detectCyclesO(dg);
 
         //now we must detect and remove one edge for cycles
@@ -1168,6 +1168,7 @@ public class Cloud {
             if (tempPm != null){
                 removeTemps.add(tempmigration);
                 Migration newTempMigration = new Migration(tempmigration.getSource() , tempPm , tempmigration.getVm() ,tempmigration.getFinalDestination());
+                newTempMigration.setWeight(tempmigration.getWeight());
 
                 //it's a temp must have a next phase migration
                 Migration oldNextPhase = findMigrationOfVM(tempmigration.getVm(), nextPhaseMigrations);

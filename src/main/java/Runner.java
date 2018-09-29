@@ -8,7 +8,6 @@ import java.util.ArrayList;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 public class Runner {
 
@@ -122,8 +121,10 @@ public class Runner {
 //        dependencyGraph.printDependency();
 
 //        //setting default migration weights
-        current.setMigrationTimes(current.getMigrations());
-        current.setDependencyWeightsO(dependencyGraph);
+        current.setInitialMigrationTimes(current.getMigrations());
+
+        DependencyGraph dependencyGraphCopy = current.generateOnoueDependencyGraph(current.generateMigrations());
+        current.setDependencyWeightsO(dependencyGraphCopy);
         System.out.println(current.getMigrations());
 
 /*
@@ -151,7 +152,7 @@ public class Runner {
 */
         // current.draw(dependencyGraph);
  /*
-        current.setMigrationTimes(current.getMigrations());
+        current.setInitialMigrationTimes(current.getMigrations());
         System.out.println(current.getMigrations());
         current.setDependencyWeightsO(current.getMigrations());
         System.out.println(current.getMigrations());

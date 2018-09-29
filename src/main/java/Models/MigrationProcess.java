@@ -2,7 +2,6 @@ package Models;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -131,7 +130,7 @@ public class MigrationProcess {
 
         cloud.getReport().setNumberOfInitialCycles(0);
 
-        cloud.setMigrationTimes(cloud.getMigrations());
+        cloud.setInitialMigrationTimes(cloud.getMigrations());
         Set<List<VMSet>> cycles;
         List<Set<VM>> c = new ArrayList<>();  //connected components with no candidate
         List<VM> l = new ArrayList<>();
@@ -198,18 +197,21 @@ public class MigrationProcess {
                 //move temp migrations to a new temp server
                 if (!cloud.shuffleTempMigrations()){
                     cloud.printReport();
+                    if (l.isEmpty()){
+                                  throw new Exception("infeasible migration(s)");
+                    }
                     throw new Exception("blocked temp migration(s)");
                 }
 
             }
 
-
-            if (x.isEmpty() && l.isEmpty()){
-                // cloud.solveEmptyDependencies(d);
-                cloud.printReport();
-                throw new Exception("infeasible migration(s)");
-                //if there is no temp location, it will continue
-            }
+//
+//            if (x.isEmpty() && l.isEmpty()){
+//                // cloud.solveEmptyDependencies(d);
+//                cloud.printReport();
+//                throw new Exception("infeasible migration(s)");
+//                //if there is no temp location, it will continue
+//            }
 
 
             //line 21 of Onoue
@@ -236,6 +238,7 @@ public class MigrationProcess {
             g = cloud.getConnectedComponents(dg);
             DependencyGraph finalDg2  = dg;
             l.clear();
+            finalC.clear();
             g.forEach(setOfVms -> {
                 List<VM> i = cloud.getVMsWithoutOutEdges(finalDg2, setOfVms);
                 if (!i.isEmpty()){
@@ -245,7 +248,7 @@ public class MigrationProcess {
                 }
             });
 
-
+            c.clear();
             if (!finalC.isEmpty()) {
                 c.addAll(finalC);
 
@@ -276,7 +279,7 @@ public class MigrationProcess {
 
     public void doMigrationsOnoue (DependencyGraph d) throws Exception {
 
-        cloud.setMigrationTimes(cloud.getMigrations());
+        cloud.setInitialMigrationTimes(cloud.getMigrations());
 
         Set<List<VMSet>> c = cloud.detectCyclesO(d);
         cloud.getReport().setNumberOfInitialCycles(c.size());
