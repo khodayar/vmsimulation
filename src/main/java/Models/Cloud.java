@@ -1219,4 +1219,254 @@ public class Cloud {
         migrations.add(original);
         return original;
     }
+
+
+    //added from branch realOnoue
+    public List<Set<VM>> getConnectedComponents(DependencyGraph dg){
+        Set<List<VM>> connectedVms = new HashSet<>();
+        Set<List<VMSet>> connectSetCmps= new HashSet<>();
+
+        //todo loop over vm s not keys, for single vm connected components
+        Set<VMSet> allKeys = dg.getDependencyMap().keySet();
+        allKeys.forEach(key ->{
+            //each vmset (key) is only in one connected component
+            //duplicate , check second iteration , vm-23 for clue
+            if (!setOfListContains(connectSetCmps , key)){
+                List<VMSet> cncmp = new ArrayList<>();
+                dfs(key , cncmp , dg);
+                connectSetCmps.add(cncmp);
+                connectedVms.add(getVmListOfSets(cncmp));
+            }
+
+        });
+
+        List<Set<VM>> merged = mergedConnectedVMs(connectSetCmps);
+        addSoloVMS(merged);
+
+        return merged;
+    }
+
+    private List<Set<VM>> mergedConnectedVMs(Set<List<VMSet>> connectSetCmps) {
+        ArrayList<List<VMSet>> all = new ArrayList<>();
+        connectSetCmps.forEach(setlist -> {
+            all.add(setlist);
+        });
+
+
+
+
+        boolean thereIsAMerge = false;
+
+        do{
+            thereIsAMerge = false;
+            for (int i = 0;i<all.size();i++){
+                for (int j = i+1; j<all.size(); j++){
+                    if (!intersection(all.get(i) , all.get(j)).isEmpty()){
+                        thereIsAMerge = true;
+                        all.get(i).addAll(all.get(j));
+                        all.remove(j);
+                        break;
+                    }
+
+                    if (thereIsAMerge){
+                        break;
+                    }
+
+
+                }
+
+
+            }
+
+
+
+        }while (thereIsAMerge && all.size()>1);
+
+        List<Set<VM>> mergedVMs = new ArrayList<>();
+        all.forEach(vmSetList -> {
+            Set<VM> vms = new HashSet<>();
+            vmSetList.forEach(vmSet -> {
+                vms.addAll(vmSet.getVMList());
+            });
+            mergedVMs.add(vms);
+
+        });
+
+        return mergedVMs;
+
+    }
+
+
+    private boolean setOfListContains(Set<List<VMSet>> connectCmps, VMSet key) {
+        final boolean[] thereIs = {false};
+        connectCmps.forEach(vmSetList -> {
+            if (vmSetList.contains(key)){
+                thereIs[0] = true;
+            }
+        });
+
+        return thereIs[0];
+
+    }
+
+
+    public void dfs(VMSet vmSet , List<VMSet> list , DependencyGraph dg){
+        list.add(vmSet);
+        //must be a singleton list
+        List<VMSet> rightSide = dg.getDependencyMap().get(vmSet);
+
+
+
+        Set<VMSet> getNewVmSet = new HashSet<>();
+        rightSide.get(0).getVMList().forEach(vm -> {
+            //todo here beside the key itself, we must find the other keys for which this key is in the target
+            //connection into right side
+            //but does it affect the cycles ?
+            VMSet newSet = dg.getKeyContaining(vm);
+            if (newSet != null) {
+                getNewVmSet.add(newSet);
+            }
+        });
+        getNewVmSet.forEach(vmSet1 -> {
+            if (!list.contains(vmSet1)){
+                dfs(vmSet1 , list , dg);
+            }
+        });
+
+        //we'll have duplicate vms once in left side (key) once in right side
+        list.addAll(rightSide);
+
+    }
+
+
+    private List<VM> getVmListOfSets(List<VMSet> cncmp) {
+        Set<VM> uiqueListOfVms = new HashSet<>();
+        cncmp.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                uiqueListOfVms.add(vm);
+            });
+        });
+
+        List<VM> uniqueList = new ArrayList<>();
+        uiqueListOfVms.forEach(vm -> {
+            uniqueList.add(vm);
+        });
+
+        return  uniqueList;
+    }
+
+
+    public List<VM> intersection(List<VMSet> set1 , List<VMSet> set2){
+
+        List<VM> vms1 = new ArrayList<>();
+        List<VM> vms2 = new ArrayList<>();
+
+        set1.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                if (!vms1.contains(vm)){
+                    vms1.add(vm);
+                }
+            });
+
+        });
+
+        set2.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                if (!vms2.contains(vm)){
+                    vms2.add(vm);
+                }
+            });
+
+        });
+
+        List<VM> sharedVMs = new ArrayList<>();
+
+        vms1.forEach(vm -> {
+            if (vms2.contains(vm)){
+                sharedVMs.add(vm);
+            }
+        });
+
+        return sharedVMs;
+
+    }
+
+    private void addSoloVMS(List<Set<VM>> merged) {
+        List<VM> alreadyIn = new ArrayList<>();
+        merged.forEach(set -> {
+            set.forEach(vm -> {
+                alreadyIn.add(vm);
+            });
+        });
+
+
+
+        List<VM> toBeAdded = new ArrayList<>();
+        migrations.forEach(migration -> {
+            toBeAdded.add(migration.getVm());
+        });
+        toBeAdded.removeAll(alreadyIn);
+
+        toBeAdded.forEach(vm -> {
+            merged.add(new HashSet<VM>(Collections.singleton(vm)));
+        });
+
+    }
+
+    public List<Set<VM>> getStoppedConnectedComponents(List<Set<VM>> cMDG, HashSet<VM> l, List<VM> x) {
+        List<Set<VM>> stopped = new ArrayList<>();
+        cMDG.forEach(vms -> {
+            if (interSection(vms , l).isEmpty() && interSection(vms,x).isEmpty()){
+                stopped.add(vms);
+            }
+        });
+
+        Collections.sort(stopped, new Comparator<Set>(){
+            public int compare(Set a1, Set a2) {
+                return a2.size() - a1.size(); // assumes you want biggest to smallest
+            }
+        });
+
+        return stopped;
+    }
+
+
+    public List<VM> interSection(Set<VM> vmsSet1 , Set<VM> vmSet2){
+        List<VM> shared = new ArrayList<>();
+        vmsSet1.forEach(vm -> {
+            if (vmSet2.contains(vm)) shared.add(vm);
+        });
+        return shared;
+    }
+
+
+
+    public List<VM> interSection(Set<VM> vmsSet1 , List<VM> vmSet2){
+        List<VM> shared = new ArrayList<>();
+        vmsSet1.forEach(vm -> {
+            if (vmSet2.contains(vm)) shared.add(vm);
+        });
+        return shared;
+    }
+
+    public List<VMSet> getLongestCycle(Set<List<VMSet>> c) {
+        final List<VMSet>[] large = new List[]{new ArrayList<>()};
+        c.forEach(vmSetList -> {
+            if (large[0].isEmpty() || large[0].size() < cycleWeight(vmSetList)){
+                large[0] = vmSetList;
+            }
+
+        });
+        return large[0];
+    }
+
+    private int cycleWeight(List<VMSet> cycle) {
+        final int[] weight = {0};
+        cycle.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                weight[0] += vm.getMemorySize();
+            });
+        });
+        return weight[0];
+    }
 }

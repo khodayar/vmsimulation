@@ -212,6 +212,24 @@ public class MigrationProcess {
                 System.out.println("starting wave " + loop);
             }
 
+//            dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+//            List<Set<VM>> cMDG = cloud.getConnectedComponents(dg);
+//            List<Set<VM>> stoppedConnectedComponents = cloud.getStoppedConnectedComponents(cMDG , l , x);
+//            if (!stoppedConnectedComponents.isEmpty()){
+//                System.out.println();
+//            }
+
+            //solve biggest cycle
+            c = cloud.detectCyclesO(dg);
+            if (!c.isEmpty() && !x.isEmpty()) {
+                List<VMSet> longestCycle = cloud.getLongestCycle(c);
+                HashSet longestCycleSet = new HashSet<>(Collections.singleton(longestCycle));
+                cloud.solveCyclesOn(longestCycleSet, dg);
+                dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+                List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
+                l.addAll(newL) ;
+            }
 
 
             if (x.isEmpty() && !cloud.getMigrations().isEmpty()){
