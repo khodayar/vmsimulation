@@ -126,6 +126,7 @@ public class MigrationProcess {
     }
 
 
+    //Onoue looping over connected components
     public void OnCcDoMigrations(DependencyGraph dg) throws Exception {
 
         cloud.getReport().setNumberOfInitialCycles(0);
@@ -155,7 +156,7 @@ public class MigrationProcess {
         do {
             if (!c.isEmpty()) {
                 cycles = cloud.detectCyclesO(dg);
-                cloud.solveCyclesOn(cycles, dg,g ); //here just one cycle per each c ?
+                cloud.solveCyclesOn(cycles, dg,c ); //here just one cycle per each c ?
                 dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
                 cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
                 g = cloud.getConnectedComponents(dg);

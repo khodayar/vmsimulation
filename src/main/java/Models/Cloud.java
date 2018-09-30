@@ -674,13 +674,16 @@ public class Cloud {
     }
 
 
-    public void solveCyclesOn(Set<List<VMSet>> cycles, DependencyGraph dg, List<Set<VM>> g) {
-        List<Set<VM>> tempG = new ArrayList<>(g); //copy it
+    public void solveCyclesOn(Set<List<VMSet>> cycles, DependencyGraph dg, List<Set<VM>> connectedComps) {
+        List<Set<VM>> tempG = new ArrayList<>(connectedComps); //copy it
         Set<List<VMSet>> cyclesPerCC = new HashSet<>();
         cycles.forEach(vmSetList -> {
             Set<VM> correspondCC = findSetForCycle(vmSetList , tempG);
             if (correspondCC != null) {
-                tempG.remove(correspondCC);
+
+                //switch for one cycle per CC
+                //tempG.remove(correspondCC);
+
                 cyclesPerCC.add(vmSetList);
             }
         });
