@@ -972,6 +972,7 @@ public class Cloud {
         final PM[] pm = new PM[1];
         List<PM> candidatePms = pmsNotInVMSets(cycleVMSetList);
 
+       //chose a default pm
         candidatePms.forEach(candidatePm -> {
             if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate)) {
                 pm[0] = candidatePm;
@@ -979,8 +980,46 @@ public class Cloud {
         });
         if (pm[0] == null) {
             report.setNumberOfFailedAttempts(report.getNumberOfFailedAttempts() + 1);
+//        } else {
+//
+//        candidatePms.forEach(candidatePm -> {
+//            if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate) && freeCapacityScore(candidatePm, candidate) > freeCapacityScore(pm[0], candidate)){
+//                pm[0] = candidatePm;
+//            }
+//        });
+
+
+
+
         }
+
+
         return pm[0];
+
+    }
+
+    //check the free capacity score of a pm which has free capacity for a pm in current assignment
+    private int freeCapacityScore(PM candidatePm, VMSet candidate) {
+        int currentAsgnWeight = 1;
+        int newAsgnWeight = 1;
+        int score;
+
+        final int[] vmSetMemory = {0};
+        final int[] vmSetPrc = {0};
+        final int[] vmSetNet = {0};
+
+        candidate.getVMList().forEach( vm -> {
+            vmSetMemory[0] += vm.getMemorySize();
+            vmSetPrc[0] += vm.getProcessorSize();
+            vmSetNet[0] += vm.getNetworkSize();
+                });
+
+        score = currentAsgnWeight * (freeMemory(currentAssignments , candidatePm) -  vmSetMemory[0] + freeProcessor(currentAssignments , candidatePm) -
+                vmSetPrc[0] + freeNetwork(currentAssignments , candidatePm) - vmSetNet[0])+
+                    newAsgnWeight * (freeMemory(newAssignments , candidatePm) -  vmSetMemory[0]) + freeProcessor(newAssignments , candidatePm) -
+                vmSetPrc[0] + freeNetwork(newAssignments , candidatePm) -  vmSetNet[0];
+
+    return score;
 
     }
 
