@@ -424,6 +424,11 @@ public class Cloud {
             VMSet depTo = getSetOfAllMigratingVMsFrom(migrationList, destinationPM);
             VMSet allComing = getAllIncomingVMsTo(migrationList, destinationPM);
             VMSet excess = getExcessVMSet(allComing, destinationPM);
+
+            if (!excess.getVMList().isEmpty() && getMemorySizeOfSet(depTo) > getMemorySizeOfSet(excess) && getProcessorSizeOfSet(depTo) > getProcessorSizeOfSet(excess)){
+                System.out.println();
+            }
+
             if (!excess.getVMList().isEmpty()) {
                 dependencyGraph.addDependent(excess, depTo);
 
@@ -980,14 +985,14 @@ public class Cloud {
         });
         if (pm[0] == null) {
             report.setNumberOfFailedAttempts(report.getNumberOfFailedAttempts() + 1);
-//        } else {
-//
-//        candidatePms.forEach(candidatePm -> {
-//            if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate) && freeCapacityScore(candidatePm, candidate) > freeCapacityScore(pm[0], candidate)){
-//                pm[0] = candidatePm;
-//            }
-//        });
 
+        } else {
+
+            candidatePms.forEach(candidatePm -> {
+                if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate) && freeCapacityScore(candidatePm, candidate) > freeCapacityScore(pm[0], candidate)){
+                    pm[0] = candidatePm;
+                }
+            });
 
 
 
@@ -1001,7 +1006,7 @@ public class Cloud {
     //check the free capacity score of a pm which has free capacity for a pm in current assignment
     private int freeCapacityScore(PM candidatePm, VMSet candidate) {
         int currentAsgnWeight = 1;
-        int newAsgnWeight = 1;
+        int newAsgnWeight = 0;
         int score;
 
         final int[] vmSetMemory = {0};
@@ -1458,6 +1463,26 @@ public class Cloud {
 
 
     }
+
+
+    public int getMemorySizeOfSet(VMSet set){
+        final int[] memorySize = {0};
+        set.getVMList().forEach(vm -> {
+            memorySize[0] += vm.getMemorySize();
+        });
+
+        return memorySize[0];
+    }
+
+    public int getProcessorSizeOfSet(VMSet set){
+        final int[] processorSize = {0};
+        set.getVMList().forEach(vm -> {
+            processorSize[0] += vm.getProcessorSize();
+        });
+
+        return processorSize[0];
+    }
+
 
 
 }
