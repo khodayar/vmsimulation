@@ -165,7 +165,7 @@ public class Runner {
 
         //  System.out.println(current.getMigrations());
 //        System.out.println("-------solving-----------");
-//        current.solveCyclesOn(current.detectCyclesO(dependencyGraph) , dependencyGraph);
+//        current.solveCyclesPerCCOn(current.detectCyclesO(dependencyGraph) , dependencyGraph);
 //
 //        dependencyGraph = current.generateOnoueDependencyGraph(current.getMigrations());
 //
@@ -179,6 +179,8 @@ public class Runner {
 //        System.out.println(current.getMigrations());
 //
 //        System.out.println("-------------------------------");
+
+
         System.out.println("-------------------------------process-------------"+ filePath);
         MigrationProcess migrationProcess = new MigrationProcess();
         migrationProcess.setPipelineDegree(1000);

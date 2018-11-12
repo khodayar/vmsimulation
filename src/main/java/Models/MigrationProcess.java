@@ -124,47 +124,12 @@ public class MigrationProcess {
         return finished;
     }
 
-    //old one
-    public void doMigration() throws Exception {
-        List<Migration> queue = cloud.getMigrations();
-
-      //  cloud.setInitialMigrationTimes(queue);
-    //    Collections.sort(queue);
-
-        queue.addAll(cloud.getNextPhaseMigrations());
-
-        System.out.println("Migration Order :");
-        System.out.println(queue);
-
-        while (!queue.isEmpty()) {
-
-            boolean allIsChecked = false;
-            //we must handle a case where there is no feasible migration for a while to use all the pipelineDegree
-            while (pipelineDegree > 0  && !allIsChecked) {
-
-                for (int i = 0; i < queue.size(); i++) {
-                    //second term checks if destination has capacity, otherwise checks next migration
-                    if (!onGoingMigrations.contains(queue.get(i)) && cloud.hasFreeCapacityFor(cloud.getCurrentAssignments() , queue.get(i).getDestination() , queue.get(i).getVm())
-                            && linksHaveCapacity(queue.get(i))) {
-                        System.out.println("i" + i + "   free degree :" + pipelineDegree );
-                        startMigration(queue.get(i));
-                         break;
-                    }
-                if (i == queue.size()-1 ) allIsChecked = true;
-                }
-            }
-
-            queue.removeAll(finishNextMigration());
-
-        }
-
-    }
 
     public void doMigrationsNew (DependencyGraph dg) throws Exception {
         cloud.setInitialMigrationTimes(cloud.getMigrations());
         cloud.getReport().setNumberOfInitialCycles(cloud.detectCyclesO(dg).size());
 
-        Set<List<VMSet>> c = new HashSet<>();         //to keep cycles
+        Set<List<VMSet>> cycles = new HashSet<>();         //to keep cycles
         HashSet<VM> l = new HashSet<>();  //list for feasible migration
         List<VM> x = new ArrayList<>(); // ongoing migrations vms
         List<VM> t = new ArrayList<>();  //temp for l after solving cycles
@@ -225,7 +190,7 @@ public class MigrationProcess {
 //            if (!c.isEmpty() && !x.isEmpty()) {
 //                List<VMSet> longestCycle = cloud.getLongestCycle(c);
 //                HashSet longestCycleSet = new HashSet<>(Collections.singleton(longestCycle));
-//                cloud.solveCyclesOn(longestCycleSet, dg);
+//                cloud.solveCyclesPerCCOn(longestCycleSet, dg);
 //                dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
 //                cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
 //                List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
@@ -235,10 +200,26 @@ public class MigrationProcess {
             //end of solving biggest cycle
 
             if (x.isEmpty() && !cloud.getMigrations().isEmpty()){
-                c = cloud.detectCyclesO(dg);
-                if (!c.isEmpty()) {
+                cycles = cloud.detectCyclesO(dg);
+                if (!cycles.isEmpty()) {
+
+                    List<Set<VM>> g = cloud.getConnectedComponents(dg);
+                    DependencyGraph finalDg = dg;
+                    List<Set<VM>> finalC = new ArrayList<>();  //connected components with no candidate
+
+                    g.forEach(setOfVms -> {
+                        List<VM> i = cloud.getVMsWithoutOutEdges(finalDg, setOfVms);
+                        if (!i.isEmpty()){
+                            l.addAll(i);
+                        } else {
+                            finalC.add(setOfVms);
+                        }
+                    });
+
                     System.out.println("start solving cycles" + loop);
-                    cloud.solveCyclesOn(c, dg);
+                    cloud.solveCyclesPerCCOn(cycles, dg,finalC);
+
+                    //cloud.solveCyclesPerCCOn(cycles, dg);
                     dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
                     cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
                     System.out.println("get new vms without out edge" + loop);
@@ -287,6 +268,7 @@ public class MigrationProcess {
     }
 
 
+    /*
     public void doMigrationsOnoue (DependencyGraph d) throws Exception {
 
         cloud.setInitialMigrationTimes(cloud.getMigrations());
@@ -393,6 +375,7 @@ public class MigrationProcess {
         cloud.printReport();
    }
 
+*/
     private boolean linksHaveCapacity(Migration migration) {
         final int[] sourceTraffic = {0};
         final int[] destTraffic = {0};
