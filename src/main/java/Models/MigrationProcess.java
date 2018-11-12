@@ -219,18 +219,20 @@ public class MigrationProcess {
 //                System.out.println();
 //            }
 
-            //solve biggest cycle
-            c = cloud.detectCyclesO(dg);
-            if (!c.isEmpty() && !x.isEmpty()) {
-                List<VMSet> longestCycle = cloud.getLongestCycle(c);
-                HashSet longestCycleSet = new HashSet<>(Collections.singleton(longestCycle));
-                cloud.solveCyclesOn(longestCycleSet, dg);
-                dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
-                cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
-                List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
-                l.addAll(newL) ;
-            }
+            //solve biggest cycle  this block can be commented out
 
+//            c = cloud.detectCyclesO(dg);
+//            if (!c.isEmpty() && !x.isEmpty()) {
+//                List<VMSet> longestCycle = cloud.getLongestCycle(c);
+//                HashSet longestCycleSet = new HashSet<>(Collections.singleton(longestCycle));
+//                cloud.solveCyclesOn(longestCycleSet, dg);
+//                dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+//                cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+//                List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
+//                l.addAll(newL) ;
+//            }
+
+            //end of solving biggest cycle
 
             if (x.isEmpty() && !cloud.getMigrations().isEmpty()){
                 c = cloud.detectCyclesO(dg);
