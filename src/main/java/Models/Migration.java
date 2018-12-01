@@ -10,6 +10,7 @@ public class Migration implements Comparable<Migration>{
     private int weight;
     private int remainingSize;
     private PM finalDestination;
+    private int depLevel;
 
 
     public PM getFinalDestination() {
@@ -61,12 +62,21 @@ public class Migration implements Comparable<Migration>{
         this.remainingSize = remainingSize;
     }
 
+    public int getDepLevel() {
+        return depLevel;
+    }
+
+    public void setDepLevel(int depLevel) {
+        this.depLevel = depLevel;
+    }
+
     public Migration(PM source, PM destination, VM vm , PM finalDestination) {
         this.source = source;
         this.destination = destination;
         this.vm = vm;
         this.remainingSize = vm.getMemorySize();
         this.finalDestination = finalDestination;
+        this.depLevel = 0;
     }
 
     @Override
@@ -77,6 +87,7 @@ public class Migration implements Comparable<Migration>{
                 " -> " + destination.getName() +
                 " final:" + finalDestination.getName() +
                 " weight :" + weight +
+                " DP Level :" + depLevel +
                "}";
     }
 

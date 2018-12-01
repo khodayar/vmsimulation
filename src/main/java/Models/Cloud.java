@@ -427,7 +427,7 @@ public class Cloud {
 
             //block for checking
             //todo includes the ongoing migrations
-            if (freeMemory(currentAssignments, destinationPM) + sumMemorySizeOfVmSet(depTo) < sumMemorySizeOfVmSet(excess)){
+            if (freeMemory(currentAssignments, destinationPM) + sumMemorySizeOfVmSet(depTo) < sumMemorySizeOfVmSet(excess)) {
                 //System.out.println();
             }
             //
@@ -533,7 +533,7 @@ public class Cloud {
                     minWeightSet[0] = vmSet;
                 }
             });
-            System.out.println("min weight set of cycle " + (++index[0]) + " --> " + minWeightSet[0]);
+            //  System.out.println("min weight set of cycle " + (++index[0]) + " --> " + minWeightSet[0]);
 
             //remove the dependency of the minWeight , remove it's outgoing edges
             dg.getDependencyMap().remove(minWeightSet[0]);
@@ -566,9 +566,52 @@ public class Cloud {
             o.clear();
         }
 
-     //dg.setDependencyMap(backup);
+        //dg.setDependencyMap(backup);
 
     }
+
+
+    public void setDependencyLevel(DependencyGraph dg) {
+        Set<List<VMSet>> cycles = detectCyclesO(dg);
+        //now we must detect and remove one edge for cycles
+        cycles.stream().forEach(vmSets -> {
+            final VMSet[] minWeightSet = {vmSets.get(0)};
+            vmSets.forEach(vmSet -> {
+                if (dg.getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0].getWeightSum()) {
+                    minWeightSet[0] = vmSet;
+                }
+            });
+            dg.getDependencyMap().remove(minWeightSet[0]);
+        });
+        //now we have dg without cycles
+        List<VM> node = getMigrationVMs();
+        //we have a cese where node is not empty and o is empty after several loops
+        while (!node.isEmpty()) {
+            List<VM> o = getVMsWihoutInEdge(node, dg);
+            o.forEach(oVM -> {
+                if (dg.getKeyContaining(oVM) != null) {
+                    dg.getDependencyMap().get(dg.getKeyContaining(oVM)).get(0).getVMList().forEach(dependentVM -> {
+                        Migration depMig = findMigrationOfVM(dependentVM, migrations);
+                        depMig.setDepLevel(depMig.getDepLevel() + findMigrationOfVM(oVM, migrations).getDepLevel());
+                    });
+                }
+            });
+
+            for (VM vm : o) {
+                if (dg.getKeyContaining(vm) != null) {
+                    dg.getDependencyMap().remove(dg.getKeyContaining(vm));
+                }
+
+            }
+
+            node.removeAll(o);
+            o.clear();
+        }
+
+        //dg.setDependencyMap(backup);
+
+    }
+
 
     private List<VM> getVMsWihoutInEdge(List<VM> node, DependencyGraph dg) {
         List<VM> wie = new ArrayList<>();
@@ -594,6 +637,17 @@ public class Cloud {
     }
 
 
+    public List<VM> getVMsWithoutOutEdges(DependencyGraph dg, Set<VM> vms) {
+        List<VM> woe = new ArrayList<>();
+        vms.forEach(vm -> {
+            //remove the second ?
+            if (dg.getKeyContaining(vm) == null) {
+                woe.add(vm);
+            }
+        });
+        return woe;
+    }
+
     private int maxWeightOfSet(VMSet set, List<Migration> migrations) {
         final int[] weight = {0};
         set.getVMList().forEach(vm -> {
@@ -618,11 +672,10 @@ public class Cloud {
     }
 
 
-
-    private int sumMemorySizeOfVmSet(VMSet vmSet){
+    private int sumMemorySizeOfVmSet(VMSet vmSet) {
         final int[] weight = {0};
-        vmSet.getVMList().forEach( vm -> {
-            weight[0] += vm.getMemorySize();
+        vmSet.getVMList().forEach(vm -> {
+                    weight[0] += vm.getMemorySize();
                 }
         );
 
@@ -657,25 +710,74 @@ public class Cloud {
         });
     }
 
-
-    public void solveCycles() {
-        getAllOutGoingSets(migrations).forEach(vmSet -> {
-            DependencyGraph dGraph = generateOnoueDependencyGraph(migrations);
-            if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
-                System.out.println("There is a cycle :");
-                System.out.println(dGraph.getPath(vmSet, vmSet));
-                VMSet bestCandidate = findTheMinWeightSet(dGraph.getPath(vmSet, vmSet));
-                PM bestPm = null;
-                try {
-                    bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                    System.exit(0);
+    /*
+        public void solveCycles() {
+            getAllOutGoingSets(migrations).forEach(vmSet -> {
+                DependencyGraph dGraph = generateOnoueDependencyGraph(migrations);
+                if (Collections.frequency(dGraph.getPath(vmSet, vmSet), vmSet) > 1) {
+                    System.out.println("There is a cycle :");
+                    System.out.println(dGraph.getPath(vmSet, vmSet));
+                    VMSet bestCandidate = findTheMinWeightSet(dGraph.getPath(vmSet, vmSet));
+                    PM bestPm = null;
+                    try {
+                        bestPm = findBestTempPM(dGraph.getPath(vmSet, vmSet), vmSet);
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                        System.exit(0);
+                    }
+                    updateMigration(bestCandidate, bestPm);
                 }
-                updateMigration(bestCandidate, bestPm);
-            }
 
+            });
+        }
+    */
+    public void solveCyclesPerCCOn(Set<List<VMSet>> cycles, DependencyGraph dg, List<Set<VM>> connectedComps) {
+        List<Set<VM>> tempG = new ArrayList<>(connectedComps); //copy it
+        Set<List<VMSet>> cyclesPerCC = new HashSet<>();
+
+        //get the lightest cycle for each cc
+        List<List<VMSet>> listCycles = new ArrayList<>(cycles);
+        Collections.sort(listCycles, new Comparator<List<VMSet>>() {
+            @Override
+            public int compare(List<VMSet> o1, List<VMSet> o2) {
+                //get min weightSum vmset of each list
+                if (findTheMinWeightSet(o1, dg).getWeightSum() > findTheMinWeightSet(o2, dg).getWeightSum()) {
+                    return 1;
+                }
+                if (findTheMinWeightSet(o1, dg).getWeightSum() < findTheMinWeightSet(o2, dg).getWeightSum()) {
+                    return -1;
+                }
+                if (findTheMinWeightSet(o1, dg).getWeightSum() == findTheMinWeightSet(o2, dg).getWeightSum()) {
+                    return 0;
+                }
+                return 0;
+            }
         });
+        listCycles.forEach(vmSetList -> {
+            Set<VM> correspondCC = findSetForCycle(vmSetList, tempG);
+            if (correspondCC != null) {
+                //switch for one cycle per CC
+                tempG.remove(correspondCC);
+                cyclesPerCC.add(vmSetList);
+            }
+        });
+        solveCyclesOn(cyclesPerCC, dg);
+    }
+
+    private Set<VM> findSetForCycle(List<VMSet> vmSetList, List<Set<VM>> g) {
+        final Set<VM>[] found = new HashSet[1];
+        vmSetList.forEach(vmSet -> {
+            vmSet.getVMList().forEach(vm -> {
+                if (found[0] == null) {
+                    g.forEach(setOfVM -> {
+                        if (setOfVM.contains(vm) && found[0] == null) {
+                            found[0] = setOfVM;
+                        }
+                    });
+                }
+            });
+        });
+        return found[0];
     }
 
 
@@ -688,35 +790,47 @@ public class Cloud {
         final int[] index = {0};
         final int[] numberOfUnsolved = {0};
         cycles.stream().forEach(vmSets -> {
-            final VMSet[] minWeightSet = {vmSets.get(0)};
-            vmSets.forEach(vmSet -> {
-                //must be a key, left side of dependency , in Onoue is right side
-                //data set results is with left side 2018-08-26
-                //Onoue original is d[0].getTargetNodeEqual(vmSet) != null
-                //o2 results : d[0].getDependencyMap().get(vmSet) != null
-                //todo decide which
-                if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
-                        .getWeightSum()) {
-                    minWeightSet[0] = vmSet;
+
+            //is right side of dependency , l --> r  see comments below
+            VMSet minWeightSet = findTheMinWeightSet(vmSets, dg);
+
+//            final VMSet[] minWeightSet = {vmSets.get(0)};
+//            vmSets.forEach(vmSet -> {
+//                //must be a key, left side of dependency , in Onoue is right side
+//                //data set results is with left side 2018-08-26
+//                //Onoue original is d[0].getTargetNodeEqual(vmSet) != null
+//                //o2 results : d[0].getDependencyMap().get(vmSet) != null
+//                //todo decide which
+//                if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
+//                        .getWeightSum()) {
+//                    minWeightSet[0] = vmSet;
+//                }
+//            });
+//
+
+            final PM[] tempLocation = {null};
+            final boolean[] vmsetSolved = {true};
+
+            minWeightSet.getVMList().forEach(vm -> {
+                VMSet singleTonVMset = new VMSet();
+                singleTonVMset.add(vm);
+                tempLocation[0] = findBestTempPM(vmSets, singleTonVMset);
+                if (tempLocation[0] != null) {
+
+                    updateMigration(singleTonVMset, tempLocation[0]);
+                } else {
+                    vmsetSolved[0] = false;
                 }
+
             });
 
-            //todo
-           // VMSet tmCandidates = findCandidatesInTarget(dg, minWeightSet[0]);
-
-            PM tempLocation = null;
-            try {
-                tempLocation = findBestTempPM(vmSets, minWeightSet[0]);
-                //as a test
-                if (tempLocation != null) {
-                    solved.add(vmSets);
-                    updateMigration(minWeightSet[0], tempLocation);
-                } else {
-                    numberOfUnsolved[0]++;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+            //as a test
+            if (vmsetSolved[0]) {
+                solved.add(vmSets);
+            } else {
+                numberOfUnsolved[0]++;
             }
+
 
             d[0] = generateOnoueDependencyGraph(migrations);
         });
@@ -729,7 +843,7 @@ public class Cloud {
 
     //vm set is min source of cMDG
     private VMSet findCandidatesInTarget(DependencyGraph dg, VMSet vmSet) {
-        List<VMSet> target  =  dg.getDependencyMap().get(vmSet);
+        List<VMSet> target = dg.getDependencyMap().get(vmSet);
         int sumOfWeightTarget = sumMemorySizeOfVmSet(target.get(0));
         int sumOfWeightsSource = sumMemorySizeOfVmSet(vmSet);
 //        if (sumOfWeightsSource > sumOfWeightTarget){
@@ -740,33 +854,29 @@ public class Cloud {
 //            }
 //        }
 
-     return null;
+        return null;
     }
 
 
-    public void solveEmptyDependencies(DependencyGraph d){
-        d.getDependencyMap().forEach((k,v) -> {
-            if (v.get(0).getVMList().isEmpty()){
+    public void solveEmptyDependencies(DependencyGraph d) {
+        d.getDependencyMap().forEach((k, v) -> {
+            if (v.get(0).getVMList().isEmpty()) {
                 List<VM> temporaryLocatedVMs = new ArrayList<>();
-                        k.getVMList().forEach(vm -> {
-                            Migration current =  findMigrationOfVM(vm , migrations);
+                k.getVMList().forEach(vm -> {
+                    Migration current = findMigrationOfVM(vm, migrations);
 
-                            VMSet vmSet = getCurrentVMSetsForPM(current.getDestination());
-                            vmSet.getVMList().forEach(residedVm->{
-                                if (findMigrationOfVM(residedVm, nextPhaseMigrations) != null){
-                                    System.out.println();
-                                }
-                            });
+                    VMSet vmSet = getCurrentVMSetsForPM(current.getDestination());
+                    vmSet.getVMList().forEach(residedVm -> {
+                        if (findMigrationOfVM(residedVm, nextPhaseMigrations) != null) {
+                            System.out.println();
+                        }
+                    });
 
 
-                        });
+                });
 
             }
         });
-
-
-
-
 
 
     }
@@ -879,7 +989,7 @@ public class Cloud {
             //sometime both of them are not null and it creates a repeated migration in 'migrations'.
             //vm-112 in \out_inst_50_FAIL-32_100_80-100_1.csv   5th data set
             if (oldmig != null) {
-                newMig = new Migration(oldmig.getSource(), bestPm, vm , oldmig.getFinalDestination());
+                newMig = new Migration(oldmig.getSource(), bestPm, vm, oldmig.getFinalDestination());
                 newMig.setWeight(oldmig.getWeight());
                 migrations.remove(oldmig);
             }
@@ -904,11 +1014,11 @@ public class Cloud {
             nextPhaseMigrations.remove(oldTemp);
 
             Migration nextphaseMig = new Migration(bestPm, oldmig != null ? oldmig.getFinalDestination() : oldTemp.getFinalDestination(),
-                    vm , oldmig != null ? oldmig.getFinalDestination() : oldTemp.getFinalDestination());
+                    vm, oldmig != null ? oldmig.getFinalDestination() : oldTemp.getFinalDestination());
             nextphaseMig.setWeight(oldmig != null ? oldmig.getWeight() : oldTemp.getWeight());
 
-            if (newMig.getVm().getName().equals("VM-112")){
-              //  System.out.println();
+            if (newMig.getVm().getName().equals("VM-112")) {
+                //  System.out.println();
             }
 
             if (!bestPm.equals(nextphaseMig.getFinalDestination())) {
@@ -918,13 +1028,14 @@ public class Cloud {
 
 
             //in wrong palce, I count it only if temp migration starts
-           // report.setNumberOFTempMig(report.getNumberOFTempMig() + 1);
+            // report.setNumberOFTempMig(report.getNumberOFTempMig() + 1);
 
 
             migrations.add(newMig);
-            if (!checkRepeatedMigrations().isEmpty()){
-              //  System.out.println();
-            };
+            if (!checkRepeatedMigrations().isEmpty()) {
+                //  System.out.println();
+            }
+            ;
         });
         System.out.println("--------------------------");
     }
@@ -956,10 +1067,23 @@ public class Cloud {
     }
 
 
-    private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) throws Exception {
+    private VMSet findTheMinWeightSet(List<VMSet> vmSetList, DependencyGraph dg) {
+        final VMSet[] found = {dg.getDependencyMap().get(vmSetList.get(0)) == null ? null : dg.getDependencyMap().get(vmSetList.get(0)).get(0)};
+        vmSetList.forEach(vmSet -> {
+            VMSet that = dg.getDependencyMap().get(vmSetList.get(0)) == null ? null : dg.getDependencyMap().get(vmSetList.get(0)).get(0);
+            if (that != null && sumWeightOfSet(that, migrations) < sumWeightOfSet(found[0], migrations)) {
+                found[0] = that;
+            }
+        });
+        return found[0];
+    }
+
+
+    private PM findBestTempPM(List<VMSet> cycleVMSetList, VMSet candidate) {
         final PM[] pm = new PM[1];
         List<PM> candidatePms = pmsNotInVMSets(cycleVMSetList);
 
+        //chose a default pm
         candidatePms.forEach(candidatePm -> {
             if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate)) {
                 pm[0] = candidatePm;
@@ -967,8 +1091,27 @@ public class Cloud {
         });
         if (pm[0] == null) {
             report.setNumberOfFailedAttempts(report.getNumberOfFailedAttempts() + 1);
+        } else {
+            candidatePms.forEach(candidatePm -> {
+                if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate) && freeCapacityScore(candidatePm) > freeCapacityScore(pm[0])) {
+                    pm[0] = candidatePm;
+                }
+            });
         }
         return pm[0];
+    }
+
+    private int freeCapacityScore(PM candidatePm) {
+        int currentAsgnWeight = 1;
+        int newAsgnWeight = 0;
+        int score;
+
+        score = currentAsgnWeight * (freeMemory(currentAssignments, candidatePm) + freeProcessor(currentAssignments, candidatePm)
+                + freeNetwork(currentAssignments, candidatePm)) +
+                newAsgnWeight * (freeMemory(newAssignments, candidatePm) + freeProcessor(newAssignments, candidatePm)
+                        + freeNetwork(newAssignments, candidatePm));
+
+        return score;
 
     }
 
@@ -1102,14 +1245,14 @@ public class Cloud {
         String timestamp = sdf.format(new Date());
         report.setTimeStampFinished(timestamp);
         System.out.println(report);
-        System.out.println("number of migrations remained " +this.getMigrations().size());
+        System.out.println("number of migrations remained " + this.getMigrations().size());
     }
 
     public void writeReport() {
 
         try {
             Files.write(Paths.get("myfile.txt"), "the text".getBytes(), StandardOpenOption.APPEND);
-        }catch (IOException e) {
+        } catch (IOException e) {
             //exception handling left as an exercise for the reader
         }
 
@@ -1117,12 +1260,12 @@ public class Cloud {
 
     public void removeDependantVMs(DependencyGraph d, List<VM> l) {
         List<VM> newL = new ArrayList<>();
-        for (int i = 0 ; i<l.size() ; i++){
-            if (d.getKeyContaining(l.get(i)) == null){
+        for (int i = 0; i < l.size(); i++) {
+            if (d.getKeyContaining(l.get(i)) == null) {
                 newL.add(l.get(i));
             }
         }
-        l =  newL;
+        l = newL;
     }
 
     public List<Migration> getFeasibleNextPhase(List<Migration> tempFinished) {
@@ -1133,7 +1276,7 @@ public class Cloud {
                 .collect(Collectors.toList());
         nextPhaseMigrations.forEach(nextPhaseMigration -> {
 
-            if (vmsToCheck.indexOf(nextPhaseMigration.getVm()) > -1 && findMigrationOfVM(nextPhaseMigration.getVm(), migrations) == null){
+            if (vmsToCheck.indexOf(nextPhaseMigration.getVm()) > -1 && findMigrationOfVM(nextPhaseMigration.getVm(), migrations) == null) {
                 feasibleNext.add(nextPhaseMigration);
             }
         });
@@ -1145,7 +1288,7 @@ public class Cloud {
         boolean solved = true;
         List<Migration> unfinishedTempMigrations = new ArrayList<>();
         migrations.forEach(migration -> {
-            if (migration.isTemp()){
+            if (migration.isTemp()) {
                 unfinishedTempMigrations.add(migration);
             }
         });
@@ -1153,21 +1296,21 @@ public class Cloud {
         List<Migration> removeTemps = new ArrayList<>();
         List<Migration> newTemps = new ArrayList<>();
 
-        unfinishedTempMigrations.forEach(tempmigration ->{
+        unfinishedTempMigrations.forEach(tempmigration -> {
 
             PM tempPm = getTempPmForVM(tempmigration);
 
-            if (tempPm != null){
+            if (tempPm != null) {
                 removeTemps.add(tempmigration);
-                Migration newTempMigration = new Migration(tempmigration.getSource() , tempPm , tempmigration.getVm() ,tempmigration.getFinalDestination());
+                Migration newTempMigration = new Migration(tempmigration.getSource(), tempPm, tempmigration.getVm(), tempmigration.getFinalDestination());
                 newTempMigration.setWeight(tempmigration.getWeight());
 
                 //it's a temp must have a next phase migration
                 Migration oldNextPhase = findMigrationOfVM(tempmigration.getVm(), nextPhaseMigrations);
                 nextPhaseMigrations.remove(oldNextPhase);
 
-                if (!tempPm.equals(tempmigration.getFinalDestination())){
-                    Migration newNexTPhaseForNewTemp = new Migration(tempPm , tempmigration.getFinalDestination() , tempmigration.getVm() , tempmigration.getFinalDestination());
+                if (!tempPm.equals(tempmigration.getFinalDestination())) {
+                    Migration newNexTPhaseForNewTemp = new Migration(tempPm, tempmigration.getFinalDestination(), tempmigration.getVm(), tempmigration.getFinalDestination());
                     newNexTPhaseForNewTemp.setWeight(tempmigration.getWeight());
                     nextPhaseMigrations.add(newNexTPhaseForNewTemp);
                 }
@@ -1175,9 +1318,9 @@ public class Cloud {
                 newTemps.add(newTempMigration);
 
             }
-         });
+        });
 
-        if (newTemps.isEmpty()){
+        if (newTemps.isEmpty()) {
             System.out.println("**** no new temp location for blocked temp migrations");
             solved = false;
         }
@@ -1185,15 +1328,15 @@ public class Cloud {
         migrations.removeAll(removeTemps);
         migrations.addAll(newTemps);
         return solved;
-   }
+    }
 
     private PM getTempPmForVM(Migration tempmigration) {
         final PM[] tempPM = {null};
-        if (hasFreeCapacityFor(currentAssignments , tempmigration.getFinalDestination() , tempmigration.getVm())){
+        if (hasFreeCapacityFor(currentAssignments, tempmigration.getFinalDestination(), tempmigration.getVm())) {
             return tempmigration.getFinalDestination();
         }
-        pmList.forEach(pm->{
-            if (!pm.equals(tempmigration.getDestination()) && hasFreeCapacityFor(currentAssignments , pm , tempmigration.getVm())){
+        pmList.forEach(pm -> {
+            if (!pm.equals(tempmigration.getDestination()) && hasFreeCapacityFor(currentAssignments, pm, tempmigration.getVm())) {
                 tempPM[0] = pm;
             }
         });
@@ -1202,8 +1345,7 @@ public class Cloud {
     }
 
 
-
-    public List<VM> getMigrationVMs(){
+    public List<VM> getMigrationVMs() {
         List<VM> vms = new ArrayList<>();
         migrations.forEach(migration -> {
             vms.add(migration.getVm());
@@ -1212,28 +1354,28 @@ public class Cloud {
     }
 
     public Migration putBackTemp(Migration m) {
-        Migration original = new Migration(m.getSource() , m.getFinalDestination() ,m.getVm(), m.getFinalDestination());
+        Migration original = new Migration(m.getSource(), m.getFinalDestination(), m.getVm(), m.getFinalDestination());
         original.setWeight(m.getWeight());
         migrations.remove(m);
-        nextPhaseMigrations.remove(findMigrationOfVM(original.getVm() , nextPhaseMigrations));
+        nextPhaseMigrations.remove(findMigrationOfVM(original.getVm(), nextPhaseMigrations));
         migrations.add(original);
         return original;
     }
 
 
     //added from branch realOnoue
-    public List<Set<VM>> getConnectedComponents(DependencyGraph dg){
+    public List<Set<VM>> getConnectedComponents(DependencyGraph dg) {
         Set<List<VM>> connectedVms = new HashSet<>();
-        Set<List<VMSet>> connectSetCmps= new HashSet<>();
+        Set<List<VMSet>> connectSetCmps = new HashSet<>();
 
         //todo loop over vm s not keys, for single vm connected components
         Set<VMSet> allKeys = dg.getDependencyMap().keySet();
-        allKeys.forEach(key ->{
+        allKeys.forEach(key -> {
             //each vmset (key) is only in one connected component
             //duplicate , check second iteration , vm-23 for clue
-            if (!setOfListContains(connectSetCmps , key)){
+            if (!setOfListContains(connectSetCmps, key)) {
                 List<VMSet> cncmp = new ArrayList<>();
-                dfs(key , cncmp , dg);
+                dfs(key, cncmp, dg);
                 connectSetCmps.add(cncmp);
                 connectedVms.add(getVmListOfSets(cncmp));
             }
@@ -1253,22 +1395,20 @@ public class Cloud {
         });
 
 
-
-
         boolean thereIsAMerge = false;
 
-        do{
+        do {
             thereIsAMerge = false;
-            for (int i = 0;i<all.size();i++){
-                for (int j = i+1; j<all.size(); j++){
-                    if (!intersection(all.get(i) , all.get(j)).isEmpty()){
+            for (int i = 0; i < all.size(); i++) {
+                for (int j = i + 1; j < all.size(); j++) {
+                    if (!intersection(all.get(i), all.get(j)).isEmpty()) {
                         thereIsAMerge = true;
                         all.get(i).addAll(all.get(j));
                         all.remove(j);
                         break;
                     }
 
-                    if (thereIsAMerge){
+                    if (thereIsAMerge) {
                         break;
                     }
 
@@ -1279,8 +1419,7 @@ public class Cloud {
             }
 
 
-
-        }while (thereIsAMerge && all.size()>1);
+        } while (thereIsAMerge && all.size() > 1);
 
         List<Set<VM>> mergedVMs = new ArrayList<>();
         all.forEach(vmSetList -> {
@@ -1300,7 +1439,7 @@ public class Cloud {
     private boolean setOfListContains(Set<List<VMSet>> connectCmps, VMSet key) {
         final boolean[] thereIs = {false};
         connectCmps.forEach(vmSetList -> {
-            if (vmSetList.contains(key)){
+            if (vmSetList.contains(key)) {
                 thereIs[0] = true;
             }
         });
@@ -1310,11 +1449,10 @@ public class Cloud {
     }
 
 
-    public void dfs(VMSet vmSet , List<VMSet> list , DependencyGraph dg){
+    public void dfs(VMSet vmSet, List<VMSet> list, DependencyGraph dg) {
         list.add(vmSet);
         //must be a singleton list
         List<VMSet> rightSide = dg.getDependencyMap().get(vmSet);
-
 
 
         Set<VMSet> getNewVmSet = new HashSet<>();
@@ -1328,8 +1466,8 @@ public class Cloud {
             }
         });
         getNewVmSet.forEach(vmSet1 -> {
-            if (!list.contains(vmSet1)){
-                dfs(vmSet1 , list , dg);
+            if (!list.contains(vmSet1)) {
+                dfs(vmSet1, list, dg);
             }
         });
 
@@ -1352,18 +1490,18 @@ public class Cloud {
             uniqueList.add(vm);
         });
 
-        return  uniqueList;
+        return uniqueList;
     }
 
 
-    public List<VM> intersection(List<VMSet> set1 , List<VMSet> set2){
+    public List<VM> intersection(List<VMSet> set1, List<VMSet> set2) {
 
         List<VM> vms1 = new ArrayList<>();
         List<VM> vms2 = new ArrayList<>();
 
         set1.forEach(vmSet -> {
             vmSet.getVMList().forEach(vm -> {
-                if (!vms1.contains(vm)){
+                if (!vms1.contains(vm)) {
                     vms1.add(vm);
                 }
             });
@@ -1372,7 +1510,7 @@ public class Cloud {
 
         set2.forEach(vmSet -> {
             vmSet.getVMList().forEach(vm -> {
-                if (!vms2.contains(vm)){
+                if (!vms2.contains(vm)) {
                     vms2.add(vm);
                 }
             });
@@ -1382,7 +1520,7 @@ public class Cloud {
         List<VM> sharedVMs = new ArrayList<>();
 
         vms1.forEach(vm -> {
-            if (vms2.contains(vm)){
+            if (vms2.contains(vm)) {
                 sharedVMs.add(vm);
             }
         });
@@ -1400,7 +1538,6 @@ public class Cloud {
         });
 
 
-
         List<VM> toBeAdded = new ArrayList<>();
         migrations.forEach(migration -> {
             toBeAdded.add(migration.getVm());
@@ -1416,12 +1553,12 @@ public class Cloud {
     public List<Set<VM>> getStoppedConnectedComponents(List<Set<VM>> cMDG, HashSet<VM> l, List<VM> x) {
         List<Set<VM>> stopped = new ArrayList<>();
         cMDG.forEach(vms -> {
-            if (interSection(vms , l).isEmpty() && interSection(vms,x).isEmpty()){
+            if (interSection(vms, l).isEmpty() && interSection(vms, x).isEmpty()) {
                 stopped.add(vms);
             }
         });
 
-        Collections.sort(stopped, new Comparator<Set>(){
+        Collections.sort(stopped, new Comparator<Set>() {
             public int compare(Set a1, Set a2) {
                 return a2.size() - a1.size(); // assumes you want biggest to smallest
             }
@@ -1431,7 +1568,7 @@ public class Cloud {
     }
 
 
-    public List<VM> interSection(Set<VM> vmsSet1 , Set<VM> vmSet2){
+    public List<VM> interSection(Set<VM> vmsSet1, Set<VM> vmSet2) {
         List<VM> shared = new ArrayList<>();
         vmsSet1.forEach(vm -> {
             if (vmSet2.contains(vm)) shared.add(vm);
@@ -1440,8 +1577,7 @@ public class Cloud {
     }
 
 
-
-    public List<VM> interSection(Set<VM> vmsSet1 , List<VM> vmSet2){
+    public List<VM> interSection(Set<VM> vmsSet1, List<VM> vmSet2) {
         List<VM> shared = new ArrayList<>();
         vmsSet1.forEach(vm -> {
             if (vmSet2.contains(vm)) shared.add(vm);
@@ -1452,7 +1588,7 @@ public class Cloud {
     public List<VMSet> getLongestCycle(Set<List<VMSet>> c) {
         final List<VMSet>[] large = new List[]{new ArrayList<>()};
         c.forEach(vmSetList -> {
-            if (large[0].isEmpty() || large[0].size() < cycleWeight(vmSetList)){
+            if (large[0].isEmpty() || large[0].size() < cycleWeight(vmSetList)) {
                 large[0] = vmSetList;
             }
 
