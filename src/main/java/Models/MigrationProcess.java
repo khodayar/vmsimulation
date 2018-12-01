@@ -234,6 +234,8 @@ public class MigrationProcess {
 
             //end of solving biggest cycle
 
+            dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+
             if (x.isEmpty() && !cloud.getMigrations().isEmpty()){
                 c = cloud.detectCyclesO(dg);
                 if (!c.isEmpty()) {
