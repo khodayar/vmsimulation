@@ -646,7 +646,7 @@ public class Cloud {
                 }
             });
 
-            VMSet tmCandidates = findCandidatesInTarget(d[0], minWeightSet[0]);
+          //  VMSet tmCandidates = findCandidatesInTarget(d[0], minWeightSet[0]);
 
             PM tempLocation = null;
             try {
@@ -824,6 +824,11 @@ public class Cloud {
 
             System.out.println("new temp Migration :" + newMig);
 
+            if (newMig.getVm().getName().equals("VM-58")){
+                System.out.println();
+            }
+
+
             //we need it here
             nextPhaseMigrations.remove(oldTemp);
 
@@ -831,9 +836,7 @@ public class Cloud {
                     vm , oldmig != null ? oldmig.getFinalDestination() : oldTemp.getFinalDestination());
             nextphaseMig.setWeight(oldmig != null ? oldmig.getWeight() : oldTemp.getWeight());
 
-            if (newMig.getVm().getName().equals("VM-112")){
-                System.out.println();
-            }
+
 
             if (!bestPm.equals(nextphaseMig.getFinalDestination())) {
                 nextPhaseMigrations
@@ -1037,7 +1040,7 @@ public class Cloud {
     private PM getTampPmForVM(Migration tempmigration) {
         final PM[] tempPM = {null};
         pmList.forEach(pm->{
-            if (!pm.equals(tempmigration.getDestination()) && hasFreeCapacityFor(currentAssignments , pm , tempmigration.getVm())){
+            if (!pm.equals(tempmigration.getSource()) && !pm.equals(tempmigration.getDestination()) && hasFreeCapacityFor(currentAssignments , pm , tempmigration.getVm())){
                 tempPM[0] = pm;
             }
         });
