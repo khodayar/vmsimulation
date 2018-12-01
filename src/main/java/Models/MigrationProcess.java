@@ -219,6 +219,8 @@ public class MigrationProcess {
 //                System.out.println();
 //            }
 
+            dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+
             //solve biggest cycle
             c = cloud.detectCyclesO(dg);
             if (!c.isEmpty() && !x.isEmpty()) {
