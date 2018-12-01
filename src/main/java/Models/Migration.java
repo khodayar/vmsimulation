@@ -70,13 +70,17 @@ public class Migration implements Comparable<Migration>{
         this.depLevel = depLevel;
     }
 
+    public Migration(){
+        this.depLevel = 1;
+    }
+
     public Migration(PM source, PM destination, VM vm , PM finalDestination) {
         this.source = source;
         this.destination = destination;
         this.vm = vm;
         this.remainingSize = vm.getMemorySize();
         this.finalDestination = finalDestination;
-        this.depLevel = 0;
+        this.depLevel = 1;
     }
 
     @Override
