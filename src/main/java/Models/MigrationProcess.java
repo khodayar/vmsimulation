@@ -164,6 +164,9 @@ public class MigrationProcess {
         cloud.setInitialMigrationTimes(cloud.getMigrations());
         cloud.getReport().setNumberOfInitialCycles(cloud.detectCyclesO(dg).size());
 
+        final int totalNumberofMigration = cloud.getMigrations().size();
+        final int totalServers = cloud.getPmList().size();
+        final int idleThreshold = (int) Math.ceil((double) totalNumberofMigration / totalServers);
         Set<List<VMSet>> c = new HashSet<>();         //to keep cycles
         HashSet<VM> l = new HashSet<>();  //list for feasible migration
         List<VM> x = new ArrayList<>(); // ongoing migrations vms
@@ -221,16 +224,16 @@ public class MigrationProcess {
 
             //solve biggest cycle  this block can be commented out
 
-//            c = cloud.detectCyclesO(dg);
-//            if (!c.isEmpty() && !x.isEmpty()) {
-//                List<VMSet> longestCycle = cloud.getLongestCycle(c);
-//                HashSet longestCycleSet = new HashSet<>(Collections.singleton(longestCycle));
-//                cloud.solveCyclesOn(longestCycleSet, dg);
-//                dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
-//                cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
-//                List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
-//                l.addAll(newL) ;
-//            }
+            c = cloud.detectCyclesO(dg);
+            if (!c.isEmpty() && x.size() < idleThreshold ) {
+                List<VMSet> longestCycle = cloud.getLongestCycle(c);
+                HashSet longestCycleSet = new HashSet<>(Collections.singleton(longestCycle));
+                cloud.solveCyclesOn(longestCycleSet, dg);
+                dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
+                cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
+                List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
+                l.addAll(newL) ;
+            }
 
             //end of solving biggest cycle
 
