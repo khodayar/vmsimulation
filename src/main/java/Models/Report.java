@@ -16,6 +16,7 @@ public class Report {
     int numberOfFailedAttemptsForSolcingCycles;
     int numberOFTempMig;
     int timeSteps;
+    int maxOngoingMigs;
 
     String timeStampCalcStarted;
     String timeStampMigStart;
@@ -166,5 +167,13 @@ public class Report {
 
     public void setNumberOFTempMig(int numberOFTempMig) {
         this.numberOFTempMig = numberOFTempMig;
+    }
+
+    public int getMaxOngoingMigs() {
+        return maxOngoingMigs;
+    }
+
+    public void setMaxOngoingMigs(int maxOngoingMigs) {
+        this.maxOngoingMigs = maxOngoingMigs;
     }
 }

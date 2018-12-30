@@ -139,6 +139,8 @@ public class MigrationProcess {
         List<VM> t = new ArrayList<>();
         List<VM> x = new ArrayList<>();
 
+        int maxOngoingMigs = 0;
+
 
         DependencyGraph finalDg = dg;
         List<Set<VM>> finalC = new ArrayList<>();
@@ -183,6 +185,7 @@ public class MigrationProcess {
                 }
             }
 
+            maxOngoingMigs = Math.max(maxOngoingMigs , x.size());
             l.removeAll(x);
 
             t.forEach(vm -> {
@@ -197,6 +200,7 @@ public class MigrationProcess {
                 //     System.out.println();
                 //move temp migrations to a new temp server
                 if (!cloud.shuffleTempMigrations()){
+                    cloud.getReport().setMaxOngoingMigs(maxOngoingMigs);
                     cloud.printReport();
                     if (l.isEmpty()){
                                   throw new Exception("infeasible migration(s)");
@@ -270,6 +274,7 @@ public class MigrationProcess {
 
         } while (!cloud.getMigrations().isEmpty() || !onGoingMigrations.isEmpty());
 
+        cloud.getReport().setMaxOngoingMigs(maxOngoingMigs);
         cloud.printReport();
 
 

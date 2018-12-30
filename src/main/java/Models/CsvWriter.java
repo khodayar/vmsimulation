@@ -51,6 +51,8 @@ public class CsvWriter {
         }
         sb.append(duration);
         sb.append(',');
+        sb.append(report.getMaxOngoingMigs());
+        sb.append(',');
                 sb.append('\n');
 
         pw.append(sb.toString());
