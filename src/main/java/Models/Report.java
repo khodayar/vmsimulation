@@ -17,6 +17,8 @@ public class Report {
     int numberOFTempMig;
     int timeSteps;
     int maxOngoingMigs;
+    int initialCapacityOfnetwork;
+    int nextCapacityOfNetwork;
 
     String timeStampCalcStarted;
     String timeStampMigStart;
@@ -175,5 +177,21 @@ public class Report {
 
     public void setMaxOngoingMigs(int maxOngoingMigs) {
         this.maxOngoingMigs = maxOngoingMigs;
+    }
+
+    public int getInitialCapacityOfnetwork() {
+        return initialCapacityOfnetwork;
+    }
+
+    public void setInitialCapacityOfnetwork(int initialCapacityOfnetwork) {
+        this.initialCapacityOfnetwork = initialCapacityOfnetwork;
+    }
+
+    public int getNextCapacityOfNetwork() {
+        return nextCapacityOfNetwork;
+    }
+
+    public void setNextCapacityOfNetwork(int nextCapacityOfNetwork) {
+        this.nextCapacityOfNetwork = nextCapacityOfNetwork;
     }
 }

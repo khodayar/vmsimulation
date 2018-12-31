@@ -129,6 +129,7 @@ public class MigrationProcess {
     //Onoue looping over connected components
     public void OnCcDoMigrations(DependencyGraph dg) throws Exception {
 
+        cloud.getReport().setInitialCapacityOfnetwork(0);
         cloud.getReport().setNumberOfInitialCycles(0);
 
         cloud.setInitialMigrationTimes(cloud.getMigrations());
@@ -175,7 +176,7 @@ public class MigrationProcess {
                     System.out.println();
                 }
                 if (cloud.hasFreeCapacityFor(cloud.getCurrentAssignments(), m.getDestination(), l.get(i)) &&
-                        linksHaveCapacity(m)) {
+                        linksHaveCapacity(m) && networkHasCapacity()) {
                     try {
                         startMigration(m);
                         x.add(l.get(i));  //ongoing migrating VMs
@@ -183,6 +184,12 @@ public class MigrationProcess {
                         e.printStackTrace();
                     }
                 }
+            }
+
+            //do it once
+            //it must be before solving cycles, because it changes the migrations
+            if (cloud.getReport().getNextCapacityOfNetwork() == 0) {
+                cloud.getReport().setNextCapacityOfNetwork(0);
             }
 
             maxOngoingMigs = Math.max(maxOngoingMigs , x.size());
@@ -280,6 +287,7 @@ public class MigrationProcess {
 
 
     }
+
 
 
 
@@ -405,5 +413,9 @@ public class MigrationProcess {
         return sourceTraffic[0] < linkDegree && destTraffic[0] < linkDegree;
     }
 
+
+    private boolean networkHasCapacity() {
+        return pipelineDegree > onGoingMigrations.size();
+    }
 
 }
