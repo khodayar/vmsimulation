@@ -978,24 +978,29 @@ public class Cloud {
         List<PM> candidatePms = pmsNotInVMSets(cycleVMSetList);
 
        //chose a default pm
-        candidatePms.forEach(candidatePm -> {
-            if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate)) {
-                pm[0] = candidatePm;
+
+        for (int i=0 ; i<candidatePms.size(); i++){
+            if (hasFreeCapacityForSet(currentAssignments, candidatePms.get(i), candidate)) {
+                pm[0] = candidatePms.get(i);
+                break;
             }
-        });
+        }
+//        candidatePms.forEach(candidatePm -> {
+//            if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate)) {
+//                pm[0] = candidatePm;
+//            }
+//        });
         if (pm[0] == null) {
             report.setNumberOfFailedAttempts(report.getNumberOfFailedAttempts() + 1);
 
-        } else {
+        }
 
+        else {
             candidatePms.forEach(candidatePm -> {
                 if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate) && freeCapacityScore(candidatePm, candidate) > freeCapacityScore(pm[0], candidate)){
                     pm[0] = candidatePm;
                 }
             });
-
-
-
         }
 
 
@@ -1005,8 +1010,8 @@ public class Cloud {
 
     //check the free capacity score of a pm which has free capacity for a pm in current assignment
     private int freeCapacityScore(PM candidatePm, VMSet candidate) {
-        int currentAsgnWeight = 1;
-        int newAsgnWeight = 0;
+        int currentAsgnWeight = 2;
+        int newAsgnWeight = 1;
         int score;
 
         final int[] vmSetMemory = {0};
