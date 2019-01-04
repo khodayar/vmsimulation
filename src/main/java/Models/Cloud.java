@@ -977,6 +977,8 @@ public class Cloud {
         final PM[] pm = new PM[1];
         List<PM> candidatePms = pmsNotInVMSets(cycleVMSetList);
 
+        Collections.shuffle(candidatePms);
+
        //chose a default pm
 
         for (int i=0 ; i<candidatePms.size(); i++){
@@ -995,13 +997,13 @@ public class Cloud {
 
         }
 
-        else {
-            candidatePms.forEach(candidatePm -> {
-                if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate) && freeCapacityScore(candidatePm, candidate) > freeCapacityScore(pm[0], candidate)){
-                    pm[0] = candidatePm;
-                }
-            });
-        }
+//        else {
+//            candidatePms.forEach(candidatePm -> {
+//                if (hasFreeCapacityForSet(currentAssignments, candidatePm, candidate) && freeCapacityScore(candidatePm, candidate) > freeCapacityScore(pm[0], candidate)){
+//                    pm[0] = candidatePm;
+//                }
+//            });
+//        }
 
 
         return pm[0];
@@ -1010,7 +1012,7 @@ public class Cloud {
 
     //check the free capacity score of a pm which has free capacity for a pm in current assignment
     private int freeCapacityScore(PM candidatePm, VMSet candidate) {
-        int currentAsgnWeight = 2;
+        int currentAsgnWeight = 0;
         int newAsgnWeight = 1;
         int score;
 
