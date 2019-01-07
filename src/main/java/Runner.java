@@ -12,19 +12,50 @@ import java.util.List;
 public class Runner {
 
     public static void main(String[] args) throws Exception {
-        List<String> files = new ArrayList<>();
+//        List<String> files = new ArrayList<>();
+//
+//
+//        readNestedFiles("D:\\google drive\\vm migration\\generator\\dataset_small-x" , files);
+//            //more code
+//
+//            files.forEach(file -> {
+//                try {
+//                    CsvWriter.addReportToCsv(runTheFile(file));
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            });
 
 
-        readNestedFiles("C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\dataset_small-x" , files);
-            //more code
+        String  folderPath = "D:\\google drive\\vm migration\\generator\\datasets_50_100";
+        File folder = new File(folderPath);
+        File[] listOfFolders = folder.listFiles();
 
-            files.forEach(file -> {
+        for (File directory : listOfFolders) {
+
+
+            List<String> files = new ArrayList<>();
+
+            File[] innerFolders = directory.listFiles();
+            for (File innerfolder : innerFolders ) {
+
+                if (innerfolder.isDirectory()) {
+                    files.add(innerfolder.listFiles()[1].toString());
+                }
+            }
+
+            final boolean[] firsLine = {true};
+           files.forEach(file -> {
                 try {
-                    CsvWriter.addReportToCsv(runTheFile(file));
+                    CsvWriter.addReportToCsv(runTheFile(file) , directory.getName() , firsLine[0]);
+                    firsLine[0] = false;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
+
+        }
+
 
 
 

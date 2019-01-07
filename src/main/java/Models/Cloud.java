@@ -991,6 +991,7 @@ public class Cloud {
                 migrations.forEach(migration -> {
                     if (migration.getVm().equals(vm)) {
                         pms.remove(migration.getDestination());
+                        pms.remove(migration.getSource());
                     }
                 });
             });
