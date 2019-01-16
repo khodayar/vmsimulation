@@ -129,6 +129,7 @@ public class MigrationProcess {
     //Onoue looping over connected components
     public void OnCcDoMigrations(DependencyGraph dg) throws Exception {
 
+        cloud.getReport().setInitialCapacityOfnetwork(0);
         cloud.getReport().setNumberOfInitialCycles(0);
 
         cloud.setInitialMigrationTimes(cloud.getMigrations());
@@ -138,6 +139,8 @@ public class MigrationProcess {
         List<Set<VM>> g = cloud.getConnectedComponents(dg);
         List<VM> t = new ArrayList<>();
         List<VM> x = new ArrayList<>();
+
+        int maxOngoingMigs = 0;
 
 
         DependencyGraph finalDg = dg;
@@ -173,7 +176,7 @@ public class MigrationProcess {
                     System.out.println();
                 }
                 if (cloud.hasFreeCapacityFor(cloud.getCurrentAssignments(), m.getDestination(), l.get(i)) &&
-                        linksHaveCapacity(m)) {
+                        linksHaveCapacity(m) && networkHasCapacity()) {
                     try {
                         startMigration(m);
                         x.add(l.get(i));  //ongoing migrating VMs
@@ -183,6 +186,13 @@ public class MigrationProcess {
                 }
             }
 
+            //do it once
+            //it must be before solving cycles, because it changes the migrations
+            if (cloud.getReport().getNextCapacityOfNetwork() == 0) {
+                cloud.getReport().setNextCapacityOfNetwork(0);
+            }
+
+            maxOngoingMigs = Math.max(maxOngoingMigs , x.size());
             l.removeAll(x);
 
             t.forEach(vm -> {
@@ -197,6 +207,7 @@ public class MigrationProcess {
                 //     System.out.println();
                 //move temp migrations to a new temp server
                 if (!cloud.shuffleTempMigrations()){
+                    cloud.getReport().setMaxOngoingMigs(maxOngoingMigs);
                     cloud.printReport();
                     if (l.isEmpty()){
                                   throw new Exception("infeasible migration(s)");
@@ -270,11 +281,13 @@ public class MigrationProcess {
 
         } while (!cloud.getMigrations().isEmpty() || !onGoingMigrations.isEmpty());
 
+        cloud.getReport().setMaxOngoingMigs(maxOngoingMigs);
         cloud.printReport();
 
 
 
     }
+
 
 
 
@@ -400,5 +413,9 @@ public class MigrationProcess {
         return sourceTraffic[0] < linkDegree && destTraffic[0] < linkDegree;
     }
 
+
+    private boolean networkHasCapacity() {
+        return pipelineDegree > onGoingMigrations.size();
+    }
 
 }
