@@ -167,10 +167,10 @@ public class MigrationProcess {
         final int totalNumberofMigration = cloud.getMigrations().size();
         final int totalServers = cloud.getPmList().size();
         final int idleThreshold = (int) Math.ceil((double) totalNumberofMigration / totalServers);
-        Set<List<VMSet>> c = new HashSet<>();         //to keep cycles
+        Set<List<VMSet>> c ;         //to keep cycles
         HashSet<VM> l = new HashSet<>();  //list for feasible migration
         List<VM> x = new ArrayList<>(); // ongoing migrations vms
-        List<VM> t = new ArrayList<>();  //temp for l after solving cycles
+        //List<VM> t = new ArrayList<>();  //temp for l after solving cycles
 
 
 

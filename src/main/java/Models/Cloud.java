@@ -352,9 +352,33 @@ public class Cloud {
 
     }
 
+
+    public boolean hasFreeCapacityAll(List<Assignment> assignments, PM pm, VM vm){
+        int freeMemory = pm.getMemoryCapacity();
+        int freeProcessor = pm.getProcessorCapacity();
+        int freeNetwork = pm.getNetworkCapacity();
+
+        for (int i = 0 ; i< assignments.size(); i++){
+            if (assignments.get(i).getPm().equals(pm)){
+                freeMemory -= assignments.get(i).getVm().getMemorySize();
+                freeProcessor -=assignments.get(i).getVm().getProcessorSize();
+                freeNetwork -= assignments.get(i).getVm().getNetworkSize();
+            }
+
+            if (freeMemory <0 || freeProcessor <0 || freeNetwork <0){
+                return  false;
+            }
+        }
+        return true;
+    }
+
     public boolean hasFreeCapacityFor(List<Assignment> assignments, PM pm, VM vm) {
-        return freeMemory(assignments, pm) >= vm.getMemorySize() && freeNetwork(assignments, pm) >= vm.getNetworkSize()
-                && freeProcessor(assignments, pm) >= vm.getProcessorSize();
+
+       //here we can do some improvement by looping once over the assignments
+//        return freeMemory(assignments, pm) >= vm.getMemorySize() && freeNetwork(assignments, pm) >= vm.getNetworkSize()
+//                && freeProcessor(assignments, pm) >= vm.getProcessorSize();
+
+        return  hasFreeCapacityAll(assignments , pm , vm);
     }
 
 
@@ -631,14 +655,19 @@ public class Cloud {
 
 
     public Migration findMigrationOfVM(VM vm, List<Migration> migrations) {
-        final Migration[] migration = new Migration[1];
-        migrations.forEach(mig -> {
-            if (mig.getVm().equals(vm)) {
-                migration[0] = mig;
+      //  final Migration[] migration = new Migration[1];
+        for (int i=0 ; i< migrations.size() ; i++){
+            if (migrations.get(i).getVm().equals(vm)) {
+               return migrations.get(i);
             }
-        });
+        }
+//        migrations.forEach(mig -> {
+//            if (mig.getVm().equals(vm)) {
+//                migration[0] = mig;
+//            }
+//        });
 
-        return migration[0];
+        return null;
 
     }
 
