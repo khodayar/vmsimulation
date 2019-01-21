@@ -744,6 +744,43 @@ public class Cloud {
     }
 
 
+    public boolean solveAnyCycle(Set<List<VMSet>> c, DependencyGraph dg) {
+        final DependencyGraph[] d = {dg};
+        Set<List<VMSet>> solved = new HashSet<>();
+        final int[] index = {0};
+        final int[] numberOfUnsolved = {0};
+        final boolean[] thereIsSolution = {false};
+
+        c.stream().forEach(cycle -> {
+
+            if (!thereIsSolution[0]) {
+                cycle.forEach(vmSet -> {
+                PM tempLocation = null;
+                try {
+                    tempLocation = findBestTempPM(cycle, vmSet);
+                    //as a test
+                    if (tempLocation != null) {
+                        thereIsSolution[0] = true;
+                        updateMigration(vmSet, tempLocation);
+                    } else {
+                        numberOfUnsolved[0]++;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                d[0] = generateOnoueDependencyGraph(migrations);
+                });
+            }
+        });
+
+
+        report.setNumberOfSolvedCycles(report.getNumberOfSolvedCycles() + solved.size());
+        return thereIsSolution[0];
+    }
+
+
+
     public void solveEmptyDependencies(DependencyGraph d){
         d.getDependencyMap().forEach((k,v) -> {
             if (v.get(0).getVMList().isEmpty()){
@@ -1470,4 +1507,6 @@ public class Cloud {
         });
         return weight[0];
     }
+
+
 }

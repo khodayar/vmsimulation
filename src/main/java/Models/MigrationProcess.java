@@ -223,7 +223,7 @@ public class MigrationProcess {
 //            }
 
             //solve biggest cycle  this block can be commented out
-
+            List<VM> newL;
             c = cloud.detectCyclesO(dg);
             if (!c.isEmpty() && x.size() < idleThreshold ) {
                 List<VMSet> longestCycle = cloud.getLongestCycle(c);
@@ -231,7 +231,7 @@ public class MigrationProcess {
                 cloud.solveCyclesOn(longestCycleSet, dg);
                 dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
                 cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
-                List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
+                 newL =cloud.getVMsWithoutOutEdges(dg);
                 l.addAll(newL) ;
             }
 
@@ -245,14 +245,16 @@ public class MigrationProcess {
                     dg = cloud.generateOnoueDependencyGraph(cloud.getMigrations());
                     cloud.setDependencyWeightsO(cloud.generateOnoueDependencyGraph(cloud.getMigrations()));
                     System.out.println("get new vms without out edge" + loop);
-                    List<VM> newL =cloud.getVMsWithoutOutEdges(dg);
+                     newL =cloud.getVMsWithoutOutEdges(dg);
                     if (newL.isEmpty()){
                         System.out.println("new L is empty");
                     }
                     if (newL.isEmpty() && !cloud.getMigrations().isEmpty()) {
                         //change this with finish Report or something
-                        cloud.printReport();
-                        throw new Exception ("dead end");
+                        if (!cloud.solveAnyCycle(c, dg)) {
+                            cloud.printReport();
+                            throw new Exception("dead end");
+                        }
                     } else {
                         l.addAll(newL) ;
                         System.out.println("having new l" +  loop);

@@ -27,7 +27,7 @@ public class Runner {
 //            });
 
 
-        String  folderPath = "D:\\google drive\\vm migration\\generator\\datasets_50_100";
+        String  folderPath = "D:\\google drive\\vm migration\\generator\\dataset_small-x";
         File folder = new File(folderPath);
         File[] listOfFolders = folder.listFiles();
 
