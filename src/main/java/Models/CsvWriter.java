@@ -16,7 +16,7 @@ public class CsvWriter {
 
         //Instance,Total Time,SV,VM,VM To Move (Migrations),optimal,time, Finished Migrations, Temporary Migrations, Initial Cycles,Solved Cycles,Failed Attempts For Solving Cycles, CPU Time
         FileWriter pw = null;
-        String resultFile = "results//report_" + set + ".csv";
+        String resultFile = "report_" + set + ".csv";
         pw = new FileWriter (resultFile, true);
 
         StringBuilder sb = new StringBuilder();

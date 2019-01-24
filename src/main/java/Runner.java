@@ -27,9 +27,13 @@ public class Runner {
 //            });
 
 
-        String  folderPath = "D:\\google drive\\vm migration\\generator\\dataset_small-x";
-        File folder = new File(folderPath);
+        String  folderPath = "data";
+        ClassLoader classLoader = Runner.class.getClassLoader();
+        File folder = new File(classLoader.getResource(folderPath).getFile());
+
+       // File folder = new File(folderPath);
         File[] listOfFolders = folder.listFiles();
+
 
         for (File directory : listOfFolders) {
 
@@ -40,7 +44,7 @@ public class Runner {
             for (File innerfolder : innerFolders ) {
 
                 if (innerfolder.isDirectory()) {
-                    files.add(innerfolder.listFiles()[1].toString());
+                    files.add(innerfolder.listFiles()[4].toString());
                 }
             }
 
