@@ -27,11 +27,11 @@ public class Runner {
 //            });
 
 
-        String  folderPath = "data";
-        ClassLoader classLoader = Runner.class.getClassLoader();
-        File folder = new File(classLoader.getResource(folderPath).getFile());
+        String  folderPath = "./data";
+       // ClassLoader classLoader = Runner.class.getClassLoader();
+        //File folder = new File(classLoader.getResource(folderPath).getFile());
 
-       // File folder = new File(folderPath);
+        File folder = new File(folderPath);
         File[] listOfFolders = folder.listFiles();
 
 
