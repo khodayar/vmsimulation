@@ -92,7 +92,7 @@ public class CsvReader {
             }
         }
 
-        cloud.getReport().setFileName(filePath.substring(filePath.lastIndexOf("\\")));
+        cloud.getReport().setFileName(filePath.substring(filePath.lastIndexOf("inst")));
         cloud.getReport().setNumberOFPms(cloud.getPmList().size());
         cloud.getReport().setNumberOfVMs(cloud.getVMs().size());
         cloud.getReport().setNumberOFMig(cloud.generateMigrations().size());
