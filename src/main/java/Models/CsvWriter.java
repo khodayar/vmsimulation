@@ -20,7 +20,7 @@ public class CsvWriter {
         pw = new FileWriter (resultFile, true);
 
         StringBuilder sb = new StringBuilder();
-        if (firsLine) sb.append("Instance,Total Time,SV,VM,VM To Move (Migrations),optimal,time, Finished Migrations, Temporary Migrations, Initial Cycles,Solved Cycles,Failed Attempts For Solving Cycles, CPU time\n");
+        if (firsLine) sb.append("Instance,Total Time,SV,VM,VM To Move (Migrations),optimal,time, Finished Migrations, Temporary Migrations, Initial Cycles,Solved Cycles,Failed Attempts For Solving Cycles, CPU time, temp migration memory\n");
         sb.append(report.getFileName());
         sb.append(',');
         sb.append("");
@@ -52,6 +52,8 @@ public class CsvWriter {
             e.printStackTrace();
         }
         sb.append(duration);
+        sb.append(',');
+        sb.append(report.getTmMemory());
         sb.append(',');
                 sb.append('\n');
 

@@ -100,6 +100,7 @@ public class Cloud {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
         String timestamp = sdf.format(new Date());
         report.setTimeStampCalcStarted(timestamp);
+        report.setTmMemory(0);
     }
 
 
