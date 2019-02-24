@@ -17,6 +17,8 @@ public class Report {
     int numberOFTempMig;
     int timeSteps;
 
+    int tmMemory;
+
     String timeStampCalcStarted;
     String timeStampMigStart;
     String timeStampFinished;
@@ -166,5 +168,13 @@ public class Report {
 
     public void setNumberOFTempMig(int numberOFTempMig) {
         this.numberOFTempMig = numberOFTempMig;
+    }
+
+    public int getTmMemory() {
+        return tmMemory;
+    }
+
+    public void setTmMemory(int tmMemory) {
+        this.tmMemory = tmMemory;
     }
 }

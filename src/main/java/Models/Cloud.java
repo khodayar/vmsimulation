@@ -100,6 +100,7 @@ public class Cloud {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
         String timestamp = sdf.format(new Date());
         report.setTimeStampCalcStarted(timestamp);
+        report.setTmMemory(0);
     }
 
 
@@ -695,8 +696,8 @@ public class Cloud {
                 //Onoue original is d[0].getTargetNodeEqual(vmSet) != null
                 //o2 results : d[0].getDependencyMap().get(vmSet) != null
                 //todo decide which
-                if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getWeightSum() < minWeightSet[0]
-                        .getWeightSum()) {
+                if (d[0].getDependencyMap().get(vmSet) != null && vmSet.getVMList().size() < minWeightSet[0]
+                        .getVMList().size()) {
                     minWeightSet[0] = vmSet;
                 }
             });

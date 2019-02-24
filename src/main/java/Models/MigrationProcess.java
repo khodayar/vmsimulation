@@ -74,6 +74,7 @@ public class MigrationProcess {
         System.out.println("Migration Started " + m + " at " + timeStamp);
         if (!m.getDestination().equals(m.getFinalDestination())){
             cloud.getReport().setNumberOFTempMig(cloud.getReport().getNumberOFTempMig() + 1);
+            cloud.getReport().setTmMemory(cloud.getReport().getTmMemory() + m.getVm().getMemorySize());
         }
 
         cloud.getMigrations().remove(m);
