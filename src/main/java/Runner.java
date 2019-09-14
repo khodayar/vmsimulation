@@ -12,25 +12,53 @@ import java.util.List;
 public class Runner {
 
     public static void main(String[] args) throws Exception {
-        List<String> files = new ArrayList<>();
+//        List<String> files = new ArrayList<>();
+//
+//
+//        readNestedFiles("D:\\google drive\\vm migration\\generator\\dataset_small-x" , files);
+//            //more code
+//
+//            files.forEach(file -> {
+//                try {
+//                    CsvWriter.addReportToCsv(runTheFile(file));
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            });
 
-        boolean readNestedFolder = true;
 
-        if (readNestedFolder) {
-            readNestedFiles("C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\dataset_small-x", files);
-            //more code
+        String  folderPath = "C:\\Users\\Khodayar\\Google Drive\\vm migration\\generator\\dataset_small-x";
+        File folder = new File(folderPath);
+        File[] listOfFolders = folder.listFiles();
 
-            files.forEach(file -> {
+        for (File directory : listOfFolders) {
+
+
+            List<String> files = new ArrayList<>();
+
+            File[] innerFolders = directory.listFiles();
+            for (File innerfolder : innerFolders ) {
+
+                if (innerfolder.isDirectory()) {
+                    files.add(innerfolder.listFiles()[1].toString());
+                }
+            }
+
+            final boolean[] firsLine = {true};
+           files.forEach(file -> {
                 try {
-                    CsvWriter.addReportToCsv(runTheFile(file));
+                    CsvWriter.addReportToCsv(runTheFile(file) , directory.getName() , firsLine[0]);
+                    firsLine[0] = false;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
+
         }
-        else {
-            runTheFile(null);
-        }
+
+
+
+
     }
 
     private static void readFiles(String folderPath , List<String> files) {
@@ -73,24 +101,15 @@ public class Runner {
 
         Cloud current = new Cloud();
 
-        if (filePath != null) {
-            //read Charles's version
-            CsvReader.readFile(current, filePath);
-        }
-
+        //read Charles's version
+         CsvReader.readFile(current , filePath);
         System.out.println("Start of file" +  filePath);
 
         //out_inst_100_CONS-20-80_50_90-95.csv
         //out_inst_100_CONS-20-80_50_80-85.csv
         //we can use this function to read the set up and current and new placements from setup.txt
 
-        if (filePath == null) {
-            try {
-                SetUp.readSetUp(current);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        //  SetUp.readSetUp(current);
         //  alternative way to set up , create an optimal new assignment and a random current
         //DataGenerator.setUpCloud(5 , 20, 1, 80 , current);
 
@@ -103,9 +122,6 @@ public class Runner {
 
        // System.out.println("Onoue dependency graph");
         dependencyGraph = current.generateOnoueDependencyGraph(current.generateMigrations());
-
-        current.showAssignments(false);
-       // List<Set<VM>> cmp = current.getConnectedComponents(dependencyGraph);
         //  dependencyGraph.printDependency();
 
         //  current.showCyclesO(dependencyGraph);
@@ -122,9 +138,7 @@ public class Runner {
 
 //        //setting default migration weights
         current.setInitialMigrationTimes(current.getMigrations());
-
-        DependencyGraph dependencyGraphCopy = current.generateOnoueDependencyGraph(current.generateMigrations());
-        current.setDependencyWeightsO(dependencyGraphCopy);
+        current.setDependencyWeightsO(dependencyGraph);
         System.out.println(current.getMigrations());
 
 /*

@@ -10,15 +10,17 @@ import java.text.SimpleDateFormat;
  */
 public class CsvWriter {
 
-    public static void addReportToCsv (Report report) throws IOException {
+    public static void addReportToCsv (Report report , String set, boolean firsLine) throws IOException {
 
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
 
         //Instance,Total Time,SV,VM,VM To Move (Migrations),optimal,time, Finished Migrations, Temporary Migrations, Initial Cycles,Solved Cycles,Failed Attempts For Solving Cycles, CPU Time
         FileWriter pw = null;
-        pw = new FileWriter ("report.csv", true);
+        String resultFile = "results//report_" + set + ".csv";
+        pw = new FileWriter (resultFile, true);
 
         StringBuilder sb = new StringBuilder();
+        if (firsLine) sb.append("Instance,Total Time,SV,VM,VM To Move (Migrations),optimal,time, Finished Migrations, Temporary Migrations, Initial Cycles,Solved Cycles,Failed Attempts For Solving Cycles, CPU time\n");
         sb.append(report.getFileName());
         sb.append(',');
         sb.append("");
@@ -50,12 +52,6 @@ public class CsvWriter {
             e.printStackTrace();
         }
         sb.append(duration);
-        sb.append(',');
-        sb.append(report.getMaxOngoingMigs());
-        sb.append(',');
-        sb.append(report.getInitialCapacityOfnetwork());
-        sb.append(',');
-        sb.append(report.getNextCapacityOfNetwork());
         sb.append(',');
                 sb.append('\n');
 
